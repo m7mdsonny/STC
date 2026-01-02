@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\AnalyticsDashboard;
 use App\Models\AnalyticsReport;
 use App\Models\AnalyticsWidget;
+use App\Models\Camera;
+use App\Models\EdgeServer;
 use App\Models\Event;
+use App\Models\License;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -14,23 +17,124 @@ class AnalyticsController extends Controller
 {
     public function summary(Request $request): JsonResponse
     {
-        $query = $this->applyFilters(Event::query(), $request);
+        $organizationId = $request->get('organization_id') ?? $request->user()?->organization_id;
 
-        $events = $query->get();
-        $totalEvents = $events->count();
-        $eventsByType = $events->groupBy('event_type')->map->count();
-        $eventsBySeverity = $events->groupBy('severity')->map->count();
-        $eventsByModule = $events->groupBy(fn ($event) => $event->meta['module'] ?? $event->event_type)->map->count();
+        if (!$organizationId) {
+            return response()->json([
+                'cameras' => [
+                    'total_cameras' => 0,
+                    'active_cameras' => 0,
+                    'inactive_cameras' => 0,
+                ],
+                'alerts' => [
+                    'total_alerts' => 0,
+                    'open_alerts' => 0,
+                    'resolved_alerts' => 0,
+                    'alerts_today' => 0,
+                    'alerts_last_7_days' => 0,
+                ],
+                'edges' => [
+                    'total_edges' => 0,
+                    'online_edges' => 0,
+                    'offline_edges' => 0,
+                ],
+                'market' => [
+                    'suspicious_events_total' => 0,
+                    'high_risk_count' => 0,
+                    'critical_risk_count' => 0,
+                    'licensed' => false,
+                ],
+                'timeline' => [
+                    'events_by_day' => collect(range(6, 0))->map(function ($i) {
+                        $date = Carbon::today()->subDays($i)->toDateString();
+                        return ['date' => $date, 'count' => 0];
+                    })->values(),
+                ],
+            ]);
+        }
+
+        $cameraQuery = Camera::query()->where('organization_id', $organizationId);
+        $edgeQuery = EdgeServer::query()->where('organization_id', $organizationId);
+        $eventQuery = $this->applyFilters(Event::query(), $request)->where('organization_id', $organizationId);
+
+        $totalCameras = (clone $cameraQuery)->count();
+        $activeCameras = (clone $cameraQuery)->where('status', 'online')->count();
+        $inactiveCameras = max($totalCameras - $activeCameras, 0);
+
+        $totalEdges = (clone $edgeQuery)->count();
+        $onlineEdges = (clone $edgeQuery)->where('online', true)->count();
+        $offlineEdges = max($totalEdges - $onlineEdges, 0);
+
+        $totalAlerts = (clone $eventQuery)->count();
+        $openAlerts = (clone $eventQuery)->whereNull('resolved_at')->count();
+        $resolvedAlerts = (clone $eventQuery)->whereNotNull('resolved_at')->count();
+        $alertsToday = (clone $eventQuery)
+            ->whereDate('occurred_at', Carbon::today())
+            ->count();
+        $alertsLast7Days = (clone $eventQuery)
+            ->whereDate('occurred_at', '>=', Carbon::today()->subDays(6))
+            ->count();
+
+        $marketLicensed = $organizationId && License::where('organization_id', $organizationId)
+            ->where('status', 'active')
+            ->whereJsonContains('modules', 'market')
+            ->exists();
+
+        $marketQuery = $marketLicensed
+            ? (clone $eventQuery)->where('meta->module', 'market')
+            : null;
+
+        $suspiciousEventsTotal = $marketQuery ? (clone $marketQuery)->count() : 0;
+        $highRiskCount = $marketQuery
+            ? (clone $marketQuery)->where('meta->risk_level', 'high')->count()
+            : 0;
+        $criticalRiskCount = $marketQuery
+            ? (clone $marketQuery)->where('meta->risk_level', 'critical')->count()
+            : 0;
+
+        $eventsByDayRaw = (clone $eventQuery)
+            ->whereDate('occurred_at', '>=', Carbon::today()->subDays(6))
+            ->selectRaw('DATE(occurred_at) as date, COUNT(*) as count')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->pluck('count', 'date');
+
+        $eventsByDay = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::today()->subDays($i)->toDateString();
+            $eventsByDay[] = [
+                'date' => $date,
+                'count' => (int) ($eventsByDayRaw[$date] ?? 0),
+            ];
+        }
 
         return response()->json([
-            'total_events' => $totalEvents,
-            'total_acknowledged' => $events->where('meta.acknowledged', true)->count(),
-            'total_resolved' => $events->where('meta.resolved', true)->count(),
-            'total_false_positives' => $events->where('meta.false_positive', true)->count(),
-            'avg_response_time' => round($events->avg('meta.response_time') ?? 0, 2),
-            'events_by_type' => $eventsByType,
-            'events_by_severity' => $eventsBySeverity,
-            'events_by_module' => $eventsByModule,
+            'cameras' => [
+                'total_cameras' => $totalCameras,
+                'active_cameras' => $activeCameras,
+                'inactive_cameras' => $inactiveCameras,
+            ],
+            'alerts' => [
+                'total_alerts' => $totalAlerts,
+                'open_alerts' => $openAlerts,
+                'resolved_alerts' => $resolvedAlerts,
+                'alerts_today' => $alertsToday,
+                'alerts_last_7_days' => $alertsLast7Days,
+            ],
+            'edges' => [
+                'total_edges' => $totalEdges,
+                'online_edges' => $onlineEdges,
+                'offline_edges' => $offlineEdges,
+            ],
+            'market' => [
+                'suspicious_events_total' => $suspiciousEventsTotal,
+                'high_risk_count' => $highRiskCount,
+                'critical_risk_count' => $criticalRiskCount,
+                'licensed' => (bool) $marketLicensed,
+            ],
+            'timeline' => [
+                'events_by_day' => $eventsByDay,
+            ],
         ]);
     }
 

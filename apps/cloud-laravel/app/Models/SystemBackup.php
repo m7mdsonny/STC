@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
-class SystemBackup extends Model
+class SystemBackup extends BaseModel
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'file_path',
+        'status',
+        'meta',
+        'created_by',
+    ];
 
     protected $casts = [
         'meta' => 'array',
