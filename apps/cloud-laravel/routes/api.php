@@ -51,7 +51,9 @@ Route::prefix('v1')->group(function () {
         [LicenseController::class, 'validateKey']
     )->middleware('throttle:10,1'); // Reduced from 100/min to 10/min for security
 
-    // Heartbeat endpoint: public for first registration (generates edge_key/edge_secret)
+    // Heartbeat endpoint: supports both public (first registration) and HMAC (subsequent)
+    // First registration: public (no auth) - uses edge_id + organization_id
+    // Subsequent heartbeats: HMAC authenticated via optional middleware
     Route::post('/edges/heartbeat', [EdgeController::class, 'heartbeat'])->middleware('throttle:100,1');
 
     // Edge Server endpoints (HMAC-secured ONLY - NO public access)
