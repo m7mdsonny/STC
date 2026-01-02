@@ -511,8 +511,13 @@ class AnalyticsController extends Controller
 
     protected function applyFilters($query, Request $request)
     {
-        if ($orgId = $request->get('organization_id')) {
-            $query->where('organization_id', $orgId);
+        $organizationId = $request->get('organization_id') ?? $request->user()?->organization_id;
+
+        if ($organizationId) {
+            $query->where('organization_id', $organizationId);
+        } else {
+            // Hard block unscoped analytics access
+            return $query->whereRaw('1 = 0');
         }
 
         if ($request->filled('start_date')) {
