@@ -25,6 +25,7 @@ from .camera_sync import CameraSyncService
 from .event_sender import EventSenderService
 from .command_listener import CommandListenerService
 from .web_ui import router as web_ui_router
+from .enterprise_monitoring import EnterpriseMonitoringService
 
 
 # Global services (will be initialized in lifespan)
@@ -36,6 +37,7 @@ heartbeat_service: HeartbeatService = None
 camera_sync: CameraSyncService = None
 event_sender: EventSenderService = None
 command_listener: CommandListenerService = None
+enterprise_monitoring: EnterpriseMonitoringService = None
 
 
 # Setup logging
@@ -71,6 +73,7 @@ async def lifespan(app: FastAPI):
     """Application lifespan manager"""
     global config, error_store, status_service, cloud_client
     global heartbeat_service, camera_sync, event_sender, command_listener
+    global enterprise_monitoring
     
     logger.info("=" * 60)
     logger.info("Starting STC Edge Server")
@@ -98,6 +101,7 @@ async def lifespan(app: FastAPI):
         event_sender = EventSenderService(cloud_client, status_service, error_store)
         command_listener = CommandListenerService(cloud_client, status_service, error_store, camera_sync)
         heartbeat_service = HeartbeatService(config, cloud_client, status_service, error_store)
+        enterprise_monitoring = EnterpriseMonitoringService(cloud_client, config, status_service, error_store)
         
         # Start services
         await heartbeat_service.start()
@@ -106,6 +110,9 @@ async def lifespan(app: FastAPI):
         
         # Initial camera sync
         await camera_sync.sync_cameras()
+        
+        # Initial scenario fetch for enterprise monitoring
+        await enterprise_monitoring.fetch_scenarios()
         
         status_service.set_state("Online")
         logger.info("Edge Server is OPERATIONAL")

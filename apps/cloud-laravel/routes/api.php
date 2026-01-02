@@ -33,6 +33,8 @@ use App\Http\Controllers\AutomationRuleController;
 use App\Http\Controllers\MarketController;
 use App\Http\Controllers\OrganizationSubscriptionController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\AiScenarioController;
+use App\Http\Controllers\AiAlertPolicyController;
 
 Route::prefix('v1')->group(function () {
     // Public endpoints (no authentication required)
@@ -165,6 +167,18 @@ Route::prefix('v1')->group(function () {
         Route::get('/market/dashboard', [MarketController::class, 'dashboard']);
         Route::get('/market/events', [MarketController::class, 'events']);
         Route::get('/market/events/{id}', [MarketController::class, 'show']);
+
+        // Enterprise Monitoring - AI Scenarios
+        Route::get('/ai-scenarios', [AiScenarioController::class, 'index']);
+        Route::get('/ai-scenarios/{scenario}', [AiScenarioController::class, 'show']);
+        Route::put('/ai-scenarios/{scenario}', [AiScenarioController::class, 'update']);
+        Route::put('/ai-scenarios/{scenario}/rules/{rule}', [AiScenarioController::class, 'updateRule']);
+        Route::post('/ai-scenarios/{scenario}/bind-camera', [AiScenarioController::class, 'bindCamera']);
+        Route::delete('/ai-scenarios/{scenario}/cameras/{camera}', [AiScenarioController::class, 'unbindCamera']);
+
+        // Enterprise Monitoring - Alert Policies
+        Route::get('/ai-alert-policies', [AiAlertPolicyController::class, 'index']);
+        Route::put('/ai-alert-policies/{policy}', [AiAlertPolicyController::class, 'update']);
 
         // Subscription details (for clients - Mobile/Web)
         Route::get('/subscription', [OrganizationSubscriptionController::class, 'showCurrent']);

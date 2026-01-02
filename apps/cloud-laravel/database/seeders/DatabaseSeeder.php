@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
         // Run seeders in order
         $this->call([
             AiModuleSeeder::class,
+            EnterpriseMonitoringSeeder::class,
             // LandingContentSeeder is optional - only if needed
         ]);
 
