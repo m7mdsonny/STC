@@ -136,8 +136,10 @@ class CloudClient:
         version: str,
         online: bool = True,
         system_info: Optional[Dict[str, Any]] = None,
-        cameras_status: Optional[list] = None
-    ) -> bool:
+        cameras_status: Optional[list] = None,
+        edge_id: Optional[str] = None,
+        organization_id: Optional[int] = None
+    ) -> Tuple[bool, Optional[Dict[str, Any]]]:
         """
         Send heartbeat to Cloud
         
@@ -146,9 +148,11 @@ class CloudClient:
             online: Online status
             system_info: System information dict
             cameras_status: List of camera status dicts
+            edge_id: Edge ID for first registration (optional)
+            organization_id: Organization ID for first registration (optional)
         
         Returns:
-            True if successful
+            Tuple of (success, response_data) - response_data may contain edge_key/edge_secret on first registration
         """
         payload = {
             "version": version,
@@ -161,8 +165,56 @@ class CloudClient:
         if cameras_status:
             payload["cameras_status"] = cameras_status
         
-        success, _ = await self._request("POST", "/api/v1/edges/heartbeat", json_data=payload)
-        return success
+        # First registration: include edge_id and organization_id, send without HMAC
+        if edge_id and organization_id:
+            payload["edge_id"] = edge_id
+            payload["organization_id"] = organization_id
+            
+            # Send unauthenticated request for first registration
+            if not self.client:
+                await self.connect()
+            
+            if not self.client:
+                return False, None
+            
+            import json
+            body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
+            headers = {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+            
+            try:
+                response = await self.client.request(
+                    "POST",
+                    "/api/v1/edges/heartbeat",
+                    headers=headers,
+                    content=body
+                )
+                
+                if response.status_code in (200, 201):
+                    try:
+                        data = response.json()
+                        return True, data
+                    except Exception:
+                        return True, {"status": "success"}
+                else:
+                    error_msg = f"Registration failed: {response.status_code}"
+                    try:
+                        error_data = response.json()
+                        error_msg = error_data.get("message", error_msg)
+                    except Exception:
+                        pass
+                    self.error_store.add_error("registration", error_msg)
+                    return False, {"error": error_msg}
+            except Exception as e:
+                error_msg = f"Registration request failed: {str(e)}"
+                self.error_store.add_error("registration", error_msg, e)
+                return False, {"error": error_msg}
+        
+        # Subsequent heartbeats: use HMAC authentication
+        success, data = await self._request("POST", "/api/v1/edges/heartbeat", json_data=payload)
+        return success, data
     
     async def get_cameras(self) -> Tuple[bool, list]:
         """

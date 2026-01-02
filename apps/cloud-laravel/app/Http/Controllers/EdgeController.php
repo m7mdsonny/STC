@@ -337,16 +337,73 @@ class EdgeController extends Controller
     public function heartbeat(Request $request): JsonResponse
     {
         try {
-            // Edge server is attached by VerifyEdgeSignature middleware
+            // SECURITY: Support both first registration (public) and subsequent heartbeats (HMAC)
+            // Check if request is HMAC authenticated (via optional middleware)
             $edge = $request->get('edge_server');
+            $isAuthenticated = (bool) $edge;
             
-            if (!$edge) {
-                return response()->json([
-                    'ok' => false,
-                    'message' => 'Edge server not authenticated',
-                ], 401);
+            // If not HMAC authenticated, try first registration flow
+            if (!$isAuthenticated) {
+                // First registration requires edge_id and organization_id
+                $request->validate([
+                    'edge_id' => 'required|string',
+                    'organization_id' => 'required|integer|exists:organizations,id',
+                    'version' => 'required|string',
+                    'online' => 'required|boolean',
+                ]);
+                
+                $edgeId = $request->edge_id;
+                $organizationId = $request->organization_id;
+                
+                // Find or create edge server
+                $edge = EdgeServer::where('edge_id', $edgeId)
+                    ->where('organization_id', $organizationId)
+                    ->first();
+                
+                if (!$edge) {
+                    // Create new edge server for first registration
+                    $edgeKey = 'edge_' . Str::random(32);
+                    $edgeSecret = Str::random(64);
+                    
+                    $edge = EdgeServer::create([
+                        'edge_id' => $edgeId,
+                        'organization_id' => $organizationId,
+                        'edge_key' => $edgeKey,
+                        'edge_secret' => $edgeSecret,
+                        'version' => $request->version,
+                        'online' => $request->boolean('online'),
+                        'last_seen_at' => now(),
+                    ]);
+                    
+                    // Auto-link first available license if exists
+                    $availableLicense = License::where('organization_id', $organizationId)
+                        ->where('status', 'active')
+                        ->whereNull('edge_server_id')
+                        ->first();
+                    
+                    if ($availableLicense) {
+                        $edge->update(['license_id' => $availableLicense->id]);
+                        $availableLicense->update(['edge_server_id' => $edge->id]);
+                    }
+                    
+                    // Return credentials for first registration
+                    return response()->json([
+                        'ok' => true,
+                        'edge' => $edge->load(['organization', 'license'])->toArray(),
+                        'edge_key' => $edgeKey,
+                        'edge_secret' => $edgeSecret, // Only returned on first registration
+                    ]);
+                } else {
+                    // Edge exists but no HMAC - require authentication for subsequent heartbeats
+                    return response()->json([
+                        'ok' => false,
+                        'message' => 'HMAC authentication required for registered edge servers',
+                        'error' => 'authentication_required'
+                    ], 401);
+                }
             }
-
+            
+            // HMAC authenticated flow (subsequent heartbeats)
             $request->validate([
                 'version' => 'required|string',
                 'online' => 'required|boolean',
