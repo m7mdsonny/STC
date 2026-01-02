@@ -1,0 +1,19 @@
+# STC Edge Server Requirements
+# Python 3.10+ compatible
+
+# Web Framework
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+python-multipart==0.0.12
+
+# HTTP Client
+httpx==0.27.0
+
+# Logging
+loguru==0.7.3
+
+# System Monitoring
+psutil==6.1.0
+
+# Database (SQLite is built-in, but we use it explicitly)
+# No additional package needed

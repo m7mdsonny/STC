@@ -1,0 +1,64 @@
+# Market Module Configuration
+# Suspicious Behavior & Loss Prevention
+
+# Risk Scoring Weights
+risk_weights:
+  object_picked: 30
+  object_not_returned: 15
+  concealment_motion: 40
+  exit_without_checkout: 35
+
+# Risk Level Thresholds
+risk_thresholds:
+  low: 0
+  medium: 60
+  high: 90
+  critical: 110
+
+# Detection Parameters
+detection:
+  # Person detection confidence
+  person_confidence: 0.5
+  
+  # Shelf interaction
+  shelf_interaction_time: 2.0  # seconds
+  shelf_interaction_overlap: 0.3  # minimum spatial overlap
+  
+  # Temporal filtering
+  min_tracking_duration: 3.0  # seconds
+  max_track_gap: 1.0  # seconds (max gap in tracking)
+  
+  # Concealment detection
+  concealment_confidence: 0.7
+  concealment_zones:
+    - pocket
+    - waist
+    - bag
+  
+  # Zone definitions (configured per camera)
+  zones:
+    shelf:
+      enabled: true
+      min_area: 1000  # pixels
+    checkout:
+      enabled: true
+      min_area: 2000  # pixels
+    exit:
+      enabled: true
+      min_area: 5000  # pixels
+
+# Track Management
+tracking:
+  track_expiry: 300  # seconds (5 minutes)
+  max_tracks: 100
+  
+# Snapshot Settings
+snapshots:
+  enabled: true
+  only_high_risk: true  # Only capture High/Critical risk events
+  face_blur: true  # Always blur faces
+  
+# Module Behavior
+behavior:
+  graceful_failure: true  # Don't crash if sub-module fails
+  log_level: "info"  # debug, info, warning, error
