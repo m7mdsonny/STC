@@ -35,6 +35,7 @@ use App\Http\Controllers\OrganizationSubscriptionController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AiScenarioController;
 use App\Http\Controllers\AiAlertPolicyController;
+use App\Http\Controllers\FreeTrialRequestController;
 
 Route::prefix('v1')->group(function () {
     // Public endpoints (no authentication required)
@@ -42,6 +43,10 @@ Route::prefix('v1')->group(function () {
     Route::post('/public/contact', [PublicContentController::class, 'submitContact'])->middleware('throttle:10,1');
     Route::get('/public/updates', [UpdateAnnouncementController::class, 'publicIndex']);
     Route::get('/branding', [BrandingController::class, 'showPublic']);
+    
+    // Free Trial Request (public)
+    Route::post('/public/free-trial', [FreeTrialRequestController::class, 'store'])->middleware('throttle:5,1');
+    Route::get('/public/free-trial/modules', [FreeTrialRequestController::class, 'getAvailableModules']);
 
     // Auth endpoints with throttling
     Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1'); // 5 attempts per minute
@@ -276,6 +281,12 @@ Route::prefix('v1')->group(function () {
         Route::delete('/analytics/dashboards/{dashboard}/widgets/{widget}', [AnalyticsController::class, 'deleteWidget']);
         Route::get('/analytics/export', [AnalyticsController::class, 'export']);
         Route::post('/analytics/export-pdf', [AnalyticsController::class, 'exportPdf']);
+
+        // Free Trial Requests (Super Admin only)
+        Route::get('/free-trial-requests', [FreeTrialRequestController::class, 'index']);
+        Route::get('/free-trial-requests/{trialRequest}', [FreeTrialRequestController::class, 'show']);
+        Route::put('/free-trial-requests/{trialRequest}', [FreeTrialRequestController::class, 'update']);
+        Route::post('/free-trial-requests/{trialRequest}/create-organization', [FreeTrialRequestController::class, 'createOrganization']);
 
         // Reporting endpoints
         Route::get('/reports/daily', [ReportController::class, 'daily']);
