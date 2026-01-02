@@ -12,6 +12,7 @@ class EdgeServer extends BaseModel
         'edge_id',
         'edge_key',
         'edge_secret',
+        'secret_delivered_at', // Tracks when secret was delivered (only once)
         'name',
         'hardware_id',
         'ip_address',
@@ -30,6 +31,7 @@ class EdgeServer extends BaseModel
         'online' => 'boolean',
         'system_info' => 'array',
         'last_seen_at' => 'datetime',
+        'secret_delivered_at' => 'datetime',
     ];
 
     public function organization()

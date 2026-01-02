@@ -179,7 +179,7 @@ export interface RegisteredFace {
   employee_id: string | null;
   department: string | null;
   category: PersonCategory;
-  face_encoding: unknown;
+  // face_encoding REMOVED - biometric data should not be stored
   photo_url: string | null;
   is_active: boolean;
   created_at: string;

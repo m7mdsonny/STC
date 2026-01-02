@@ -12,6 +12,12 @@ class DatabaseSeeder extends Seeder
     {
         // Disable foreign key checks for MariaDB/MySQL compatibility
         DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        
+        // Run seeders in order
+        $this->call([
+            AiModuleSeeder::class,
+            // LandingContentSeeder is optional - only if needed
+        ]);
 
         // 1. Create Distributors (only if not exists)
         // Note: distributors table only has: id, name, contact_email, timestamps, softDeletes

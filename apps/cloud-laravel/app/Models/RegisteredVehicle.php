@@ -20,7 +20,7 @@ class RegisteredVehicle extends BaseModel
         'vehicle_model',
         'category',
         'photo_url',
-        'plate_encoding',
+        // plate_encoding REMOVED - biometric data should not be stored
         'vehicle_metadata',
         'is_active',
         'last_seen_at',
@@ -117,10 +117,14 @@ class RegisteredVehicle extends BaseModel
 
     /**
      * Check if plate encoding exists
+     * 
+     * NOTE: Biometric encodings are no longer stored for compliance.
+     * This method always returns false as we do not store plate encodings.
      */
     public function hasPlateEncoding(): bool
     {
-        return !empty($this->plate_encoding);
+        // Biometric data is not stored - always return false
+        return false;
     }
 
     /**

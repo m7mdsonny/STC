@@ -1,12 +1,14 @@
 """
 Configuration Store
 Manages reading and writing config.json
+Uses secure storage for sensitive credentials
 """
 import json
 import os
 from pathlib import Path
 from typing import Optional, Dict, Any
 from loguru import logger
+from .secure_storage import SecureStorage
 
 
 class ConfigStore:
@@ -23,10 +25,15 @@ class ConfigStore:
         self.config_file = self.config_dir / "config.json"
         self.schema_file = self.config_dir / "config.schema.json"
         self._config: Dict[str, Any] = {}
+        
+        # Initialize secure storage for credentials
+        self._secure_storage = SecureStorage(self.config_dir)
+        
         self._load()
     
     def _load(self):
-        """Load configuration from file"""
+        """Load configuration from file and secure storage"""
+        # Load non-sensitive config from JSON
         if self.config_file.exists():
             try:
                 with open(self.config_file, 'r', encoding='utf-8') as f:
@@ -41,10 +48,19 @@ class ConfigStore:
                 "setup_completed": False,
                 "cloud_base_url": "",
                 "edge_key": "",
-                "edge_secret": "",
+                "edge_secret": "",  # Will be loaded from secure storage
                 "server_port": 8090,
                 "heartbeat_interval": 30,
             }
+        
+        # Load sensitive credentials from secure storage
+        credentials = self._secure_storage.load_credentials()
+        if credentials:
+            # Override with encrypted credentials
+            self._config['edge_key'] = credentials.get('edge_key', '')
+            self._config['edge_secret'] = credentials.get('edge_secret', '')
+            self._config['cloud_base_url'] = credentials.get('cloud_base_url', self._config.get('cloud_base_url', ''))
+            logger.info("Credentials loaded from secure storage")
     
     def _save(self):
         """Save configuration to file"""
@@ -84,13 +100,30 @@ class ConfigStore:
         }
     
     def set_cloud_config(self, base_url: str, edge_key: str, edge_secret: str) -> bool:
-        """Set cloud connection configuration"""
-        return self.update({
+        """
+        Set cloud connection configuration
+        
+        SECURITY: Credentials are stored encrypted, not in plaintext JSON
+        """
+        # Save credentials to secure encrypted storage
+        if not self._secure_storage.save_credentials(edge_key, edge_secret, base_url.rstrip('/')):
+            logger.error("Failed to save credentials to secure storage")
+            return False
+        
+        # Update non-sensitive config in JSON (without secrets)
+        success = self.update({
             "cloud_base_url": base_url.rstrip('/'),
-            "edge_key": edge_key,
-            "edge_secret": edge_secret,
+            "edge_key": edge_key,  # Key is not secret, can be in JSON
+            # edge_secret is NOT stored in JSON - only in encrypted storage
             "setup_completed": True,
         })
+        
+        # Ensure secret is not in JSON config
+        if 'edge_secret' in self._config:
+            del self._config['edge_secret']
+            self._save()
+        
+        return success
     
     def get_all(self) -> Dict[str, Any]:
         """Get all configuration"""

@@ -17,3 +17,6 @@ psutil==6.1.0
 
 # Database (SQLite is built-in, but we use it explicitly)
 # No additional package needed
+
+# Cryptography for secure credential storage
+cryptography==43.0.0

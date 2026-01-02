@@ -134,9 +134,17 @@ class EdgeController extends Controller
         }
 
         // Return edge server with keys (only on creation, never on update)
+        // SECURITY: Mark secret as delivered immediately to prevent re-exposure
+        $edgeServer->update(['secret_delivered_at' => now()]);
+        
         $response = $edgeServer->load(['organization', 'license'])->toArray();
         $response['edge_key'] = $edgeKey;
         $response['edge_secret'] = $edgeSecret; // Only returned once on creation
+        
+        \Illuminate\Support\Facades\Log::info('Edge server created with secret', [
+            'edge_server_id' => $edgeServer->id,
+            'edge_key' => $edgeKey,
+        ]);
         
         return response()->json($response, 201);
     }
@@ -560,7 +568,8 @@ class EdgeController extends Controller
             }
 
             // Return edge credentials in response (Edge Server needs these for HMAC signing)
-            // Only return edge_secret if edge doesn't have it stored (first heartbeat or missing)
+            // SECURITY: edge_secret is returned ONLY ONCE during initial registration
+            // After that, it is never returned again to prevent exposure
             $edgeData = $edge->load(['organization', 'license'])->toArray();
             
             // Always return edge_key (it's the identifier)
@@ -570,10 +579,28 @@ class EdgeController extends Controller
                 'edge_key' => $edge->edge_key,
             ];
             
-            // Return edge_secret only if it exists (Edge Server will store it)
-            // Security: This is safe because the request is already authenticated via HMAC middleware
+            // Return edge_secret ONLY if it hasn't been delivered before
+            // Check if secret was already delivered (tracked via secret_delivered_at timestamp)
+            $shouldReturnSecret = false;
+            
             if ($edge->edge_secret) {
-                $response['edge_secret'] = $edge->edge_secret;
+                // Check if this is the first time (secret_delivered_at is null)
+                if (!$edge->secret_delivered_at) {
+                    // First time - return secret and mark as delivered
+                    $response['edge_secret'] = $edge->edge_secret;
+                    $edge->update(['secret_delivered_at' => now()]);
+                    \Illuminate\Support\Facades\Log::info('Edge secret delivered for first time', [
+                        'edge_server_id' => $edge->id,
+                        'edge_key' => $edge->edge_key,
+                    ]);
+                } else {
+                    // Secret already delivered - do not return it
+                    \Illuminate\Support\Facades\Log::debug('Edge secret not returned - already delivered', [
+                        'edge_server_id' => $edge->id,
+                        'edge_key' => $edge->edge_key,
+                        'delivered_at' => $edge->secret_delivered_at,
+                    ]);
+                }
             }
             
             return response()->json($response);

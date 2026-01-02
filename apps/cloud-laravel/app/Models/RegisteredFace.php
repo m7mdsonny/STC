@@ -16,7 +16,7 @@ class RegisteredFace extends BaseModel
         'department',
         'category',
         'photo_url',
-        'face_encoding',
+        // face_encoding REMOVED - biometric data should not be stored
         'face_metadata',
         'is_active',
         'last_seen_at',
@@ -113,10 +113,14 @@ class RegisteredFace extends BaseModel
 
     /**
      * Check if face encoding exists
+     * 
+     * NOTE: Biometric encodings are no longer stored for compliance.
+     * This method always returns false as we do not store face encodings.
      */
     public function hasFaceEncoding(): bool
     {
-        return !empty($this->face_encoding);
+        // Biometric data is not stored - always return false
+        return false;
     }
 
     /**
