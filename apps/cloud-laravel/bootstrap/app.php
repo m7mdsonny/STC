@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Routing\Middleware\SubstituteBindings;
+use App\Http\Middleware\RequireHttps;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->api(prepend: [
+            RequireHttps::class,
             SubstituteBindings::class,
         ]);
 
@@ -23,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
             'active.subscription' => \App\Http\Middleware\EnsureActiveSubscription::class,
             'verify.edge.signature' => \App\Http\Middleware\VerifyEdgeSignature::class,
+            'require.https' => RequireHttps::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
