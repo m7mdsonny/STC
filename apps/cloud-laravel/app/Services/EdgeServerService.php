@@ -85,6 +85,8 @@ class EdgeServerService
                 return false;
             }
 
+            $this->enforceHttps($edgeUrl);
+
             Log::info("Syncing camera to Edge Server", [
                 'camera_id' => $camera->camera_id,
                 'edge_url' => $edgeUrl,
@@ -148,6 +150,8 @@ class EdgeServerService
                 return false;
             }
 
+            $this->enforceHttps($edgeUrl);
+
             $response = Http::timeout(5)
                 ->delete("{$edgeUrl}/api/v1/cameras/{$camera->camera_id}");
 
@@ -182,6 +186,8 @@ class EdgeServerService
             if (!$edgeUrl) {
                 return null;
             }
+
+            $this->enforceHttps($edgeUrl);
 
             // Only send command metadata, NOT images
             $payload = [
@@ -228,6 +234,8 @@ class EdgeServerService
                 return null;
             }
 
+            $this->enforceHttps($edgeUrl);
+
             $response = Http::timeout(5)
                 ->get("{$edgeUrl}/api/v1/cameras/{$camera->camera_id}/snapshot");
 
@@ -271,6 +279,8 @@ class EdgeServerService
             return null;
         }
 
+        $this->enforceHttps($edgeUrl);
+
         // Edge Server should provide HLS stream at this endpoint
         return "{$edgeUrl}/streams/{$camera->camera_id}/playlist.m3u8";
     }
@@ -293,6 +303,8 @@ class EdgeServerService
         if (!$edgeUrl) {
             return null;
         }
+
+        $this->enforceHttps($edgeUrl);
 
         return "{$edgeUrl}/webrtc/{$camera->camera_id}";
     }
@@ -333,12 +345,21 @@ class EdgeServerService
                 return false;
             }
 
+            $this->enforceHttps($edgeUrl);
+
             $response = Http::timeout(3)
                 ->get("{$edgeUrl}/api/v1/health");
 
             return $response->successful();
         } catch (\Exception $e) {
             return false;
+        }
+    }
+
+    private function enforceHttps(string $edgeUrl): void
+    {
+        if (!str_starts_with($edgeUrl, 'https://')) {
+            throw new \RuntimeException('Edge server URL must use HTTPS');
         }
     }
 }

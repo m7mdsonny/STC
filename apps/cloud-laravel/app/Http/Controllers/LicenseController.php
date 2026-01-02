@@ -10,6 +10,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Carbon;
 use App\Models\License;
 use Illuminate\Support\Str;
+use App\Models\EdgeServer;
+use Illuminate\Support\Facades\Log;
 
 class LicenseController extends Controller
 {
@@ -128,7 +130,7 @@ class LicenseController extends Controller
             
             // Require all HMAC headers
             if (!$edgeKey || !$timestamp || !$signature) {
-                \Illuminate\Support\Facades\Log::warning('License validation: HMAC headers missing', [
+                Log::warning('License validation: HMAC headers missing', [
                     'ip' => $request->ip(),
                     'has_edge_key' => !empty($edgeKey),
                     'has_timestamp' => !empty($timestamp),
@@ -142,9 +144,9 @@ class LicenseController extends Controller
             }
             
             // HMAC authentication headers present - verify signature
-            $edgeServer = \App\Models\EdgeServer::where('edge_key', $edgeKey)->first();
+            $edgeServer = EdgeServer::where('edge_key', $edgeKey)->first();
             if (!$edgeServer || !$edgeServer->edge_secret) {
-                \Illuminate\Support\Facades\Log::warning('License validation: HMAC headers present but edge server not found or missing secret', [
+                Log::warning('License validation: HMAC headers present but edge server not found or missing secret', [
                     'edge_key' => substr($edgeKey ?? '', 0, 8) . '...',
                     'ip' => $request->ip(),
                 ]);
@@ -160,7 +162,7 @@ class LicenseController extends Controller
             $currentTime = time();
             $timeDiff = abs($currentTime - $requestTime);
             if ($timeDiff > 300) { // 5 minutes
-                \Illuminate\Support\Facades\Log::warning('License validation: HMAC timestamp out of range', [
+                Log::warning('License validation: HMAC timestamp out of range', [
                     'edge_key' => substr($edgeKey, 0, 8) . '...',
                     'time_diff' => $timeDiff,
                 ]);
@@ -179,7 +181,7 @@ class LicenseController extends Controller
             $expectedSignature = hash_hmac('sha256', $signatureString, $edgeServer->edge_secret);
             
             if (!hash_equals($expectedSignature, $signature)) {
-                \Illuminate\Support\Facades\Log::warning('License validation: HMAC signature verification failed', [
+                Log::warning('License validation: HMAC signature verification failed', [
                     'edge_key' => substr($edgeKey, 0, 8) . '...',
                     'ip' => $request->ip(),
                 ]);
@@ -190,7 +192,7 @@ class LicenseController extends Controller
                 ], 401);
             }
             
-            \Illuminate\Support\Facades\Log::debug('License validation: HMAC signature verified', [
+            Log::debug('License validation: HMAC signature verified', [
                 'edge_key' => substr($edgeKey, 0, 8) . '...',
                 'edge_server_id' => $edgeServer->id,
             ]);
@@ -201,10 +203,12 @@ class LicenseController extends Controller
                 'edge_id' => 'required|string',
             ]);
 
-            $license = License::where('license_key', $request->license_key)->first();
+            $license = License::where('license_key', $request->license_key)
+                ->where('organization_id', $edgeServer->organization_id)
+                ->first();
             if (!$license) {
                 return response()->json([
-                    'valid' => false, 
+                    'valid' => false,
                     'reason' => 'not_found',
                     'message' => 'License key not found'
                 ], 404);
@@ -247,7 +251,7 @@ class LicenseController extends Controller
             // Verify organization exists
             $organization = \App\Models\Organization::find($license->organization_id);
             if (!$organization) {
-                \Illuminate\Support\Facades\Log::warning("License validation: Organization {$license->organization_id} not found for license {$license->id}");
+                Log::warning("License validation: Organization {$license->organization_id} not found for license {$license->id}");
                 return response()->json([
                     'valid' => false,
                     'reason' => 'organization_not_found',
@@ -259,12 +263,9 @@ class LicenseController extends Controller
                 'valid' => true,
                 'edge_id' => $request->edge_id,
                 'organization_id' => $license->organization_id,
-                'license_id' => $license->id,
                 'expires_at' => $license->expires_at?->toIso8601String(),
                 'grace_days' => $graceDays,
-                'plan' => $license->plan,
                 'modules' => $modules,
-                'max_cameras' => $license->max_cameras ?? null,
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
@@ -274,7 +275,7 @@ class LicenseController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('License validation error', [
+            Log::error('License validation error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);

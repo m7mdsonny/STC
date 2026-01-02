@@ -4,6 +4,14 @@ namespace App\Models;
 
 class AiCommand extends BaseModel
 {
+    protected $fillable = [
+        'organization_id',
+        'title',
+        'status',
+        'payload',
+        'acknowledged_at',
+    ];
+
     protected $casts = [
         'payload' => 'array',
     ];
