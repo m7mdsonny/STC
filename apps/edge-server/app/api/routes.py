@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
@@ -6,8 +6,9 @@ from datetime import datetime
 import io
 
 from config.settings import settings
+from .security import verify_hmac_signature, verify_internal_auth, require_https
 
-router = APIRouter(tags=["API"])
+router = APIRouter(tags=["API"], dependencies=[Depends(require_https)])
 
 
 class CameraConfig(BaseModel):
@@ -36,7 +37,7 @@ class CommandRequest(BaseModel):
     image_reference: Optional[str] = None
 
 
-@router.get("/status")
+@router.get("/status", dependencies=[Depends(verify_hmac_signature)])
 async def get_status(request: Request):
     from main import state
 
@@ -63,7 +64,7 @@ async def get_status(request: Request):
     }
 
 
-@router.get("/cameras")
+@router.get("/cameras", dependencies=[Depends(verify_hmac_signature)])
 async def list_cameras(request: Request):
     from main import state
 
@@ -78,7 +79,7 @@ async def list_cameras(request: Request):
     return cameras
 
 
-@router.post("/cameras")
+@router.post("/cameras", dependencies=[Depends(verify_hmac_signature)])
 async def add_camera(camera: CameraConfig, request: Request):
     from main import state
 
@@ -89,7 +90,7 @@ async def add_camera(camera: CameraConfig, request: Request):
     return {"success": True, "camera_id": camera.id}
 
 
-@router.delete("/cameras/{camera_id}")
+@router.delete("/cameras/{camera_id}", dependencies=[Depends(verify_hmac_signature)])
 async def remove_camera(camera_id: str, request: Request):
     from main import state
 
@@ -100,7 +101,7 @@ async def remove_camera(camera_id: str, request: Request):
     return {"success": True}
 
 
-@router.get("/alerts")
+@router.get("/alerts", dependencies=[Depends(verify_hmac_signature)])
 async def list_alerts(request: Request, limit: int = 50):
     from main import state
 
@@ -110,7 +111,7 @@ async def list_alerts(request: Request, limit: int = 50):
     return {"alerts": [], "total": 0}
 
 
-@router.post("/alerts")
+@router.post("/alerts", dependencies=[Depends(verify_hmac_signature)])
 async def create_alert(alert: AlertCreate, request: Request):
     from main import state
 
@@ -140,7 +141,7 @@ async def create_alert(alert: AlertCreate, request: Request):
     raise HTTPException(status_code=500, detail="Failed to create alert")
 
 
-@router.get("/modules")
+@router.get("/modules", dependencies=[Depends(verify_hmac_signature)])
 async def list_modules(request: Request):
     from main import state
 
@@ -166,7 +167,7 @@ async def list_modules(request: Request):
     return available_modules
 
 
-@router.get("/automation")
+@router.get("/automation", dependencies=[Depends(verify_hmac_signature)])
 async def list_automation(request: Request):
     from main import state
 
@@ -181,7 +182,7 @@ async def list_automation(request: Request):
     return rules
 
 
-@router.get("/system/info")
+@router.get("/system/info", dependencies=[Depends(verify_internal_auth)])
 async def system_info():
     import platform
     import psutil
@@ -202,7 +203,7 @@ async def system_info():
 
 
 # Pairing endpoints
-@router.get("/pairing/info")
+@router.get("/pairing/info", dependencies=[Depends(verify_internal_auth)])
 async def get_pairing_info(request: Request):
     """Get current pairing information"""
     from app.core.pairing import PairingManager
@@ -213,7 +214,7 @@ async def get_pairing_info(request: Request):
     return info
 
 
-@router.post("/pairing/generate-token")
+@router.post("/pairing/generate-token", dependencies=[Depends(verify_internal_auth)])
 async def generate_pairing_token(request: Request):
     """Generate a one-time pairing token"""
     from app.core.pairing import PairingManager
@@ -228,7 +229,7 @@ async def generate_pairing_token(request: Request):
     }
 
 
-@router.post("/pairing/generate-api-key")
+@router.post("/pairing/generate-api-key", dependencies=[Depends(verify_internal_auth)])
 async def generate_api_key(request: Request):
     """Generate a persistent API key for Cloud authentication"""
     from app.core.pairing import PairingManager
@@ -243,7 +244,7 @@ async def generate_api_key(request: Request):
 
 
 # AI Command execution
-@router.post("/commands")
+@router.post("/commands", dependencies=[Depends(verify_hmac_signature)])
 async def execute_command(command: CommandRequest, request: Request):
     """Execute AI command from Cloud"""
     from main import state
@@ -311,7 +312,7 @@ async def execute_command(command: CommandRequest, request: Request):
 
 
 # Snapshot endpoint
-@router.get("/cameras/{camera_id}/snapshot")
+@router.get("/cameras/{camera_id}/snapshot", dependencies=[Depends(verify_hmac_signature)])
 async def get_snapshot(camera_id: str, request: Request):
     """Get camera snapshot"""
     from main import state
@@ -337,7 +338,7 @@ async def get_snapshot(camera_id: str, request: Request):
 
 
 # Stream endpoint
-@router.get("/cameras/{camera_id}/stream")
+@router.get("/cameras/{camera_id}/stream", dependencies=[Depends(verify_hmac_signature)])
 async def get_stream(camera_id: str, request: Request):
     """Get camera stream URL"""
     from main import state

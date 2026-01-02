@@ -4,6 +4,18 @@ namespace App\Models;
 
 class SubscriptionPlan extends BaseModel
 {
+    protected $fillable = [
+        'name',
+        'name_ar',
+        'max_cameras',
+        'max_edge_servers',
+        'available_modules',
+        'notification_channels',
+        'price_monthly',
+        'price_yearly',
+        'is_active',
+    ];
+
     protected $casts = [
         'available_modules' => 'array',
         'notification_channels' => 'array',

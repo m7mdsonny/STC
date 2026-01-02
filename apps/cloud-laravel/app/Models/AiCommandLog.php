@@ -4,6 +4,13 @@ namespace App\Models;
 
 class AiCommandLog extends BaseModel
 {
+    protected $fillable = [
+        'ai_command_id',
+        'status',
+        'message',
+        'meta',
+    ];
+
     protected $casts = [
         'meta' => 'array',
     ];
