@@ -173,12 +173,27 @@ class LicenseController extends Controller
                 ], 401);
             }
             
+            // Decrypt edge_secret for HMAC calculation
+            try {
+                $decryptedSecret = \Illuminate\Support\Facades\Crypt::decryptString($edgeServer->edge_secret);
+            } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+                Log::error('License validation: Failed to decrypt edge_secret', [
+                    'edge_key' => substr($edgeKey, 0, 8) . '...',
+                    'edge_server_id' => $edgeServer->id,
+                ]);
+                return response()->json([
+                    'valid' => false,
+                    'reason' => 'configuration_error',
+                    'message' => 'Edge server configuration error'
+                ], 500);
+            }
+
             // Verify signature
             $method = 'POST';
             $path = $request->path();
             $bodyHash = hash('sha256', $request->getContent() ?: '');
             $signatureString = "{$method}|{$path}|{$timestamp}|{$bodyHash}";
-            $expectedSignature = hash_hmac('sha256', $signatureString, $edgeServer->edge_secret);
+            $expectedSignature = hash_hmac('sha256', $signatureString, $decryptedSecret);
             
             if (!hash_equals($expectedSignature, $signature)) {
                 Log::warning('License validation: HMAC signature verification failed', [

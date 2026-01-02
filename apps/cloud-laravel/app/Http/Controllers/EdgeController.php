@@ -47,7 +47,18 @@ class EdgeController extends Controller
 
         $perPage = (int) $request->get('per_page', 15);
 
-        return response()->json($query->with(['organization', 'license'])->orderByDesc('last_seen_at')->paginate($perPage));
+        // SECURITY: edge_secret is hidden in model, but ensure it's never exposed
+        $edgeServers = $query->with(['organization', 'license'])->orderByDesc('last_seen_at')->paginate($perPage);
+        
+        // Explicitly remove edge_secret from response if somehow present
+        $edgeServers->getCollection()->transform(function ($edge) {
+            if (isset($edge->edge_secret)) {
+                unset($edge->edge_secret);
+            }
+            return $edge;
+        });
+        
+        return response()->json($edgeServers);
     }
 
     public function show(EdgeServer $edgeServer): JsonResponse
@@ -55,7 +66,11 @@ class EdgeController extends Controller
         // Use Policy for authorization
         $this->authorize('view', $edgeServer);
         
-        return response()->json($edgeServer);
+        // SECURITY: Never expose edge_secret in show endpoint
+        $edgeData = $edgeServer->load(['organization', 'license'])->toArray();
+        unset($edgeData['edge_secret']); // Explicitly remove if present
+        
+        return response()->json($edgeData);
     }
 
     public function store(EdgeServerStoreRequest $request): JsonResponse
@@ -101,13 +116,16 @@ class EdgeController extends Controller
         $edgeKey = 'edge_' . Str::random(32);
         $edgeSecret = Str::random(64);
 
+        // SECURITY: Encrypt edge_secret before storing
+        $encryptedSecret = \Illuminate\Support\Facades\Crypt::encryptString($edgeSecret);
+
         $edgeServer = EdgeServer::create([
             'name' => $data['name'],
             'organization_id' => $organizationId,
             'license_id' => $data['license_id'] ?? null,
             'edge_id' => $data['edge_id'] ?? Str::uuid()->toString(),
             'edge_key' => $edgeKey,
-            'edge_secret' => $edgeSecret,
+            // edge_secret stored encrypted (not in fillable, set directly)
             'location' => $data['location'] ?? null,
             'notes' => $data['notes'] ?? null,
             'internal_ip' => $data['internal_ip'] ?? null,
@@ -115,6 +133,10 @@ class EdgeController extends Controller
             'hostname' => $data['hostname'] ?? null,
             'online' => false,
         ]);
+        
+        // Set encrypted secret directly (bypassing fillable)
+        $edgeServer->setAttribute('edge_secret', $encryptedSecret);
+        $edgeServer->save();
 
         // If license_id was provided, update the license to link it to this edge server
         if (!empty($data['license_id'])) {
@@ -138,8 +160,9 @@ class EdgeController extends Controller
         $edgeServer->update(['secret_delivered_at' => now()]);
         
         $response = $edgeServer->load(['organization', 'license'])->toArray();
+        unset($response['edge_secret']); // Remove encrypted secret from response
         $response['edge_key'] = $edgeKey;
-        $response['edge_secret'] = $edgeSecret; // Only returned once on creation
+        $response['edge_secret'] = $edgeSecret; // Return plaintext secret ONLY ONCE on creation
         
         \Illuminate\Support\Facades\Log::info('Edge server created with secret', [
             'edge_server_id' => $edgeServer->id,
@@ -381,7 +404,16 @@ class EdgeController extends Controller
                     $path = $request->path();
                     $bodyHash = hash('sha256', $request->getContent() ?: '');
                     $signatureString = "{$method}|{$path}|{$timestamp}|{$bodyHash}";
-                    $expectedSignature = hash_hmac('sha256', $signatureString, $edgeServer->edge_secret);
+                    // Decrypt edge_secret for HMAC calculation
+                    try {
+                        $decryptedSecret = \Illuminate\Support\Facades\Crypt::decryptString($edgeServer->edge_secret);
+                    } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+                        return response()->json([
+                            'ok' => false,
+                            'message' => 'Edge server configuration error',
+                        ], 500);
+                    }
+                    $expectedSignature = hash_hmac('sha256', $signatureString, $decryptedSecret);
                     
                     if (!hash_equals($expectedSignature, $signature)) {
                         return response()->json([
@@ -586,13 +618,23 @@ class EdgeController extends Controller
             if ($edge->edge_secret) {
                 // Check if this is the first time (secret_delivered_at is null)
                 if (!$edge->secret_delivered_at) {
-                    // First time - return secret and mark as delivered
-                    $response['edge_secret'] = $edge->edge_secret;
-                    $edge->update(['secret_delivered_at' => now()]);
-                    \Illuminate\Support\Facades\Log::info('Edge secret delivered for first time', [
-                        'edge_server_id' => $edge->id,
-                        'edge_key' => $edge->edge_key,
-                    ]);
+                    // First time - decrypt and return secret, then mark as delivered
+                    try {
+                        $decryptedSecret = \Illuminate\Support\Facades\Crypt::decryptString($edge->edge_secret);
+                        $response['edge_secret'] = $decryptedSecret;
+                        $edge->update(['secret_delivered_at' => now()]);
+                        \Illuminate\Support\Facades\Log::info('Edge secret delivered for first time', [
+                            'edge_server_id' => $edge->id,
+                            'edge_key' => $edge->edge_key,
+                        ]);
+                    } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+                        // If decryption fails, secret may be corrupted - log but don't expose
+                        \Illuminate\Support\Facades\Log::error('Failed to decrypt edge_secret', [
+                            'edge_server_id' => $edge->id,
+                            'edge_key' => $edge->edge_key,
+                        ]);
+                        // Do not return secret if decryption fails
+                    }
                 } else {
                     // Secret already delivered - do not return it
                     \Illuminate\Support\Facades\Log::debug('Edge secret not returned - already delivered', [

@@ -6,8 +6,10 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\EdgeServer;
+use App\Models\EdgeNonce;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 
 class VerifyEdgeSignature
 {
@@ -29,6 +31,7 @@ class VerifyEdgeSignature
         $edgeKey = $request->header('X-EDGE-KEY');
         $timestamp = $request->header('X-EDGE-TIMESTAMP');
         $signature = $request->header('X-EDGE-SIGNATURE');
+        $nonce = $request->header('X-EDGE-NONCE'); // Replay protection
 
         // Check required headers - ALL must be present for HMAC authentication
         if (!$edgeKey || !$timestamp || !$signature) {
@@ -42,6 +45,19 @@ class VerifyEdgeSignature
             return response()->json([
                 'message' => 'Missing required authentication headers (X-EDGE-KEY, X-EDGE-TIMESTAMP, X-EDGE-SIGNATURE)',
                 'error' => 'authentication_required'
+            ], 401);
+        }
+
+        // REPLAY PROTECTION: Require nonce header
+        if (!$nonce) {
+            Log::warning('Edge signature verification failed: missing nonce', [
+                'edge_key' => $edgeKey,
+                'ip' => $request->ip(),
+                'path' => $request->path(),
+            ]);
+            return response()->json([
+                'message' => 'Missing required header: X-EDGE-NONCE',
+                'error' => 'nonce_required'
             ], 401);
         }
 
@@ -89,14 +105,45 @@ class VerifyEdgeSignature
             ], 401);
         }
 
+        // REPLAY PROTECTION: Check if nonce was already used
+        $existingNonce = EdgeNonce::where('nonce', $nonce)->first();
+        if ($existingNonce) {
+            Log::warning('Edge signature verification failed: nonce already used (replay attack)', [
+                'edge_key' => $edgeKey,
+                'edge_server_id' => $edgeServer->id ?? null,
+                'nonce' => substr($nonce, 0, 16) . '...',
+                'used_at' => $existingNonce->used_at,
+                'ip' => $request->ip(),
+                'path' => $request->path(),
+            ]);
+            return response()->json([
+                'message' => 'Request nonce already used (replay attack detected)',
+                'error' => 'nonce_reused'
+            ], 401);
+        }
+
         // Build signature string: method|path|timestamp|body_hash
         $method = strtoupper($request->method());
         $path = $request->path();
         $bodyHash = hash('sha256', $request->getContent() ?: '');
         $signatureString = "{$method}|{$path}|{$timestamp}|{$bodyHash}";
 
+        // Decrypt edge_secret for HMAC calculation
+        try {
+            $decryptedSecret = \Illuminate\Support\Facades\Crypt::decryptString($edgeServer->edge_secret);
+        } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+            Log::error('Failed to decrypt edge_secret for signature verification', [
+                'edge_key' => $edgeKey,
+                'edge_server_id' => $edgeServer->id,
+            ]);
+            return response()->json([
+                'message' => 'Edge server configuration error',
+                'error' => 'decryption_failed'
+            ], 500);
+        }
+
         // Calculate expected signature
-        $expectedSignature = hash_hmac('sha256', $signatureString, $edgeServer->edge_secret);
+        $expectedSignature = hash_hmac('sha256', $signatureString, $decryptedSecret);
 
         // Use hash_equals for timing-safe comparison
         if (!hash_equals($expectedSignature, $signature)) {
@@ -113,6 +160,17 @@ class VerifyEdgeSignature
             ], 401);
         }
 
+        // REPLAY PROTECTION: Store nonce to prevent reuse
+        EdgeNonce::create([
+            'nonce' => $nonce,
+            'edge_server_id' => $edgeServer->id,
+            'ip_address' => $request->ip(),
+            'used_at' => Carbon::now(),
+        ]);
+
+        // Cleanup old nonces (older than 10 minutes) - prevent table bloat
+        EdgeNonce::where('used_at', '<', Carbon::now()->subMinutes(10))->delete();
+
         // Attach edge server to request for use in controllers
         $request->merge(['edge_server' => $edgeServer]);
         $request->setUserResolver(function () use ($edgeServer) {
@@ -127,6 +185,7 @@ class VerifyEdgeSignature
             'edge_key' => $edgeKey,
             'edge_server_id' => $edgeServer->id,
             'organization_id' => $edgeServer->organization_id,
+            'nonce' => substr($nonce, 0, 16) . '...',
         ]);
 
         return $next($request);
