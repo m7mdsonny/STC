@@ -2,22 +2,28 @@
 -- STC AI-VAP Cloud Platform - MySQL Database
 -- ============================================
 -- Description: Complete MySQL database with comprehensive demo data
--- Version: 5.0.0 - CANONICAL (Code-Derived, All Tables Included)
--- Date: 2025-01-28
+-- Version: 5.1.0 - SECURITY PATCH UPDATE
+-- Date: 2025-01-28 (Security Patch Applied)
 -- Includes: Enterprise Monitoring, Free Trial Requests, Analytics, Edge Security
 -- Database: MySQL 8.0+ / MariaDB 10.3+
 -- ============================================
 -- IMPORTANT: This database includes ALL features:
--- - All 47 tables (verified against codebase)
+-- - All 48 tables (verified against codebase)
 -- - Enterprise Monitoring (Market & Factory scenarios)
 -- - Free Trial / Sales Pipeline
 -- - Analytics & Reporting fields
--- - Edge Security (HMAC nonces, secret tracking)
+-- - Edge Security (HMAC nonces, secret tracking, encrypted secrets)
 -- - Organization Subscriptions
 -- - Registered Faces & Vehicles (NO biometric storage - compliance)
 -- - Vehicle Access Logs
 -- - Complete integration with Events
+-- - Notification Settings (organization-level config)
 -- - All migrations are idempotent-safe
+-- ============================================
+-- SECURITY PATCH UPDATES (2025-01-28):
+-- - edge_secret encryption (requires Laravel migration for existing data)
+-- - notification_config column added to organizations
+-- - edge_nonces table for replay attack protection
 -- ============================================
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
@@ -140,6 +146,7 @@ CREATE TABLE `organizations` (
     `max_edge_servers` INT UNSIGNED DEFAULT 1,
     `is_active` BOOLEAN DEFAULT TRUE,
     `settings` JSON NULL,
+    `notification_config` JSON NULL COMMENT 'Organization-level notification preferences (push, sms, email, whatsapp)',
     `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `deleted_at` TIMESTAMP NULL,
