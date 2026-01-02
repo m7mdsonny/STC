@@ -337,14 +337,90 @@ class EdgeController extends Controller
     public function heartbeat(Request $request): JsonResponse
     {
         try {
-            // Edge server is attached by VerifyEdgeSignature middleware
-            $edge = $request->get('edge_server');
+            // Check if HMAC authentication is provided (after registration)
+            $edgeKey = $request->header('X-EDGE-KEY');
+            $timestamp = $request->header('X-EDGE-TIMESTAMP');
+            $signature = $request->header('X-EDGE-SIGNATURE');
+            
+            $edge = $request->get('edge_server'); // Set by middleware if HMAC provided
+            
+            // If HMAC headers are present, verify authentication
+            if ($edgeKey && $timestamp && $signature) {
+                // Require HMAC authentication for registered edge servers
+                if (!$edge) {
+                    // Try to verify signature manually
+                    $edgeServer = EdgeServer::where('edge_key', $edgeKey)->first();
+                    
+                    if (!$edgeServer || !$edgeServer->edge_secret) {
+                        return response()->json([
+                            'ok' => false,
+                            'message' => 'Edge server not found or not properly configured',
+                        ], 401);
+                    }
+                    
+                    // Verify timestamp
+                    $requestTime = (int) $timestamp;
+                    $currentTime = time();
+                    if (abs($currentTime - $requestTime) > 300) {
+                        return response()->json([
+                            'ok' => false,
+                            'message' => 'Request timestamp is too old or too far in the future',
+                        ], 401);
+                    }
+                    
+                    // Verify signature
+                    $method = strtoupper($request->method());
+                    $path = $request->path();
+                    $bodyHash = hash('sha256', $request->getContent() ?: '');
+                    $signatureString = "{$method}|{$path}|{$timestamp}|{$bodyHash}";
+                    $expectedSignature = hash_hmac('sha256', $signatureString, $edgeServer->edge_secret);
+                    
+                    if (!hash_equals($expectedSignature, $signature)) {
+                        return response()->json([
+                            'ok' => false,
+                            'message' => 'Invalid signature',
+                        ], 401);
+                    }
+                    
+                    $edge = $edgeServer;
+                }
+            } else {
+                // No HMAC provided - check if this is initial registration
+                // For initial registration, edge_id must be provided in request body
+                $edgeId = $request->input('edge_id');
+                
+                if (!$edgeId) {
+                    return response()->json([
+                        'ok' => false,
+                        'message' => 'HMAC authentication required for registered edge servers. For initial registration, provide edge_id in request body.',
+                    ], 401);
+                }
+                
+                // Find or create edge server for initial registration
+                $edge = EdgeServer::where('edge_id', $edgeId)->first();
+                
+                if (!$edge) {
+                    // This should not happen - edge should be created via web portal first
+                    return response()->json([
+                        'ok' => false,
+                        'message' => 'Edge server not found. Please register via web portal first.',
+                    ], 404);
+                }
+                
+                // If edge already has credentials, require HMAC
+                if ($edge->edge_key && $edge->edge_secret) {
+                    return response()->json([
+                        'ok' => false,
+                        'message' => 'HMAC authentication required. This edge server is already registered.',
+                    ], 401);
+                }
+            }
             
             if (!$edge) {
                 return response()->json([
                     'ok' => false,
-                    'message' => 'Edge server not authenticated',
-                ], 401);
+                    'message' => 'Edge server not found',
+                ], 404);
             }
 
             $request->validate([

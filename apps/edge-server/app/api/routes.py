@@ -370,3 +370,50 @@ async def health_check():
         "server_id": state.server_id,
         "version": settings.APP_VERSION
     }
+
+
+# Command endpoints for Cloud to send system commands (HMAC PROTECTED)
+@router.post("/commands/restart", dependencies=[Depends(verify_hmac_signature)])
+async def restart_command(request: Request):
+    """Handle restart command from Cloud (HMAC authenticated)"""
+    from main import state
+    from loguru import logger
+    import sys
+    import asyncio
+    
+    logger.info("Restart command received from Cloud")
+    
+    # Schedule restart after a short delay to allow response
+    async def schedule_restart():
+        await asyncio.sleep(2)  # Give time for HTTP response
+        logger.info("Restarting Edge Server...")
+        sys.exit(0)  # Service manager will restart
+    
+    asyncio.create_task(schedule_restart())
+    
+    return {
+        "success": True,
+        "message": "Restart scheduled"
+    }
+
+
+@router.post("/commands/sync_config", dependencies=[Depends(verify_hmac_signature)])
+async def sync_config_command(request: Request):
+    """Handle sync-config command from Cloud (HMAC authenticated)"""
+    from main import state
+    
+    if not state.sync_service:
+        raise HTTPException(status_code=503, detail="Sync service not initialized")
+    
+    try:
+        # Trigger configuration sync
+        await state.sync_service._sync_configuration()
+        
+        return {
+            "success": True,
+            "message": "Configuration sync completed"
+        }
+    except Exception as e:
+        from loguru import logger
+        logger.error(f"Sync config command error: {e}")
+        raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}")

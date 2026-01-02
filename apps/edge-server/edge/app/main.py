@@ -6,7 +6,7 @@ import asyncio
 import sys
 from pathlib import Path
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from loguru import logger
@@ -152,10 +152,96 @@ app.add_middleware(
 # Include web UI routes
 app.include_router(web_ui_router)
 
-# Command endpoints (for Cloud to send commands)
-@app.post("/api/v1/system/restart")
+# Import security functions for HMAC verification
+from typing import Optional
+import hmac
+import hashlib
+import time
+
+
+async def verify_hmac_signature(
+    request: Request,
+    x_edge_key: Optional[str] = Header(default=None, alias="X-EDGE-KEY"),
+    x_edge_timestamp: Optional[str] = Header(default=None, alias="X-EDGE-TIMESTAMP"),
+    x_edge_signature: Optional[str] = Header(default=None, alias="X-EDGE-SIGNATURE"),
+):
+    """Verify HMAC signature for Cloud commands"""
+    # Require HTTPS
+    if request.url.scheme != "https":
+        raise HTTPException(
+            status_code=403,
+            detail="HTTPS is required for all API access"
+        )
+    
+    # Check required headers
+    if not x_edge_key or not x_edge_timestamp or not x_edge_signature:
+        raise HTTPException(
+            status_code=401,
+            detail="HMAC headers are required (X-EDGE-KEY, X-EDGE-TIMESTAMP, X-EDGE-SIGNATURE)"
+        )
+    
+    # Load edge credentials from config (access global config)
+    global config
+    if not config or not config.is_setup_completed():
+        raise HTTPException(
+            status_code=503,
+            detail="Edge Server not configured"
+        )
+    
+    cloud_config = config.get_cloud_config()
+    stored_edge_key = cloud_config.get("edge_key")
+    stored_edge_secret = cloud_config.get("edge_secret")
+    
+    if not stored_edge_key or not stored_edge_secret:
+        raise HTTPException(
+            status_code=401,
+            detail="Edge credentials not configured"
+        )
+    
+    # Verify edge_key matches
+    if stored_edge_key != x_edge_key:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid edge key"
+        )
+    
+    # Verify timestamp (within 5 minutes)
+    try:
+        request_time = int(x_edge_timestamp)
+        current_time = int(time.time())
+        if abs(current_time - request_time) > 300:
+            raise HTTPException(
+                status_code=401,
+                detail="Timestamp out of range (replay attack protection)"
+            )
+    except ValueError:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid timestamp"
+        )
+    
+    # Verify signature
+    body_bytes = await request.body()
+    body_hash = hashlib.sha256(body_bytes or b"").hexdigest()
+    signature_string = f"{request.method}|{request.url.path}|{x_edge_timestamp}|{body_hash}"
+    
+    expected_signature = hmac.new(
+        stored_edge_secret.encode("utf-8"),
+        signature_string.encode("utf-8"),
+        hashlib.sha256
+    ).hexdigest()
+    
+    if not hmac.compare_digest(expected_signature, x_edge_signature):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid signature"
+        )
+
+
+# Command endpoints (for Cloud to send commands) - HMAC PROTECTED
+@app.post("/api/v1/commands/restart", dependencies=[Depends(verify_hmac_signature)])
 async def restart_command(request: Request):
-    """Handle restart command from Cloud"""
+    """Handle restart command from Cloud (HMAC authenticated)"""
     if not command_listener:
         return JSONResponse(
             status_code=503,
@@ -166,9 +252,36 @@ async def restart_command(request: Request):
     return JSONResponse(content=result)
 
 
-@app.post("/api/v1/system/sync-config")
+@app.post("/api/v1/commands/sync_config", dependencies=[Depends(verify_hmac_signature)])
 async def sync_config_command(request: Request):
-    """Handle sync-config command from Cloud"""
+    """Handle sync-config command from Cloud (HMAC authenticated)"""
+    if not command_listener:
+        return JSONResponse(
+            status_code=503,
+            content={"success": False, "error": "Command listener not initialized"}
+        )
+    
+    result = await command_listener.execute_sync_config()
+    return JSONResponse(content=result)
+
+
+# Legacy endpoints (for backward compatibility) - Also HMAC PROTECTED
+@app.post("/api/v1/system/restart", dependencies=[Depends(verify_hmac_signature)])
+async def restart_command_legacy(request: Request):
+    """Handle restart command from Cloud (legacy endpoint, HMAC authenticated)"""
+    if not command_listener:
+        return JSONResponse(
+            status_code=503,
+            content={"success": False, "error": "Command listener not initialized"}
+        )
+    
+    result = await command_listener.execute_restart()
+    return JSONResponse(content=result)
+
+
+@app.post("/api/v1/system/sync-config", dependencies=[Depends(verify_hmac_signature)])
+async def sync_config_command_legacy(request: Request):
+    """Handle sync-config command from Cloud (legacy endpoint, HMAC authenticated)"""
     if not command_listener:
         return JSONResponse(
             status_code=503,
