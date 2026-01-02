@@ -32,6 +32,7 @@ use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\AutomationRuleController;
 use App\Http\Controllers\MarketController;
 use App\Http\Controllers\OrganizationSubscriptionController;
+use App\Http\Controllers\ReportController;
 
 Route::prefix('v1')->group(function () {
     // Public endpoints (no authentication required)
@@ -235,6 +236,13 @@ Route::prefix('v1')->group(function () {
         Route::get('/analytics/time-series', [AnalyticsController::class, 'timeSeries']);
         Route::get('/analytics/by-location', [AnalyticsController::class, 'byLocation']);
         Route::get('/analytics/by-module', [AnalyticsController::class, 'byModule']);
+        Route::get('/analytics/by-camera', [AnalyticsController::class, 'byCamera']);
+        Route::get('/analytics/by-severity', [AnalyticsController::class, 'bySeverity']);
+        Route::get('/analytics/high-risk', [AnalyticsController::class, 'highRisk']);
+        Route::get('/analytics/top-cameras', [AnalyticsController::class, 'topCameras']);
+        Route::get('/analytics/module-activity', [AnalyticsController::class, 'moduleActivity']);
+        Route::get('/analytics/weekly-trend', [AnalyticsController::class, 'weeklyTrend']);
+        Route::get('/analytics/today-alerts', [AnalyticsController::class, 'todayAlerts']);
         Route::get('/analytics/response-times', [AnalyticsController::class, 'responseTimes']);
         Route::get('/analytics/compare', [AnalyticsController::class, 'compare']);
         Route::get('/analytics/reports', [AnalyticsController::class, 'reports']);
@@ -254,6 +262,14 @@ Route::prefix('v1')->group(function () {
         Route::delete('/analytics/dashboards/{dashboard}/widgets/{widget}', [AnalyticsController::class, 'deleteWidget']);
         Route::get('/analytics/export', [AnalyticsController::class, 'export']);
         Route::post('/analytics/export-pdf', [AnalyticsController::class, 'exportPdf']);
+
+        // Reporting endpoints
+        Route::get('/reports/daily', [ReportController::class, 'daily']);
+        Route::get('/reports/weekly', [ReportController::class, 'weekly']);
+        Route::get('/reports/monthly', [ReportController::class, 'monthly']);
+        Route::get('/reports/custom', [ReportController::class, 'custom']);
+        Route::get('/reports/export/csv', [ReportController::class, 'exportCsv']);
+        Route::get('/reports/export/pdf', [ReportController::class, 'exportPdf']);
 
         Route::get('/ai-policies', [AiPolicyController::class, 'index']);
         Route::post('/ai-policies', [AiPolicyController::class, 'store']);

@@ -9,12 +9,20 @@ use App\Models\Camera;
 use App\Models\EdgeServer;
 use App\Models\Event;
 use App\Models\License;
+use App\Services\AnalyticsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
 class AnalyticsController extends Controller
 {
+    protected AnalyticsService $analyticsService;
+
+    public function __construct(AnalyticsService $analyticsService)
+    {
+        $this->analyticsService = $analyticsService;
+    }
+
     public function summary(Request $request): JsonResponse
     {
         $organizationId = $request->get('organization_id') ?? $request->user()?->organization_id;
@@ -140,24 +148,35 @@ class AnalyticsController extends Controller
 
     public function timeSeries(Request $request): JsonResponse
     {
-        $query = $this->applyFilters(Event::query(), $request);
-        $groupBy = $request->get('group_by', 'day');
+        $user = $request->user();
+        $organizationId = $user->organization_id ?? $request->get('organization_id');
 
-        $format = match ($groupBy) {
-            'hour' => 'Y-m-d H:00:00',
-            'week' => 'o-W',
-            'month' => 'Y-m',
-            default => 'Y-m-d',
-        };
-
-        $series = $query->get()->groupBy(function ($event) use ($format) {
-            return Carbon::parse($event->occurred_at)->format($format);
-        })->map->count();
-
-        $data = [];
-        foreach ($series as $date => $count) {
-            $data[] = ['date' => $date, 'value' => $count];
+        if (!$organizationId) {
+            return response()->json(['error' => 'Organization ID required'], 400);
         }
+
+        $granularity = $request->get('group_by', 'day');
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->get('start_date')) : null;
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->get('end_date')) : null;
+
+        $filters = [];
+        if ($request->filled('camera_id')) {
+            $filters['camera_id'] = $request->get('camera_id');
+        }
+        if ($request->filled('ai_module')) {
+            $filters['ai_module'] = $request->get('ai_module');
+        }
+        if ($request->filled('severity')) {
+            $filters['severity'] = $request->get('severity');
+        }
+
+        $data = $this->analyticsService->getTimeSeries(
+            $organizationId,
+            $granularity,
+            $startDate,
+            $endDate,
+            $filters
+        );
 
         return response()->json($data);
     }
@@ -170,10 +189,134 @@ class AnalyticsController extends Controller
         return response()->json($data);
     }
 
+    public function byCamera(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $organizationId = $user->organization_id ?? $request->get('organization_id');
+
+        if (!$organizationId) {
+            return response()->json(['error' => 'Organization ID required'], 400);
+        }
+
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->get('start_date')) : null;
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->get('end_date')) : null;
+
+        $data = $this->analyticsService->getByCamera($organizationId, $startDate, $endDate);
+
+        return response()->json($data);
+    }
+
+    public function bySeverity(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $organizationId = $user->organization_id ?? $request->get('organization_id');
+
+        if (!$organizationId) {
+            return response()->json(['error' => 'Organization ID required'], 400);
+        }
+
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->get('start_date')) : null;
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->get('end_date')) : null;
+
+        $data = $this->analyticsService->getBySeverity($organizationId, $startDate, $endDate);
+
+        return response()->json($data);
+    }
+
+    public function highRisk(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $organizationId = $user->organization_id ?? $request->get('organization_id');
+
+        if (!$organizationId) {
+            return response()->json(['error' => 'Organization ID required'], 400);
+        }
+
+        $threshold = (int) $request->get('threshold', 80);
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->get('start_date')) : null;
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->get('end_date')) : null;
+
+        $data = $this->analyticsService->getHighRiskEvents($organizationId, $threshold, $startDate, $endDate);
+
+        return response()->json($data);
+    }
+
+    public function topCameras(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $organizationId = $user->organization_id ?? $request->get('organization_id');
+
+        if (!$organizationId) {
+            return response()->json(['error' => 'Organization ID required'], 400);
+        }
+
+        $limit = (int) $request->get('limit', 10);
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->get('start_date')) : null;
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->get('end_date')) : null;
+
+        $data = $this->analyticsService->getTopCameras($organizationId, $limit, $startDate, $endDate);
+
+        return response()->json($data);
+    }
+
+    public function moduleActivity(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $organizationId = $user->organization_id ?? $request->get('organization_id');
+
+        if (!$organizationId) {
+            return response()->json(['error' => 'Organization ID required'], 400);
+        }
+
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->get('start_date')) : null;
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->get('end_date')) : null;
+
+        $data = $this->analyticsService->getModuleActivity($organizationId, $startDate, $endDate);
+
+        return response()->json($data);
+    }
+
+    public function weeklyTrend(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $organizationId = $user->organization_id ?? $request->get('organization_id');
+
+        if (!$organizationId) {
+            return response()->json(['error' => 'Organization ID required'], 400);
+        }
+
+        $data = $this->analyticsService->getWeeklyTrend($organizationId);
+
+        return response()->json($data);
+    }
+
+    public function todayAlerts(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $organizationId = $user->organization_id ?? $request->get('organization_id');
+
+        if (!$organizationId) {
+            return response()->json(['error' => 'Organization ID required'], 400);
+        }
+
+        $count = $this->analyticsService->getTodayAlertsCount($organizationId);
+
+        return response()->json(['count' => $count]);
+    }
+
     public function byModule(Request $request): JsonResponse
     {
-        $query = $this->applyFilters(Event::query(), $request);
-        $data = $query->get()->groupBy(fn ($event) => $event->meta['module'] ?? $event->event_type)->map->count();
+        $user = $request->user();
+        $organizationId = $user->organization_id ?? $request->get('organization_id');
+
+        if (!$organizationId) {
+            return response()->json(['error' => 'Organization ID required'], 400);
+        }
+
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->get('start_date')) : null;
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->get('end_date')) : null;
+
+        $data = $this->analyticsService->getByModule($organizationId, $startDate, $endDate);
 
         return response()->json($data);
     }

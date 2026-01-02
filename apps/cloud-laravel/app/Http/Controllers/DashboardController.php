@@ -10,6 +10,7 @@ use App\Models\License;
 use App\Models\Organization;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
+use App\Services\AnalyticsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -17,6 +18,13 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    protected AnalyticsService $analyticsService;
+
+    public function __construct(AnalyticsService $analyticsService)
+    {
+        $this->analyticsService = $analyticsService;
+    }
+
     public function admin(Request $request): JsonResponse
     {
         $this->ensureSuperAdmin($request);
@@ -88,9 +96,8 @@ class DashboardController extends Controller
 
         $edgeServers = EdgeServer::where('organization_id', $organizationId)->get();
         $cameras = Camera::where('organization_id', $organizationId)->get();
-        $alertsToday = Event::where('organization_id', $organizationId)
-            ->whereDate('occurred_at', now()->toDateString())
-            ->count();
+        // Use AnalyticsService for better performance and caching
+        $alertsToday = $this->analyticsService->getTodayAlertsCount($organizationId);
         $unresolvedAlerts = Event::where('organization_id', $organizationId)
             ->whereNull('resolved_at')
             ->count();
@@ -114,24 +121,31 @@ class DashboardController extends Controller
                 ];
             });
 
-        // Calculate weekly stats (last 7 days)
+        // Calculate weekly stats (last 7 days) using AnalyticsService
         $startOfWeek = Carbon::now()->startOfWeek(Carbon::SATURDAY);
-        $weeklyStats = [];
+        $weeklyTrend = $this->analyticsService->getWeeklyTrend($organizationId);
         $dayNames = ['السبت', 'الاحد', 'الاثنين', 'الثلاثاء', 'الاربعاء', 'الخميس', 'الجمعة'];
         
+        $weeklyStats = [];
         for ($i = 0; $i < 7; $i++) {
             $dayStart = $startOfWeek->copy()->addDays($i)->startOfDay();
-            $dayEnd = $startOfWeek->copy()->addDays($i)->endOfDay();
+            $dayDate = $dayStart->format('Y-m-d');
             
-            $dayAlerts = Event::where('organization_id', $organizationId)
-                ->whereBetween('occurred_at', [$dayStart, $dayEnd])
-                ->count();
+            // Find matching period in trend data
+            $dayAlerts = 0;
+            foreach ($weeklyTrend as $trendItem) {
+                if (str_starts_with($trendItem['period'], $dayDate)) {
+                    $dayAlerts = $trendItem['count'];
+                    break;
+                }
+            }
             
             // Visitors count from events with people_counter module
             $dayVisitors = Event::where('organization_id', $organizationId)
-                ->whereBetween('occurred_at', [$dayStart, $dayEnd])
+                ->whereBetween('occurred_at', [$dayStart, $dayStart->copy()->endOfDay()])
                 ->where(function ($query) {
                     $query->where('event_type', 'people_detected')
+                        ->orWhere('ai_module', 'people_counter')
                         ->orWhereJsonContains('meta->module', 'people_counter');
                 })
                 ->count();

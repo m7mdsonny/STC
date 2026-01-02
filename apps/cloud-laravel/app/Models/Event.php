@@ -13,7 +13,9 @@ class Event extends BaseModel
         'edge_server_id',
         'edge_id',
         'event_type',
+        'ai_module', // AI module name (extracted from meta->module for analytics)
         'severity',
+        'risk_score', // Numeric risk score for analytics
         'occurred_at',
         'title',
         'description',
@@ -25,6 +27,7 @@ class Event extends BaseModel
     
     protected $casts = [
         'meta' => 'array',
+        'risk_score' => 'integer',
         'occurred_at' => 'datetime',
         'acknowledged_at' => 'datetime',
         'resolved_at' => 'datetime',

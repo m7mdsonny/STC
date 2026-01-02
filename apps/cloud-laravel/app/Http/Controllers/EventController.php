@@ -49,15 +49,23 @@ class EventController extends Controller
             }
         }
 
+        // Extract ai_module and risk_score from meta for analytics
+        $meta = $request->input('meta', []);
+        $aiModule = $meta['module'] ?? null;
+        $riskScore = isset($meta['risk_score']) ? (int) $meta['risk_score'] : null;
+        
         $event = Event::create([
             'organization_id' => $edge->organization_id,
             'edge_server_id' => $edge->id,
             'edge_id' => $edge->edge_id,
             'event_type' => $request->event_type,
+            'ai_module' => $aiModule, // Store in dedicated column for analytics
             'severity' => $request->severity,
+            'risk_score' => $riskScore, // Store in dedicated column for analytics
             'occurred_at' => $request->occurred_at,
+            'camera_id' => $request->input('camera_id'),
             'meta' => [
-                ...$request->input('meta', []),
+                ...$meta,
                 'camera_id' => $request->input('camera_id'),
             ],
         ]);

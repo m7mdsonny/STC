@@ -6,6 +6,7 @@ import { camerasApi } from '../lib/api/cameras';
 import { edgeServersApi } from '../lib/api/edgeServers';
 import { alertsApi } from '../lib/api/alerts';
 import { aiPoliciesApi, type AiPolicyEffective } from '../lib/api/aiPolicies';
+import { analyticsApi } from '../lib/api/analytics';
 import { useAuth } from '../contexts/AuthContext';
 import { StatCard } from '../components/ui/StatCard';
 import { EdgeServerStatus } from '../components/ui/EdgeServerStatus';
@@ -25,6 +26,12 @@ export function Dashboard() {
     attendance: { today: number; late: number };
     weekly_stats: { day: string; alerts: number; visitors: number }[];
   } | null>(null);
+  const [analyticsData, setAnalyticsData] = useState<{
+    todayAlerts: number;
+    moduleActivity: { module: string; count: number }[];
+    highRiskCount: number;
+  } | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   useEffect(() => {
     if (organization) {
@@ -47,6 +54,31 @@ export function Dashboard() {
         aiPoliciesApi.getEffective(organization.id).catch(() => null),
         dashboardApi.getDashboard(organization.id).catch(() => null),
       ]);
+
+      // Fetch analytics data
+      setAnalyticsLoading(true);
+      try {
+        const [todayAlertsRes, moduleActivityRes, highRiskRes] = await Promise.all([
+          analyticsApi.getTodayAlerts({ organization_id: organization.id.toString() }).catch(() => ({ count: 0 })),
+          analyticsApi.getModuleActivity({ organization_id: organization.id.toString() }).catch(() => []),
+          analyticsApi.getHighRisk({ organization_id: organization.id.toString(), threshold: 80 }).catch(() => []),
+        ]);
+
+        setAnalyticsData({
+          todayAlerts: todayAlertsRes.count || 0,
+          moduleActivity: moduleActivityRes || [],
+          highRiskCount: Array.isArray(highRiskRes) ? highRiskRes.length : 0,
+        });
+      } catch (error) {
+        console.error('Error fetching analytics:', error);
+        setAnalyticsData({
+          todayAlerts: 0,
+          moduleActivity: [],
+          highRiskCount: 0,
+        });
+      } finally {
+        setAnalyticsLoading(false);
+      }
 
       setCameras(Array.isArray(camerasRes.data) ? camerasRes.data : []);
       setServers(Array.isArray(serversRes.data) ? serversRes.data : []);
@@ -118,9 +150,9 @@ export function Dashboard() {
         />
         <StatCard
           title="التنبيهات الجديدة"
-          value={loading ? '-' : newAlerts}
+          value={loading || analyticsLoading ? '-' : (analyticsData?.todayAlerts ?? newAlerts)}
           icon={AlertTriangle}
-          color={newAlerts > 0 ? 'red' : 'blue'}
+          color={(analyticsData?.todayAlerts ?? newAlerts) > 0 ? 'red' : 'blue'}
         />
         <StatCard
           title="الزوار اليوم"

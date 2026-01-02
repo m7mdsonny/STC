@@ -89,4 +89,76 @@ export const analyticsApi = {
     }
     return data;
   },
+
+  async getTimeSeries(filters: AnalyticsFilters = {}): Promise<{ period: string; count: number }[]> {
+    const { data, error } = await apiClient.get('/analytics/time-series', filters as Record<string, string>);
+    if (error || !data) {
+      throw new Error(error || 'Failed to fetch time series');
+    }
+    return data;
+  },
+
+  async getByModule(filters: AnalyticsFilters = {}): Promise<{ module: string; count: number }[]> {
+    const { data, error } = await apiClient.get('/analytics/by-module', filters as Record<string, string>);
+    if (error || !data) {
+      throw new Error(error || 'Failed to fetch module analytics');
+    }
+    return data;
+  },
+
+  async getByCamera(filters: AnalyticsFilters = {}): Promise<{ camera_id: string; count: number }[]> {
+    const { data, error } = await apiClient.get('/analytics/by-camera', filters as Record<string, string>);
+    if (error || !data) {
+      throw new Error(error || 'Failed to fetch camera analytics');
+    }
+    return data;
+  },
+
+  async getBySeverity(filters: AnalyticsFilters = {}): Promise<{ severity: string; count: number }[]> {
+    const { data, error } = await apiClient.get('/analytics/by-severity', filters as Record<string, string>);
+    if (error || !data) {
+      throw new Error(error || 'Failed to fetch severity analytics');
+    }
+    return data;
+  },
+
+  async getHighRisk(filters: AnalyticsFilters & { threshold?: number } = {}): Promise<any[]> {
+    const { data, error } = await apiClient.get('/analytics/high-risk', filters as Record<string, string>);
+    if (error || !data) {
+      throw new Error(error || 'Failed to fetch high risk events');
+    }
+    return data;
+  },
+
+  async getTopCameras(filters: AnalyticsFilters & { limit?: number } = {}): Promise<{ camera_id: string; count: number }[]> {
+    const { data, error } = await apiClient.get('/analytics/top-cameras', filters as Record<string, string>);
+    if (error || !data) {
+      throw new Error(error || 'Failed to fetch top cameras');
+    }
+    return data;
+  },
+
+  async getModuleActivity(filters: AnalyticsFilters = {}): Promise<{ module: string; count: number }[]> {
+    const { data, error } = await apiClient.get('/analytics/module-activity', filters as Record<string, string>);
+    if (error || !data) {
+      throw new Error(error || 'Failed to fetch module activity');
+    }
+    return data;
+  },
+
+  async getWeeklyTrend(filters: AnalyticsFilters = {}): Promise<{ period: string; count: number }[]> {
+    const { data, error } = await apiClient.get('/analytics/weekly-trend', filters as Record<string, string>);
+    if (error || !data) {
+      throw new Error(error || 'Failed to fetch weekly trend');
+    }
+    return data;
+  },
+
+  async getTodayAlerts(filters: AnalyticsFilters = {}): Promise<{ count: number }> {
+    const { data, error } = await apiClient.get('/analytics/today-alerts', filters as Record<string, string>);
+    if (error || !data) {
+      throw new Error(error || 'Failed to fetch today alerts');
+    }
+    return data;
+  },
 };
