@@ -41,6 +41,20 @@ cp AiModule.php /www/wwwroot/api.stcsolutions.online/apps/cloud-laravel/app/Mode
 cp DatabaseSeeder.php /www/wwwroot/api.stcsolutions.online/apps/cloud-laravel/database/seeders/DatabaseSeeder.php
 ```
 
+#### `EnterpriseMonitoringSeeder.php`
+**الموقع الأصلي**: `/www/wwwroot/api.stcsolutions.online/apps/cloud-laravel/database/seeders/EnterpriseMonitoringSeeder.php`
+
+**التغييرات**:
+- ✅ استخدام updateOrCreate logic لـ ai_scenarios (يتحقق من unique constraint)
+- ✅ التحقق من وجود rules قبل إدراجها
+- ✅ استخدام updateOrCreate logic لـ ai_alert_policies
+- ✅ يمنع duplicate key errors عند seeding على قاعدة بيانات موجودة
+
+**كيفية التطبيق**:
+```bash
+cp EnterpriseMonitoringSeeder.php /www/wwwroot/api.stcsolutions.online/apps/cloud-laravel/database/seeders/EnterpriseMonitoringSeeder.php
+```
+
 #### `AiModuleSeeder.php`
 **الموقع الأصلي**: `/www/wwwroot/api.stcsolutions.online/apps/cloud-laravel/database/seeders/AiModuleSeeder.php`
 
