@@ -24,7 +24,8 @@ const TABS: { id: TabId; label: string; icon: typeof SettingsIcon }[] = [
 ];
 
 export function Settings() {
-  const { organization, canManage } = useAuth();
+  const { organization, profile, canManage } = useAuth();
+  const { showSuccess, showError } = useToast();
   const [activeTab, setActiveTab] = useState<TabId>('organization');
   const [servers, setServers] = useState<EdgeServer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,26 +87,45 @@ export function Settings() {
 
   const addServer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!organization) return;
+    const orgId = organization?.id || profile?.organization_id;
+
+    if (!orgId) {
+      console.error('[Settings] cannot submit edge server form: missing organization context', {
+        organization,
+        profile,
+      });
+      showError('بيانات المؤسسة مفقودة', 'لا يمكن إضافة السيرفر لأن بيانات المؤسسة غير متاحة. يرجى إعادة تسجيل الدخول ثم المحاولة مرة أخرى.');
+      return;
+    }
 
     if (!serverForm.name.trim()) {
       alert('يرجى إدخال اسم السيرفر');
       return;
     }
 
+    console.log('[Settings] submit edge server form', {
+      ...serverForm,
+      editingServerId: editingServer?.id,
+      organizationId: orgId,
+    });
+
     try {
       if (editingServer) {
         await edgeServersApi.updateEdgeServer(editingServer.id, {
           name: serverForm.name,
           location: serverForm.location || undefined,
+          ip_address: serverForm.ip_address || undefined,
         });
         showSuccess('تم التحديث بنجاح', `تم تحديث بيانات السيرفر ${serverForm.name} بنجاح`);
       } else {
         const newServer = await edgeServersApi.createEdgeServer({
+          organization_id: orgId,
           name: serverForm.name,
           location: serverForm.location || undefined,
+          ip_address: serverForm.ip_address || undefined,
           license_id: serverForm.license_id || undefined,
         });
+        console.log('[Settings] edge server created', newServer);
         showSuccess(
           'تم الإضافة بنجاح',
           `تم إضافة السيرفر ${serverForm.name} بنجاح. معرف السيرفر: ${newServer.edge_id || newServer.id}\n${newServer.license ? `تم ربطه بالترخيص: ${newServer.license.license_key}` : 'يرجى ربطه بترخيص لاحقاً'}\nيرجى استخدام معرف السيرفر في Edge Server للربط.`
