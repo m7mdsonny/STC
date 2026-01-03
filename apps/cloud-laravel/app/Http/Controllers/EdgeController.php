@@ -12,6 +12,7 @@ use App\Models\EdgeServer;
 use App\Models\EdgeServerLog;
 use App\Models\License;
 use App\Models\Organization;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class EdgeController extends Controller
@@ -80,6 +81,13 @@ class EdgeController extends Controller
     {
         // Authorization is handled by EdgeServerStoreRequest
         $data = $request->validated();
+
+        Log::info('EdgeController@store received payload', [
+            'user_id' => optional($request->user())->id,
+            'organization_id' => $data['organization_id'] ?? $request->user()?->organization_id,
+            'has_license' => !empty($data['license_id']),
+            'ip_address' => $data['ip_address'] ?? null,
+        ]);
         
         $user = $request->user();
         
@@ -145,6 +153,7 @@ class EdgeController extends Controller
             'edge_id' => $data['edge_id'] ?? Str::uuid()->toString(),
             'edge_key' => $edgeKey,
             // edge_secret stored encrypted (not in fillable, set directly)
+            'ip_address' => $data['ip_address'] ?? null,
             'location' => $data['location'] ?? null,
             'notes' => $data['notes'] ?? null,
             'internal_ip' => $data['internal_ip'] ?? null,

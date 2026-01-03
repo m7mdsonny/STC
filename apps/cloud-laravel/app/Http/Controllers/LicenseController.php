@@ -61,10 +61,25 @@ class LicenseController extends Controller
         // Authorization is handled by LicenseStoreRequest
         $data = $request->validated();
 
+        $isTrial = (bool) ($data['is_trial'] ?? false);
+        unset($data['is_trial']);
+
+        $licenseKey = $data['license_key'] ?? Str::uuid()->toString();
+
+        $expiresAt = $data['expires_at'] ?? Carbon::now()->addYear();
+        $trialEndsAt = $isTrial
+            ? Carbon::now()->addDays(14)
+            : ($data['trial_ends_at'] ?? null);
+
+        unset($data['trial_ends_at']);
+        unset($data['expires_at']);
+
         $license = License::create([
             ...$data,
-            'license_key' => Str::uuid()->toString(),
-            'status' => 'active',
+            'license_key' => $licenseKey,
+            'status' => $isTrial ? 'trial' : ($data['status'] ?? 'active'),
+            'trial_ends_at' => $trialEndsAt,
+            'expires_at' => $expiresAt,
         ]);
 
         return response()->json($license, 201);
