@@ -9,12 +9,15 @@ class AiModuleSeeder extends Seeder
 {
     public function run(): void
     {
+        // Modules matching the database schema
+        // Table uses: name (UNIQUE), display_name, display_name_ar, description, description_ar, is_active
         $modules = [
             [
-                'module_key' => 'fire_detection',
-                'name' => 'fire_detection', // This will be used as the unique identifier
-                'display_name' => 'Fire & Smoke Detection',
+                'name' => 'fire_detection',
+                'display_name' => 'Fire Detection',
+                'display_name_ar' => 'كشف الحرائق',
                 'description' => 'Detect fire and smoke in real-time using advanced AI algorithms',
+                'description_ar' => 'كشف الحرائق والدخان في الوقت الفعلي باستخدام خوارزميات الذكاء الاصطناعي المتقدمة',
                 'is_active' => true,
                 'icon' => 'flame',
                 'min_fps' => 15,
@@ -30,10 +33,11 @@ class AiModuleSeeder extends Seeder
                 ],
             ],
             [
-                'module_key' => 'intrusion_detection',
                 'name' => 'intrusion_detection',
                 'display_name' => 'Intrusion Detection',
+                'display_name_ar' => 'كشف التسلل',
                 'description' => 'Detect unauthorized access and intrusions in restricted areas',
+                'description_ar' => 'كشف الوصول غير المصرح به والتسلل في المناطق المحظورة',
                 'is_active' => true,
                 'icon' => 'shield-alert',
                 'min_fps' => 15,
@@ -49,10 +53,11 @@ class AiModuleSeeder extends Seeder
                 ],
             ],
             [
-                'module_key' => 'face_recognition',
                 'name' => 'face_recognition',
                 'display_name' => 'Face Recognition',
+                'display_name_ar' => 'التعرف على الوجوه',
                 'description' => 'Identify and track individuals using facial recognition technology',
+                'description_ar' => 'تحديد وتتبع الأفراد باستخدام تقنية التعرف على الوجوه',
                 'is_active' => true,
                 'icon' => 'user-check',
                 'min_fps' => 25,
@@ -68,10 +73,11 @@ class AiModuleSeeder extends Seeder
                 ],
             ],
             [
-                'module_key' => 'vehicle_recognition',
                 'name' => 'license_plate_recognition',
-                'display_name' => 'Vehicle Recognition (ANPR)',
+                'display_name' => 'License Plate Recognition',
+                'display_name_ar' => 'قراءة لوحات الأرقام',
                 'description' => 'Automatic Number Plate Recognition for vehicle tracking',
+                'description_ar' => 'قراءة لوحات الأرقام تلقائياً لتتبع المركبات',
                 'is_active' => true,
                 'icon' => 'car',
                 'min_fps' => 25,
@@ -87,10 +93,11 @@ class AiModuleSeeder extends Seeder
                 ],
             ],
             [
-                'module_key' => 'crowd_detection',
                 'name' => 'crowd_counting',
-                'display_name' => 'Crowd Detection',
+                'display_name' => 'Crowd Counting',
+                'display_name_ar' => 'عد الحشود',
                 'description' => 'Monitor and analyze crowd density and movement patterns',
+                'description_ar' => 'مراقبة وتحليل كثافة الحشود وأنماط الحركة',
                 'is_active' => true,
                 'icon' => 'users',
                 'min_fps' => 15,
@@ -106,109 +113,103 @@ class AiModuleSeeder extends Seeder
                 ],
             ],
             [
-                'module_key' => 'ppe_detection',
-                'name' => 'ppe_detection',
-                'display_name' => 'PPE Detection',
-                'description' => 'Ensure safety equipment compliance (helmets, vests, etc.)',
+                'name' => 'face_detection',
+                'display_name' => 'Face Detection',
+                'display_name_ar' => 'كشف الوجوه',
+                'description' => 'Detect and identify faces in video',
+                'description_ar' => 'كشف وتحديد الوجوه في الفيديو',
                 'is_active' => true,
-                'icon' => 'hard-hat',
-                'min_fps' => 15,
-                'min_resolution' => '720p',
+                'icon' => 'user',
+                'min_fps' => 25,
+                'min_resolution' => '1080p',
                 'display_order' => 6,
                 'config_schema' => [
-                    'confidence_threshold' => ['type' => 'number', 'min' => 0.5, 'max' => 1.0, 'default' => 0.75],
-                    'alert_threshold' => ['type' => 'number', 'min' => 1, 'max' => 10, 'default' => 1],
+                    'confidence_threshold' => ['type' => 'number', 'min' => 0.5, 'max' => 1.0, 'default' => 0.8],
                 ],
                 'default_config' => [
-                    'confidence_threshold' => 0.75,
-                    'alert_threshold' => 1,
+                    'confidence_threshold' => 0.8,
                 ],
             ],
             [
-                'module_key' => 'production_monitoring',
-                'name' => 'production_monitoring',
-                'display_name' => 'Production Monitoring',
-                'description' => 'Monitor production lines and detect anomalies',
+                'name' => 'object_detection',
+                'display_name' => 'Object Detection',
+                'display_name_ar' => 'كشف الأشياء',
+                'description' => 'Detect and identify objects in video',
+                'description_ar' => 'كشف وتحديد الأشياء في الفيديو',
                 'is_active' => true,
-                'icon' => 'factory',
+                'icon' => 'box',
                 'min_fps' => 15,
                 'min_resolution' => '720p',
                 'display_order' => 7,
                 'config_schema' => [
-                    'anomaly_threshold' => ['type' => 'number', 'min' => 0.1, 'max' => 1.0, 'default' => 0.5],
-                    'alert_threshold' => ['type' => 'number', 'min' => 1, 'max' => 10, 'default' => 3],
+                    'confidence_threshold' => ['type' => 'number', 'min' => 0.5, 'max' => 1.0, 'default' => 0.75],
                 ],
                 'default_config' => [
-                    'anomaly_threshold' => 0.5,
-                    'alert_threshold' => 3,
+                    'confidence_threshold' => 0.75,
                 ],
             ],
             [
-                'module_key' => 'warehouse_monitoring',
-                'name' => 'warehouse_monitoring',
-                'display_name' => 'Warehouse Monitoring',
-                'description' => 'Monitor warehouse operations and detect unauthorized access',
+                'name' => 'vehicle_detection',
+                'display_name' => 'Vehicle Detection',
+                'display_name_ar' => 'كشف المركبات',
+                'description' => 'Detect and identify vehicles',
+                'description_ar' => 'كشف وتحديد المركبات',
                 'is_active' => true,
-                'icon' => 'package',
+                'icon' => 'truck',
                 'min_fps' => 15,
                 'min_resolution' => '720p',
                 'display_order' => 8,
                 'config_schema' => [
-                    'confidence_threshold' => ['type' => 'number', 'min' => 0.5, 'max' => 1.0, 'default' => 0.7],
-                    'alert_threshold' => ['type' => 'number', 'min' => 1, 'max' => 10, 'default' => 2],
+                    'confidence_threshold' => ['type' => 'number', 'min' => 0.5, 'max' => 1.0, 'default' => 0.8],
                 ],
                 'default_config' => [
-                    'confidence_threshold' => 0.7,
-                    'alert_threshold' => 2,
+                    'confidence_threshold' => 0.8,
                 ],
             ],
             [
-                'module_key' => 'drowning_detection',
-                'name' => 'drowning_detection',
-                'display_name' => 'Drowning Detection',
-                'description' => 'Detect drowning incidents in pools and water areas',
+                'name' => 'loitering_detection',
+                'display_name' => 'Loitering Detection',
+                'display_name_ar' => 'كشف التكاسل',
+                'description' => 'Detect loitering persons',
+                'description_ar' => 'كشف الأشخاص المتكاسلين',
                 'is_active' => true,
-                'icon' => 'waves',
-                'min_fps' => 25,
-                'min_resolution' => '1080p',
+                'icon' => 'clock',
+                'min_fps' => 15,
+                'min_resolution' => '720p',
                 'display_order' => 9,
                 'config_schema' => [
-                    'confidence_threshold' => ['type' => 'number', 'min' => 0.5, 'max' => 1.0, 'default' => 0.9],
-                    'alert_threshold' => ['type' => 'number', 'min' => 1, 'max' => 10, 'default' => 1],
+                    'time_threshold' => ['type' => 'number', 'min' => 10, 'max' => 300, 'default' => 60],
                 ],
                 'default_config' => [
-                    'confidence_threshold' => 0.9,
-                    'alert_threshold' => 1,
+                    'time_threshold' => 60,
+                ],
+            ],
+            [
+                'name' => 'abandoned_object',
+                'display_name' => 'Abandoned Object',
+                'display_name_ar' => 'الأشياء المتروكة',
+                'description' => 'Detect abandoned objects',
+                'description_ar' => 'كشف الأشياء المتروكة',
+                'is_active' => true,
+                'icon' => 'package-x',
+                'min_fps' => 15,
+                'min_resolution' => '720p',
+                'display_order' => 10,
+                'config_schema' => [
+                    'time_threshold' => ['type' => 'number', 'min' => 30, 'max' => 600, 'default' => 120],
+                ],
+                'default_config' => [
+                    'time_threshold' => 120,
                 ],
             ],
         ];
 
         foreach ($modules as $module) {
-            // Use 'name' instead of 'module_key' as the unique identifier
-            // The table uses 'name' as UNIQUE column, not 'module_key'
-            $moduleData = $module;
-            $moduleKey = $moduleData['module_key'];
-            unset($moduleData['module_key']); // Remove module_key from data
-            
-            // Map module_key to name (use module_key as name)
-            $moduleData['name'] = $moduleKey;
-            
-            // Set display_name if not provided
-            if (!isset($moduleData['display_name'])) {
-                $moduleData['display_name'] = $moduleData['name'];
-            }
-            
-            // Map is_enabled to is_active (table uses is_active)
-            if (isset($moduleData['is_enabled'])) {
-                $moduleData['is_active'] = $moduleData['is_enabled'];
-                unset($moduleData['is_enabled']);
-            }
-            
+            // Use 'name' as the unique identifier (matches database schema)
             AiModule::updateOrCreate(
-                ['name' => $moduleKey], // Use 'name' as unique identifier
-                $moduleData
+                ['name' => $module['name']],
+                $module
             );
         }
     }
 }
-
