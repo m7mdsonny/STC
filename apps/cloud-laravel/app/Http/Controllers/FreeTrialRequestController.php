@@ -302,64 +302,65 @@ class FreeTrialRequestController extends Controller
      */
     public function getAvailableModules(): JsonResponse
     {
+        // CRITICAL FIX: Use Arabic translations (display_name_ar, description_ar) for all modules
         $modules = AiModule::where('is_active', true)
             ->orderBy('display_order')
             ->get()
             ->map(function ($module) {
                 return [
                     'key' => $module->name, // Use 'name' as key (matches database schema)
-                    'name' => $module->display_name ?? $module->name,
-                    'description' => $module->description,
+                    'name' => $module->display_name_ar ?? $module->display_name ?? $module->name,
+                    'description' => $module->description_ar ?? $module->description ?? '',
                     'category' => 'general', // Category removed from schema, use default
                 ];
             });
 
-        // Add enterprise monitoring modules
+        // Add enterprise monitoring modules - ALL IN ARABIC
         $enterpriseModules = [
             [
                 'key' => 'market_suspicious_behavior',
-                'name' => 'Market – Suspicious Behavior',
-                'description' => 'Detect suspicious behavior patterns in retail environments',
+                'name' => 'كشف السلوك المشبوه في المتاجر',
+                'description' => 'كشف أنماط السلوك المشبوه في بيئات البيع بالتجزئة',
                 'category' => 'security',
             ],
             [
                 'key' => 'factory_worker_safety',
-                'name' => 'Factory – Worker Safety',
-                'description' => 'Monitor worker safety compliance and PPE usage',
+                'name' => 'مراقبة سلامة العمال',
+                'description' => 'مراقبة التزام العمال بمعايير السلامة واستخدام معدات الحماية الشخصية',
                 'category' => 'safety',
             ],
             [
                 'key' => 'factory_production_monitoring',
-                'name' => 'Factory – Production Monitoring',
-                'description' => 'Monitor production lines and detect anomalies',
+                'name' => 'مراقبة خطوط الانتاج',
+                'description' => 'مراقبة خطوط الانتاج وكشف الأعطال والانحرافات',
                 'category' => 'operations',
             ],
             [
                 'key' => 'analytics_reports',
-                'name' => 'Analytics & Reports',
-                'description' => 'Advanced analytics and reporting capabilities',
+                'name' => 'التحليلات والتقارير',
+                'description' => 'قدرات تحليلية متقدمة وإعداد تقارير شاملة',
                 'category' => 'analytics',
             ],
             [
                 'key' => 'edge_ai_integration',
-                'name' => 'Edge AI Integration',
-                'description' => 'On-premise Edge AI processing and integration',
+                'name' => 'تكامل Edge AI',
+                'description' => 'معالجة وتكامل Edge AI محلياً',
                 'category' => 'operations',
             ],
         ];
 
-        // Add people counting and other standard modules
+        // Add people counting and other standard modules - ALL IN ARABIC
         $standardModules = [
             [
                 'key' => 'people_counting',
-                'name' => 'People Counting',
-                'description' => 'Count and track people in real-time',
+                'name' => 'عد الاشخاص',
+                'description' => 'عد وتتبع الأشخاص في الوقت الفعلي',
                 'category' => 'analytics',
             ],
             [
                 'key' => 'loitering_detection',
-                'name' => 'Loitering Detection',
-                'description' => 'Detect loitering behavior in monitored areas',
+                'name' => 'كشف التكاسل',
+                'description' => 'كشف السلوك المتكاسل في المناطق المراقبة',
                 'category' => 'security',
             ],
         ];
