@@ -302,7 +302,7 @@ class FreeTrialRequestController extends Controller
      */
     public function getAvailableModules(): JsonResponse
     {
-        $modules = AiModule::where('is_enabled', true)
+        $modules = AiModule::where('is_active', true)
             ->orderBy('display_order')
             ->get()
             ->map(function ($module) {
