@@ -12,12 +12,10 @@ class AiModuleSeeder extends Seeder
         $modules = [
             [
                 'module_key' => 'fire_detection',
-                'name' => 'Fire & Smoke Detection',
+                'name' => 'fire_detection', // This will be used as the unique identifier
+                'display_name' => 'Fire & Smoke Detection',
                 'description' => 'Detect fire and smoke in real-time using advanced AI algorithms',
-                'category' => 'safety',
-                'is_enabled' => true,
-                'is_premium' => false,
-                'min_plan_level' => 1,
+                'is_active' => true,
                 'icon' => 'flame',
                 'min_fps' => 15,
                 'min_resolution' => '720p',
@@ -33,12 +31,10 @@ class AiModuleSeeder extends Seeder
             ],
             [
                 'module_key' => 'intrusion_detection',
-                'name' => 'Intrusion Detection',
+                'name' => 'intrusion_detection',
+                'display_name' => 'Intrusion Detection',
                 'description' => 'Detect unauthorized access and intrusions in restricted areas',
-                'category' => 'security',
-                'is_enabled' => true,
-                'is_premium' => false,
-                'min_plan_level' => 1,
+                'is_active' => true,
                 'icon' => 'shield-alert',
                 'min_fps' => 15,
                 'min_resolution' => '720p',
@@ -54,12 +50,10 @@ class AiModuleSeeder extends Seeder
             ],
             [
                 'module_key' => 'face_recognition',
-                'name' => 'Face Recognition',
+                'name' => 'face_recognition',
+                'display_name' => 'Face Recognition',
                 'description' => 'Identify and track individuals using facial recognition technology',
-                'category' => 'security',
-                'is_enabled' => true,
-                'is_premium' => true,
-                'min_plan_level' => 2,
+                'is_active' => true,
                 'icon' => 'user-check',
                 'min_fps' => 25,
                 'min_resolution' => '1080p',
@@ -75,12 +69,10 @@ class AiModuleSeeder extends Seeder
             ],
             [
                 'module_key' => 'vehicle_recognition',
-                'name' => 'Vehicle Recognition (ANPR)',
+                'name' => 'license_plate_recognition',
+                'display_name' => 'Vehicle Recognition (ANPR)',
                 'description' => 'Automatic Number Plate Recognition for vehicle tracking',
-                'category' => 'security',
-                'is_enabled' => true,
-                'is_premium' => true,
-                'min_plan_level' => 2,
+                'is_active' => true,
                 'icon' => 'car',
                 'min_fps' => 25,
                 'min_resolution' => '1080p',
@@ -96,12 +88,10 @@ class AiModuleSeeder extends Seeder
             ],
             [
                 'module_key' => 'crowd_detection',
-                'name' => 'Crowd Detection',
+                'name' => 'crowd_counting',
+                'display_name' => 'Crowd Detection',
                 'description' => 'Monitor and analyze crowd density and movement patterns',
-                'category' => 'analytics',
-                'is_enabled' => true,
-                'is_premium' => true,
-                'min_plan_level' => 2,
+                'is_active' => true,
                 'icon' => 'users',
                 'min_fps' => 15,
                 'min_resolution' => '720p',
@@ -117,12 +107,10 @@ class AiModuleSeeder extends Seeder
             ],
             [
                 'module_key' => 'ppe_detection',
-                'name' => 'PPE Detection',
+                'name' => 'ppe_detection',
+                'display_name' => 'PPE Detection',
                 'description' => 'Ensure safety equipment compliance (helmets, vests, etc.)',
-                'category' => 'safety',
-                'is_enabled' => true,
-                'is_premium' => true,
-                'min_plan_level' => 3,
+                'is_active' => true,
                 'icon' => 'hard-hat',
                 'min_fps' => 15,
                 'min_resolution' => '720p',
@@ -138,12 +126,10 @@ class AiModuleSeeder extends Seeder
             ],
             [
                 'module_key' => 'production_monitoring',
-                'name' => 'Production Monitoring',
+                'name' => 'production_monitoring',
+                'display_name' => 'Production Monitoring',
                 'description' => 'Monitor production lines and detect anomalies',
-                'category' => 'operations',
-                'is_enabled' => true,
-                'is_premium' => true,
-                'min_plan_level' => 3,
+                'is_active' => true,
                 'icon' => 'factory',
                 'min_fps' => 15,
                 'min_resolution' => '720p',
@@ -159,12 +145,10 @@ class AiModuleSeeder extends Seeder
             ],
             [
                 'module_key' => 'warehouse_monitoring',
-                'name' => 'Warehouse Monitoring',
+                'name' => 'warehouse_monitoring',
+                'display_name' => 'Warehouse Monitoring',
                 'description' => 'Monitor warehouse operations and detect unauthorized access',
-                'category' => 'operations',
-                'is_enabled' => true,
-                'is_premium' => true,
-                'min_plan_level' => 3,
+                'is_active' => true,
                 'icon' => 'package',
                 'min_fps' => 15,
                 'min_resolution' => '720p',
@@ -180,12 +164,10 @@ class AiModuleSeeder extends Seeder
             ],
             [
                 'module_key' => 'drowning_detection',
-                'name' => 'Drowning Detection',
+                'name' => 'drowning_detection',
+                'display_name' => 'Drowning Detection',
                 'description' => 'Detect drowning incidents in pools and water areas',
-                'category' => 'safety',
-                'is_enabled' => true,
-                'is_premium' => true,
-                'min_plan_level' => 3,
+                'is_active' => true,
                 'icon' => 'waves',
                 'min_fps' => 25,
                 'min_resolution' => '1080p',
@@ -202,9 +184,29 @@ class AiModuleSeeder extends Seeder
         ];
 
         foreach ($modules as $module) {
+            // Use 'name' instead of 'module_key' as the unique identifier
+            // The table uses 'name' as UNIQUE column, not 'module_key'
+            $moduleData = $module;
+            $moduleKey = $moduleData['module_key'];
+            unset($moduleData['module_key']); // Remove module_key from data
+            
+            // Map module_key to name (use module_key as name)
+            $moduleData['name'] = $moduleKey;
+            
+            // Set display_name if not provided
+            if (!isset($moduleData['display_name'])) {
+                $moduleData['display_name'] = $moduleData['name'];
+            }
+            
+            // Map is_enabled to is_active (table uses is_active)
+            if (isset($moduleData['is_enabled'])) {
+                $moduleData['is_active'] = $moduleData['is_enabled'];
+                unset($moduleData['is_enabled']);
+            }
+            
             AiModule::updateOrCreate(
-                ['module_key' => $module['module_key']],
-                $module
+                ['name' => $moduleKey], // Use 'name' as unique identifier
+                $moduleData
             );
         }
     }

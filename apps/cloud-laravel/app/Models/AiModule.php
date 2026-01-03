@@ -11,13 +11,11 @@ class AiModule extends BaseModel
     protected $table = 'ai_modules';
 
     protected $fillable = [
-        'module_key',
-        'name',
+        'name', // UNIQUE column in database
+        'display_name',
+        'display_name_ar',
         'description',
-        'category',
-        'is_enabled',
-        'is_premium',
-        'min_plan_level',
+        'description_ar',
         'config_schema',
         'default_config',
         'required_camera_type',
@@ -25,12 +23,11 @@ class AiModule extends BaseModel
         'min_resolution',
         'icon',
         'display_order',
+        'is_active', // Table uses is_active, not is_enabled
     ];
 
     protected $casts = [
-        'is_enabled' => 'boolean',
-        'is_premium' => 'boolean',
-        'min_plan_level' => 'integer',
+        'is_active' => 'boolean',
         'config_schema' => 'array',
         'default_config' => 'array',
         'min_fps' => 'integer',
