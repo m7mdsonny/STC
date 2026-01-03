@@ -25,6 +25,7 @@ const TABS: { id: TabId; label: string; icon: typeof SettingsIcon }[] = [
 
 export function Settings() {
   const { organization, canManage } = useAuth();
+  const { showSuccess, showError } = useToast();
   const [activeTab, setActiveTab] = useState<TabId>('organization');
   const [servers, setServers] = useState<EdgeServer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -93,19 +94,28 @@ export function Settings() {
       return;
     }
 
+    console.log('[Settings] submit edge server form', {
+      ...serverForm,
+      editingServerId: editingServer?.id,
+      organizationId: organization.id,
+    });
+
     try {
       if (editingServer) {
         await edgeServersApi.updateEdgeServer(editingServer.id, {
           name: serverForm.name,
           location: serverForm.location || undefined,
+          ip_address: serverForm.ip_address || undefined,
         });
         showSuccess('تم التحديث بنجاح', `تم تحديث بيانات السيرفر ${serverForm.name} بنجاح`);
       } else {
         const newServer = await edgeServersApi.createEdgeServer({
           name: serverForm.name,
           location: serverForm.location || undefined,
+          ip_address: serverForm.ip_address || undefined,
           license_id: serverForm.license_id || undefined,
         });
+        console.log('[Settings] edge server created', newServer);
         showSuccess(
           'تم الإضافة بنجاح',
           `تم إضافة السيرفر ${serverForm.name} بنجاح. معرف السيرفر: ${newServer.edge_id || newServer.id}\n${newServer.license ? `تم ربطه بالترخيص: ${newServer.license.license_key}` : 'يرجى ربطه بترخيص لاحقاً'}\nيرجى استخدام معرف السيرفر في Edge Server للربط.`

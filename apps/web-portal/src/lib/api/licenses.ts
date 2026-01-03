@@ -15,6 +15,8 @@ interface CreateLicenseData {
   max_cameras: number;
   modules: string[];
   expires_at?: string;
+  license_key?: string;
+  is_trial?: boolean;
 }
 
 interface LicenseValidation {

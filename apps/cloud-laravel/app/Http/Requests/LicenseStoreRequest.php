@@ -32,10 +32,11 @@ class LicenseStoreRequest extends FormRequest
             'organization_id' => 'required|exists:organizations,id',
             'subscription_plan_id' => 'nullable|exists:subscription_plans,id',
             'plan' => 'required|string',
-            'license_key' => 'required|string|unique:licenses,license_key',
-            'status' => 'sometimes|string|in:active,suspended,expired',
+            'license_key' => 'nullable|string|unique:licenses,license_key',
+            'status' => 'sometimes|string|in:active,suspended,expired,trial',
             'max_cameras' => 'nullable|integer|min:1',
             'modules' => 'nullable|array',
+            'is_trial' => 'sometimes|boolean',
             'trial_ends_at' => 'nullable|date',
             'expires_at' => 'nullable|date',
         ];
