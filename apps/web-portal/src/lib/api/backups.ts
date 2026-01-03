@@ -31,27 +31,51 @@ export const backupsApi = {
   },
 
   create: async (description?: string): Promise<SystemBackup> => {
-    // CRITICAL FIX: Use proper error handling and response parsing
-    const response = await apiClient.post<SystemBackup>('/backups', {
-      description,
-    });
-    if (response.error) {
-      // Extract error message from response
-      const errorMsg = typeof response.error === 'string' 
-        ? response.error 
-        : (response.error?.message || 'Failed to create backup');
-      throw new Error(errorMsg);
+    try {
+      // CRITICAL FIX: Use proper error handling and response parsing
+      const response = await apiClient.post<SystemBackup>('/backups', {
+        description,
+      });
+      
+      // Check for errors first
+      if (response.error) {
+        const errorMsg = typeof response.error === 'string' 
+          ? response.error 
+          : (response.error?.message || 'Failed to create backup');
+        throw new Error(errorMsg);
+      }
+      
+      // Check if data exists
+      if (!response.data) {
+        // If no error but no data, check httpStatus
+        if (response.httpStatus && response.httpStatus >= 400) {
+          throw new Error(`Server returned status ${response.httpStatus}`);
+        }
+        throw new Error('No data received from server');
+      }
+      
+      // Ensure file_path is string and add missing fields
+      const backup = response.data;
+      return {
+        id: backup.id,
+        file_path: typeof backup.file_path === 'string' 
+          ? backup.file_path 
+          : String(backup.file_path || 'backup.sql'),
+        status: backup.status || 'completed',
+        meta: backup.meta || {},
+        created_by: backup.created_by,
+        restored_at: backup.restored_at,
+        restored_by: backup.restored_by,
+        created_at: backup.created_at || new Date().toISOString(),
+        updated_at: backup.updated_at || new Date().toISOString(),
+      };
+    } catch (error) {
+      // Re-throw with better error message
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Failed to create backup: ' + String(error));
     }
-    if (!response.data) {
-      throw new Error('No data received from server');
-    }
-    // Ensure file_path is string
-    return {
-      ...response.data,
-      file_path: typeof response.data.file_path === 'string' 
-        ? response.data.file_path 
-        : String(response.data.file_path || 'backup.sql'),
-    };
   },
 
   restore: async (id: number, confirmed: boolean = false): Promise<{ message: string }> => {
