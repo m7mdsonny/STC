@@ -58,19 +58,42 @@ class EnterpriseMonitoringSeeder extends Seeder
         ];
 
         foreach ($scenarios as $scenario) {
-            $scenarioId = DB::table('ai_scenarios')->insertGetId([
-                'organization_id' => $organizationId,
-                'module' => $scenario['module'],
-                'scenario_type' => $scenario['scenario_type'],
-                'name' => $scenario['name'],
-                'description' => $scenario['description'],
-                'enabled' => $scenario['enabled'],
-                'severity_threshold' => $scenario['severity_threshold'],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            // Use updateOrCreate logic to avoid duplicate key errors
+            // Unique constraint: organization_id + module + scenario_type
+            $existing = DB::table('ai_scenarios')
+                ->where('organization_id', $organizationId)
+                ->where('module', $scenario['module'])
+                ->where('scenario_type', $scenario['scenario_type'])
+                ->first();
+            
+            if ($existing) {
+                $scenarioId = $existing->id;
+                // Update existing scenario
+                DB::table('ai_scenarios')
+                    ->where('id', $scenarioId)
+                    ->update([
+                        'name' => $scenario['name'],
+                        'description' => $scenario['description'],
+                        'enabled' => $scenario['enabled'],
+                        'severity_threshold' => $scenario['severity_threshold'],
+                        'updated_at' => now(),
+                    ]);
+            } else {
+                // Create new scenario
+                $scenarioId = DB::table('ai_scenarios')->insertGetId([
+                    'organization_id' => $organizationId,
+                    'module' => $scenario['module'],
+                    'scenario_type' => $scenario['scenario_type'],
+                    'name' => $scenario['name'],
+                    'description' => $scenario['description'],
+                    'enabled' => $scenario['enabled'],
+                    'severity_threshold' => $scenario['severity_threshold'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
-            // Add default rules for each scenario
+            // Add default rules for each scenario (only if not exists)
             $this->seedScenarioRules($scenarioId, $scenario['scenario_type']);
         }
     }
@@ -121,19 +144,42 @@ class EnterpriseMonitoringSeeder extends Seeder
         ];
 
         foreach ($scenarios as $scenario) {
-            $scenarioId = DB::table('ai_scenarios')->insertGetId([
-                'organization_id' => $organizationId,
-                'module' => $scenario['module'],
-                'scenario_type' => $scenario['scenario_type'],
-                'name' => $scenario['name'],
-                'description' => $scenario['description'],
-                'enabled' => $scenario['enabled'],
-                'severity_threshold' => $scenario['severity_threshold'],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            // Use updateOrCreate logic to avoid duplicate key errors
+            // Unique constraint: organization_id + module + scenario_type
+            $existing = DB::table('ai_scenarios')
+                ->where('organization_id', $organizationId)
+                ->where('module', $scenario['module'])
+                ->where('scenario_type', $scenario['scenario_type'])
+                ->first();
+            
+            if ($existing) {
+                $scenarioId = $existing->id;
+                // Update existing scenario
+                DB::table('ai_scenarios')
+                    ->where('id', $scenarioId)
+                    ->update([
+                        'name' => $scenario['name'],
+                        'description' => $scenario['description'],
+                        'enabled' => $scenario['enabled'],
+                        'severity_threshold' => $scenario['severity_threshold'],
+                        'updated_at' => now(),
+                    ]);
+            } else {
+                // Create new scenario
+                $scenarioId = DB::table('ai_scenarios')->insertGetId([
+                    'organization_id' => $organizationId,
+                    'module' => $scenario['module'],
+                    'scenario_type' => $scenario['scenario_type'],
+                    'name' => $scenario['name'],
+                    'description' => $scenario['description'],
+                    'enabled' => $scenario['enabled'],
+                    'severity_threshold' => $scenario['severity_threshold'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
-            // Add default rules for each scenario
+            // Add default rules for each scenario (only if not exists)
             $this->seedScenarioRules($scenarioId, $scenario['scenario_type']);
         }
     }
