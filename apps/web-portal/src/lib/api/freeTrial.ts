@@ -1,4 +1,4 @@
-import apiClient from './client';
+import { apiClient } from '../apiClient';
 
 export interface FreeTrialRequest {
   id: number;
