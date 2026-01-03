@@ -1,0 +1,4 @@
+import { RequestDemo } from "./pages/RequestDemo";
+
+// Add this route in the PublicRoute section:
+<Route path="/request-demo" element={<PublicRoute><RequestDemo /></PublicRoute>} />
