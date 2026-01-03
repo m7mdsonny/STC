@@ -28,6 +28,19 @@ cp AiModule.php /www/wwwroot/api.stcsolutions.online/apps/cloud-laravel/app/Mode
 
 ### 2. Seeders
 
+#### `DatabaseSeeder.php`
+**الموقع الأصلي**: `/www/wwwroot/api.stcsolutions.online/apps/cloud-laravel/database/seeders/DatabaseSeeder.php`
+
+**التغييرات**:
+- ✅ إزالة `id => 1` من جميع inserts (السماح لقاعدة البيانات بتوليد ID تلقائياً)
+- ✅ استخدام lookup ديناميكي لـ `organization_id` بدلاً من hardcoded `1`
+- ✅ استخدام `name`/`license_key` للتحقق من الوجود بدلاً من `id`
+
+**كيفية التطبيق**:
+```bash
+cp DatabaseSeeder.php /www/wwwroot/api.stcsolutions.online/apps/cloud-laravel/database/seeders/DatabaseSeeder.php
+```
+
 #### `AiModuleSeeder.php`
 **الموقع الأصلي**: `/www/wwwroot/api.stcsolutions.online/apps/cloud-laravel/database/seeders/AiModuleSeeder.php`
 
