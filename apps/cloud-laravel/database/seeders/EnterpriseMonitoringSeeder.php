@@ -191,16 +191,26 @@ class EnterpriseMonitoringSeeder extends Seeder
         }
 
         foreach ($rules as $rule) {
-            DB::table('ai_scenario_rules')->insert([
-                'scenario_id' => $scenarioId,
-                'rule_type' => $rule['rule_type'],
-                'rule_value' => json_encode($rule['rule_value']),
-                'weight' => $rule['weight'],
-                'enabled' => true,
-                'order' => $rule['order'],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            // Check if rule already exists (scenario_id + rule_type + order)
+            $existingRule = DB::table('ai_scenario_rules')
+                ->where('scenario_id', $scenarioId)
+                ->where('rule_type', $rule['rule_type'])
+                ->where('order', $rule['order'])
+                ->first();
+            
+            if (!$existingRule) {
+                // Only insert if rule doesn't exist
+                DB::table('ai_scenario_rules')->insert([
+                    'scenario_id' => $scenarioId,
+                    'rule_type' => $rule['rule_type'],
+                    'rule_value' => json_encode($rule['rule_value']),
+                    'weight' => $rule['weight'],
+                    'enabled' => true,
+                    'order' => $rule['order'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
     }
 
@@ -234,12 +244,33 @@ class EnterpriseMonitoringSeeder extends Seeder
         ];
 
         foreach ($policies as $policy) {
-            DB::table('ai_alert_policies')->insert([
-                'organization_id' => $organizationId,
-                ...$policy,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            // Check if policy already exists (organization_id + risk_level)
+            $existingPolicy = DB::table('ai_alert_policies')
+                ->where('organization_id', $organizationId)
+                ->where('risk_level', $policy['risk_level'])
+                ->first();
+            
+            if ($existingPolicy) {
+                // Update existing policy
+                DB::table('ai_alert_policies')
+                    ->where('id', $existingPolicy->id)
+                    ->update([
+                        'notify_web' => $policy['notify_web'],
+                        'notify_mobile' => $policy['notify_mobile'],
+                        'notify_email' => $policy['notify_email'],
+                        'notify_sms' => $policy['notify_sms'],
+                        'cooldown_minutes' => $policy['cooldown_minutes'],
+                        'updated_at' => now(),
+                    ]);
+            } else {
+                // Create new policy
+                DB::table('ai_alert_policies')->insert([
+                    'organization_id' => $organizationId,
+                    ...$policy,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
     }
 }
