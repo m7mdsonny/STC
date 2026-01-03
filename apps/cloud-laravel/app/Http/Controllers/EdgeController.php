@@ -145,6 +145,7 @@ class EdgeController extends Controller
             'edge_id' => $data['edge_id'] ?? Str::uuid()->toString(),
             'edge_key' => $edgeKey,
             // edge_secret stored encrypted (not in fillable, set directly)
+            'ip_address' => $data['ip_address'] ?? null,
             'location' => $data['location'] ?? null,
             'notes' => $data['notes'] ?? null,
             'internal_ip' => $data['internal_ip'] ?? null,
