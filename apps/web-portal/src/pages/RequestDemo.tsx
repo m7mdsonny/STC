@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Send, Loader2, CheckCircle2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Send, Loader2, CheckCircle2, X } from 'lucide-react';
 import { freeTrialApi } from '../lib/api/freeTrial';
 
 interface Module {
@@ -10,6 +11,7 @@ interface Module {
 }
 
 export function RequestDemo() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -79,13 +81,36 @@ export function RequestDemo() {
     }
   };
 
+  // TASK 1.B Step 1: Fix module selection - MUST support single or multiple selection
   const toggleModule = (moduleKey: string) => {
-    setFormData(prev => ({
-      ...prev,
-      selected_modules: prev.selected_modules.includes(moduleKey)
-        ? prev.selected_modules.filter(k => k !== moduleKey)
-        : [...prev.selected_modules, moduleKey],
-    }));
+    setFormData(prev => {
+      const currentSelection = prev.selected_modules;
+      const isSelected = currentSelection.includes(moduleKey);
+      
+      // Toggle: if selected, remove; if not selected, add
+      const newSelection = isSelected
+        ? currentSelection.filter(k => k !== moduleKey)
+        : [...currentSelection, moduleKey];
+      
+      return {
+        ...prev,
+        selected_modules: newSelection,
+      };
+    });
+  };
+
+  // TASK 1.B Step 2: Cancel button - return to landing page and clear form
+  const handleCancel = () => {
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      company_name: '',
+      job_title: '',
+      message: '',
+      selected_modules: [],
+    });
+    navigate('/');
   };
 
   if (submitted) {
@@ -238,23 +263,35 @@ export function RequestDemo() {
             )}
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-stc-gold text-stc-bg-dark px-6 py-4 rounded-lg font-semibold hover:bg-stc-gold/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>جاري الإرسال...</span>
-              </>
-            ) : (
-              <>
-                <Send className="w-5 h-5" />
-                <span>إرسال الطلب</span>
-              </>
-            )}
-          </button>
+          <div className="flex gap-4">
+            {/* TASK 1.B Step 2: Cancel button */}
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={loading}
+              className="flex-1 bg-white/10 text-white px-6 py-4 rounded-lg font-semibold hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-white/20"
+            >
+              <X className="w-5 h-5" />
+              <span>إلغاء</span>
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-stc-gold text-stc-bg-dark px-6 py-4 rounded-lg font-semibold hover:bg-stc-gold/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>جاري الإرسال...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-5 h-5" />
+                  <span>إرسال الطلب</span>
+                </>
+              )}
+            </button>
+          </div>
         </form>
       </div>
     </div>

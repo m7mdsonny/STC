@@ -6,15 +6,11 @@ import {
   Users,
   Car,
   UserCheck,
-  Warehouse,
-  Activity,
-  PieChart,
   ShieldAlert,
   ShoppingBag,
   HardHat,
   Factory,
-  BarChart3,
-  Eye,
+  Package,
   ChevronLeft,
   Check,
   Zap,
@@ -36,20 +32,19 @@ import { useBranding } from '../contexts/BrandingContext';
 import { useToast } from '../contexts/ToastContext';
 import { getDetailedErrorMessage } from '../lib/errorMessages';
 
+// TASK 1.A: Exactly 10 modules with clear, expressive icons
+// Using actual modules from the platform (from AiModuleSeeder)
 const modules = [
   { icon: Flame, title: 'كشف الحريق والدخان', description: 'كشف الحرائق والدخان في الوقت الفعلي مع تنبيهات فورية' },
   { icon: ScanFace, title: 'التعرف على الوجوه', description: 'التعرف على الموظفين والزوار والقائمة السوداء' },
   { icon: Users, title: 'عد الاشخاص', description: 'احصاء عدد الاشخاص في المناطق مع تنبيهات الازدحام' },
   { icon: Car, title: 'التعرف على المركبات', description: 'قراءة لوحات السيارات والتحكم في البوابات' },
   { icon: UserCheck, title: 'تسجيل الحضور', description: 'تسجيل حضور الموظفين تلقائيا بالوجه' },
-  { icon: Warehouse, title: 'مراقبة المستودعات', description: 'مراقبة الحركة والسلامة في المستودعات' },
-  { icon: Activity, title: 'مراقبة الانتاجية', description: 'تحليل نشاط العمال والانتاجية' },
-  { icon: PieChart, title: 'تحليل الجمهور', description: 'تحليل العمر والجنس للزوار' },
   { icon: ShieldAlert, title: 'كشف التسلل', description: 'كشف الدخول غير المصرح به' },
   { icon: ShoppingBag, title: 'Market - سلوك مشبوه', description: 'كشف السلوك المشبوه ومنع الخسائر في المتاجر بدون استخدام التعرف على الوجوه' },
   { icon: HardHat, title: 'Factory - سلامة العمال', description: 'مراقبة سلامة العمال وارتداء معدات الحماية الشخصية' },
   { icon: Factory, title: 'Factory - مراقبة الانتاج', description: 'مراقبة خطوط الانتاج وكشف الأعطال والانحرافات' },
-  { icon: BarChart3, title: 'التحليلات والتقارير', description: 'تحليلات متقدمة وتقارير شاملة للبيانات والأحداث' },
+  { icon: Package, title: 'كشف الأشياء المتروكة', description: 'كشف الأشياء المتروكة في المناطق المحظورة' },
 ];
 
 const plans = [

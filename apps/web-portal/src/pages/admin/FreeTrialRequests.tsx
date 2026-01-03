@@ -182,12 +182,27 @@ const FreeTrialRequests: React.FC = () => {
                           <h3 className="font-medium text-gray-900">{request.name}</h3>
                           {getStatusBadge(request.status)}
                         </div>
+                        {/* TASK 1.C: Display required fields - Name, Company, Phone, Email, Selected Modules, Submission Date */}
                         <p className="text-sm text-gray-600">{request.email}</p>
                         {request.company_name && (
-                          <p className="text-sm text-gray-500">{request.company_name}</p>
+                          <p className="text-sm text-gray-500">الشركة: {request.company_name}</p>
+                        )}
+                        {request.phone && (
+                          <p className="text-sm text-gray-500">الهاتف: {request.phone}</p>
+                        )}
+                        {request.selected_modules && request.selected_modules.length > 0 && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            الوحدات: {request.selected_modules.join(', ')}
+                          </p>
                         )}
                         <p className="text-xs text-gray-400 mt-1">
-                          {new Date(request.created_at).toLocaleDateString('ar-SA')}
+                          تاريخ الإرسال: {new Date(request.created_at).toLocaleDateString('ar-SA', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
                         </p>
                       </div>
                     </div>
