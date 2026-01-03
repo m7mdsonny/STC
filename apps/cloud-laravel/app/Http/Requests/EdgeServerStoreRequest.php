@@ -33,6 +33,7 @@ class EdgeServerStoreRequest extends FormRequest
             'organization_id' => 'sometimes|exists:organizations,id',
             'license_id' => 'nullable|exists:licenses,id',
             'edge_id' => 'nullable|string|unique:edge_servers,edge_id',
+            'ip_address' => 'nullable|ip',
             'location' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'internal_ip' => 'nullable|ip',

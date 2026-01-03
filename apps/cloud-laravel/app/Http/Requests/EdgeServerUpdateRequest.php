@@ -41,6 +41,7 @@ class EdgeServerUpdateRequest extends FormRequest
             'organization_id' => 'sometimes|exists:organizations,id',
             'license_id' => 'nullable|exists:licenses,id',
             'edge_id' => ['sometimes', 'string', Rule::unique('edge_servers', 'edge_id')->ignore($edgeServerId)],
+            'ip_address' => 'nullable|ip',
             'location' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'internal_ip' => 'nullable|ip',

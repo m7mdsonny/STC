@@ -11,6 +11,7 @@ interface CreateEdgeServerData {
   name: string;
   location?: string;
   notes?: string;
+  ip_address?: string;
   license_id?: string;
 }
 

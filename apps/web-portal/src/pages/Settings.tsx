@@ -25,6 +25,7 @@ const TABS: { id: TabId; label: string; icon: typeof SettingsIcon }[] = [
 
 export function Settings() {
   const { organization, canManage } = useAuth();
+  const { showSuccess, showError } = useToast();
   const [activeTab, setActiveTab] = useState<TabId>('organization');
   const [servers, setServers] = useState<EdgeServer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,12 +99,14 @@ export function Settings() {
         await edgeServersApi.updateEdgeServer(editingServer.id, {
           name: serverForm.name,
           location: serverForm.location || undefined,
+          ip_address: serverForm.ip_address || undefined,
         });
         showSuccess('تم التحديث بنجاح', `تم تحديث بيانات السيرفر ${serverForm.name} بنجاح`);
       } else {
         const newServer = await edgeServersApi.createEdgeServer({
           name: serverForm.name,
           location: serverForm.location || undefined,
+          ip_address: serverForm.ip_address || undefined,
           license_id: serverForm.license_id || undefined,
         });
         showSuccess(
