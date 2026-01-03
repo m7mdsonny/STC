@@ -11,6 +11,7 @@ import {
   HardHat,
   Factory,
   Package,
+  Clock,
   ChevronLeft,
   Check,
   Zap,
@@ -41,10 +42,10 @@ const modules = [
   { icon: Car, title: 'التعرف على المركبات', description: 'قراءة لوحات السيارات والتحكم في البوابات' },
   { icon: UserCheck, title: 'تسجيل الحضور', description: 'تسجيل حضور الموظفين تلقائيا بالوجه' },
   { icon: ShieldAlert, title: 'كشف التسلل', description: 'كشف الدخول غير المصرح به' },
-  { icon: ShoppingBag, title: 'Market - سلوك مشبوه', description: 'كشف السلوك المشبوه ومنع الخسائر في المتاجر بدون استخدام التعرف على الوجوه' },
-  { icon: HardHat, title: 'Factory - سلامة العمال', description: 'مراقبة سلامة العمال وارتداء معدات الحماية الشخصية' },
-  { icon: Factory, title: 'Factory - مراقبة الانتاج', description: 'مراقبة خطوط الانتاج وكشف الأعطال والانحرافات' },
-  { icon: Package, title: 'كشف الأشياء المتروكة', description: 'كشف الأشياء المتروكة في المناطق المحظورة' },
+  { icon: ShoppingBag, title: 'كشف السلوك المشبوه في المتاجر', description: 'كشف السلوك المشبوه ومنع الخسائر في المتاجر بدون استخدام التعرف على الوجوه' },
+  { icon: HardHat, title: 'مراقبة سلامة العمال', description: 'مراقبة سلامة العمال وارتداء معدات الحماية الشخصية في المصانع' },
+  { icon: Factory, title: 'مراقبة خطوط الانتاج', description: 'مراقبة خطوط الانتاج وكشف الأعطال والانحرافات في المصانع' },
+  { icon: Clock, title: 'كشف التكاسل والأشياء المتروكة', description: 'كشف الأشخاص المتكاسلين والأشياء المتروكة في المناطق المحظورة' },
 ];
 
 const plans = [
