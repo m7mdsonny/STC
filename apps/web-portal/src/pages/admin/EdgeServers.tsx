@@ -28,7 +28,9 @@ export function EdgeServers() {
   const fetchServers = async () => {
     try {
       const response = await edgeServersApi.getEdgeServers();
-      setServers(response.data as EdgeServerExtended[]);
+      // CRITICAL FIX: Handle paginated response correctly
+      const serversList = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+      setServers(serversList as EdgeServerExtended[]);
     } catch (error) {
       console.error('Error fetching servers:', error);
     } finally {

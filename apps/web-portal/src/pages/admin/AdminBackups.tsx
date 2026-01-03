@@ -15,7 +15,12 @@ export function AdminBackups() {
     setLoading(true);
     try {
       const data = await backupsApi.list();
-      setBackups(Array.isArray(data) ? data : []);
+      // CRITICAL FIX: Ensure all backups have file_path as string
+      const normalizedBackups = (Array.isArray(data) ? data : []).map(backup => ({
+        ...backup,
+        file_path: typeof backup.file_path === 'string' ? backup.file_path : String(backup.file_path || 'backup.sql'),
+      }));
+      setBackups(normalizedBackups);
     } catch (error) {
       console.error('Error loading backups:', error);
       showError('خطأ في التحميل', 'فشل تحميل قائمة النسخ الاحتياطية');

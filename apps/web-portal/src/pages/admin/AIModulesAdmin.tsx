@@ -61,7 +61,12 @@ export function AIModulesAdmin() {
     setLoading(true);
     try {
       const data = await aiModulesApi.getModules();
-      setModules(Array.isArray(data) ? data : []);
+      // CRITICAL FIX: Ensure all modules have is_active as boolean
+      const normalizedModules = (Array.isArray(data) ? data : []).map(module => ({
+        ...module,
+        is_active: typeof module.is_active === 'boolean' ? module.is_active : Boolean(module.is_active),
+      }));
+      setModules(normalizedModules);
     } catch (error) {
       console.error('Error fetching modules:', error);
       setModules([]);
@@ -73,16 +78,22 @@ export function AIModulesAdmin() {
 
   const handleToggleModule = async (module: AiModule) => {
     try {
-      // CRITICAL FIX: Use is_active not is_enabled
+      const newActiveState = !module.is_active;
+      // CRITICAL FIX: Use is_active not is_enabled, and update immediately for better UX
       await aiModulesApi.updateModule(module.id, {
-        is_active: !module.is_active,
+        is_active: newActiveState,
       });
-      showSuccess('تم التحديث', `تم ${module.is_active ? 'تعطيل' : 'تفعيل'} الموديول بنجاح`);
+      showSuccess('تم التحديث', `تم ${newActiveState ? 'تفعيل' : 'تعطيل'} الموديول بنجاح`);
+      // Update local state immediately
+      setModules(prev => prev.map(m => m.id === module.id ? { ...m, is_active: newActiveState } : m));
+      // Then refresh from server to ensure consistency
       await fetchModules();
     } catch (error) {
       console.error('Error toggling module:', error);
       const errorMessage = error instanceof Error ? error.message : 'فشل تحديث حالة الموديول';
       showError('خطأ', errorMessage);
+      // Refresh on error to restore correct state
+      await fetchModules();
     }
   };
 

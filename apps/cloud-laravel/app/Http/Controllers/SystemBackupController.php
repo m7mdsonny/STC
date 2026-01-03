@@ -23,7 +23,22 @@ class SystemBackupController extends Controller
                 return response()->json([]);
             }
             
-            return response()->json(SystemBackup::orderByDesc('created_at')->get());
+            // CRITICAL FIX: Ensure file_path is always returned as string
+            $backups = SystemBackup::orderByDesc('created_at')->get()->map(function ($backup) {
+                return [
+                    'id' => $backup->id,
+                    'file_path' => (string) $backup->file_path, // Force string type
+                    'status' => $backup->status,
+                    'meta' => $backup->meta,
+                    'created_by' => $backup->created_by,
+                    'restored_at' => $backup->restored_at?->toIso8601String(),
+                    'restored_by' => $backup->restored_by,
+                    'created_at' => $backup->created_at->toIso8601String(),
+                    'updated_at' => $backup->updated_at->toIso8601String(),
+                ];
+            });
+            
+            return response()->json($backups);
         } catch (\Exception $e) {
             \Log::error('SystemBackupController::index error: ' . $e->getMessage());
             return response()->json([]);

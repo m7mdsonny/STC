@@ -11,6 +11,10 @@ import {
   PieChart,
   ShieldAlert,
   ShoppingBag,
+  HardHat,
+  Factory,
+  BarChart3,
+  Eye,
   ChevronLeft,
   Check,
   Zap,
@@ -43,6 +47,9 @@ const modules = [
   { icon: PieChart, title: 'تحليل الجمهور', description: 'تحليل العمر والجنس للزوار' },
   { icon: ShieldAlert, title: 'كشف التسلل', description: 'كشف الدخول غير المصرح به' },
   { icon: ShoppingBag, title: 'Market - سلوك مشبوه', description: 'كشف السلوك المشبوه ومنع الخسائر في المتاجر بدون استخدام التعرف على الوجوه' },
+  { icon: HardHat, title: 'Factory - سلامة العمال', description: 'مراقبة سلامة العمال وارتداء معدات الحماية الشخصية' },
+  { icon: Factory, title: 'Factory - مراقبة الانتاج', description: 'مراقبة خطوط الانتاج وكشف الأعطال والانحرافات' },
+  { icon: BarChart3, title: 'التحليلات والتقارير', description: 'تحليلات متقدمة وتقارير شاملة للبيانات والأحداث' },
 ];
 
 const plans = [
@@ -176,7 +183,7 @@ export function Landing() {
             {settings?.hero_subtitle || 'حول كاميرات المراقبة الى عيون ذكية تحمي منشاتك وتحلل بياناتك في الوقت الفعلي مع 10 موديولات متخصصة'}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/login" className="btn-primary text-lg px-8 py-4">
+            <Link to="/request-demo" className="btn-primary text-lg px-8 py-4">
               {settings?.hero_button_text || 'ابدا تجربتك المجانية - 14 يوم'}
             </Link>
             <a href="#modules" className="btn-secondary text-lg px-8 py-4">
@@ -330,7 +337,7 @@ export function Landing() {
                   ))}
                 </ul>
                 <Link
-                  to="/login"
+                  to="/request-demo"
                   className={`block text-center py-3 rounded-lg font-semibold transition-colors ${
                     plan.popular
                       ? 'bg-stc-gold text-stc-navy hover:bg-stc-gold-light'

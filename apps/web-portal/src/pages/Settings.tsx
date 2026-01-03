@@ -54,11 +54,15 @@ export function Settings() {
     setLoading(true);
     try {
       const result = await edgeServersApi.getEdgeServers({});
-      setServers(result.data || []);
+      // CRITICAL FIX: Ensure we get the actual array from paginated response
+      const serversList = Array.isArray(result.data) ? result.data : (result.data?.data || []);
+      setServers(serversList);
     } catch (error) {
       console.error('Failed to fetch edge servers:', error);
+      showError('خطأ في التحميل', 'فشل تحميل قائمة السيرفرات');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const fetchLicenses = async () => {
@@ -111,8 +115,9 @@ export function Settings() {
       setShowServerModal(false);
       setServerForm({ name: '', ip_address: '', location: '', license_id: '' });
       setEditingServer(null);
-      fetchData();
-      fetchLicenses(); // Refresh licenses after creating server
+      // CRITICAL FIX: Force refresh immediately after creation
+      await fetchData();
+      await fetchLicenses(); // Refresh licenses after creating server
     } catch (error: any) {
       console.error('Failed to save edge server:', error);
       const { title, message } = getDetailedErrorMessage(error, 'حفظ السيرفر', 'حدث خطأ في حفظ السيرفر');
