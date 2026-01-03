@@ -18,34 +18,37 @@ export interface SystemBackup {
 
 export const backupsApi = {
   list: async (): Promise<SystemBackup[]> => {
-    const response = await apiClient.request<SystemBackup[]>({
-      method: 'GET',
-      url: '/backups',
-    });
-    return response;
+    // CRITICAL FIX: Use get method and handle response properly
+    const response = await apiClient.get<SystemBackup[]>('/backups');
+    if (response.error || !response.data) {
+      throw new Error(response.error || 'Failed to load backups');
+    }
+    // Ensure all backups have file_path as string
+    return (Array.isArray(response.data) ? response.data : []).map(backup => ({
+      ...backup,
+      file_path: typeof backup.file_path === 'string' ? backup.file_path : String(backup.file_path || 'backup.sql'),
+    }));
   },
 
   create: async (description?: string): Promise<SystemBackup> => {
-    const response = await apiClient.request<SystemBackup>({
-      method: 'POST',
-      url: '/backups',
-      data: {
-        description,
-      },
+    const response = await apiClient.post<SystemBackup>('/backups', {
+      description,
     });
-    return response;
+    if (response.error || !response.data) {
+      throw new Error(response.error || 'Failed to create backup');
+    }
+    return response.data;
   },
 
   restore: async (id: number, confirmed: boolean = false): Promise<{ message: string }> => {
     // CRITICAL FIX: Send confirmed parameter (required by backend)
-    const response = await apiClient.request<{ message: string }>({
-      method: 'POST',
-      url: `/backups/${id}/restore`,
-      data: {
-        confirmed,
-      },
+    const response = await apiClient.post<{ message: string }>(`/backups/${id}/restore`, {
+      confirmed,
     });
-    return response;
+    if (response.error || !response.data) {
+      throw new Error(response.error || 'Failed to restore backup');
+    }
+    return response.data;
   },
 
   download: async (id: number): Promise<Blob> => {
