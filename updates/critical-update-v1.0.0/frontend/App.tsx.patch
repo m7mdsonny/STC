@@ -1,0 +1,30 @@
+# App.tsx Route Addition Patch
+
+## Instructions
+Add the following import and route to `apps/web-portal/src/App.tsx`:
+
+### 1. Add Import (after line 42):
+```typescript
+import FreeTrialRequests from './pages/admin/FreeTrialRequests';
+```
+
+### 2. Add Route (after line 172, before closing tag):
+```typescript
+<Route path="/admin/free-trial-requests" element={<FreeTrialRequests />} />
+```
+
+### Full Context:
+
+**Import section** (around line 42):
+```typescript
+import { SystemMonitor } from './pages/admin/SystemMonitor';
+import FreeTrialRequests from './pages/admin/FreeTrialRequests';  // ADD THIS LINE
+import { Loader2 } from 'lucide-react';
+```
+
+**Routes section** (around line 172):
+```typescript
+<Route path="/admin/backups" element={<AdminBackups />} />
+<Route path="/admin/ai-commands" element={<AiCommandCenter />} />
+<Route path="/admin/free-trial-requests" element={<FreeTrialRequests />} />  // ADD THIS LINE
+```
