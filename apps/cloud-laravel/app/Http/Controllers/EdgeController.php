@@ -12,6 +12,9 @@ use App\Models\EdgeServer;
 use App\Models\EdgeServerLog;
 use App\Models\License;
 use App\Models\Organization;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class EdgeController extends Controller
@@ -80,6 +83,28 @@ class EdgeController extends Controller
     {
         // Authorization is handled by EdgeServerStoreRequest
         $data = $request->validated();
+
+        $missingColumns = collect([
+            'edge_key',
+            'edge_secret',
+            'secret_delivered_at',
+            'internal_ip',
+            'public_ip',
+            'hostname',
+        ])->filter(fn ($column) => !Schema::hasColumn('edge_servers', $column))->values();
+
+        if ($missingColumns->isNotEmpty()) {
+            return response()->json([
+                'message' => 'Edge server table is missing required columns: ' . $missingColumns->implode(', ') . '. Please run the latest migrations.'
+            ], 500);
+        }
+
+        Log::info('EdgeController@store received payload', [
+            'user_id' => optional($request->user())->id,
+            'organization_id' => $data['organization_id'] ?? $request->user()?->organization_id,
+            'has_license' => !empty($data['license_id']),
+            'ip_address' => $data['ip_address'] ?? null,
+        ]);
         
         $user = $request->user();
         
@@ -138,25 +163,31 @@ class EdgeController extends Controller
         // SECURITY: Encrypt edge_secret before storing
         $encryptedSecret = \Illuminate\Support\Facades\Crypt::encryptString($edgeSecret);
 
-        $edgeServer = EdgeServer::create([
-            'name' => $data['name'],
-            'organization_id' => $organizationId,
-            'license_id' => $data['license_id'] ?? null,
-            'edge_id' => $data['edge_id'] ?? Str::uuid()->toString(),
-            'edge_key' => $edgeKey,
-            // edge_secret stored encrypted (not in fillable, set directly)
-            'ip_address' => $data['ip_address'] ?? null,
-            'location' => $data['location'] ?? null,
-            'notes' => $data['notes'] ?? null,
-            'internal_ip' => $data['internal_ip'] ?? null,
-            'public_ip' => $data['public_ip'] ?? null,
-            'hostname' => $data['hostname'] ?? null,
-            'online' => false,
-        ]);
-        
-        // Set encrypted secret directly (bypassing fillable)
-        $edgeServer->setAttribute('edge_secret', $encryptedSecret);
-        $edgeServer->save();
+        try {
+            $edgeServer = EdgeServer::create([
+                'name' => $data['name'],
+                'organization_id' => $organizationId,
+                'license_id' => $data['license_id'] ?? null,
+                'edge_id' => $data['edge_id'] ?? Str::uuid()->toString(),
+                'edge_key' => $edgeKey,
+                // edge_secret stored encrypted (not in fillable, set directly)
+                'ip_address' => $data['ip_address'] ?? null,
+                'location' => $data['location'] ?? null,
+                'notes' => $data['notes'] ?? null,
+                'internal_ip' => $data['internal_ip'] ?? null,
+                'public_ip' => $data['public_ip'] ?? null,
+                'hostname' => $data['hostname'] ?? null,
+                'online' => false,
+            ]);
+
+            // Set encrypted secret directly (bypassing fillable)
+            $edgeServer->setAttribute('edge_secret', $encryptedSecret);
+            $edgeServer->save();
+        } catch (QueryException $e) {
+            return response()->json([
+                'message' => 'Failed to create edge server: ' . $e->getMessage(),
+            ], 500);
+        }
 
         // If license_id was provided, update the license to link it to this edge server
         if (!empty($data['license_id'])) {
