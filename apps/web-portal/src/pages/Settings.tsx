@@ -24,7 +24,7 @@ const TABS: { id: TabId; label: string; icon: typeof SettingsIcon }[] = [
 ];
 
 export function Settings() {
-  const { organization, canManage } = useAuth();
+  const { organization, profile, canManage } = useAuth();
   const { showSuccess, showError } = useToast();
   const [activeTab, setActiveTab] = useState<TabId>('organization');
   const [servers, setServers] = useState<EdgeServer[]>([]);
@@ -87,7 +87,16 @@ export function Settings() {
 
   const addServer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!organization) return;
+    const orgId = organization?.id || profile?.organization_id;
+
+    if (!orgId) {
+      console.error('[Settings] cannot submit edge server form: missing organization context', {
+        organization,
+        profile,
+      });
+      showError('بيانات المؤسسة مفقودة', 'لا يمكن إضافة السيرفر لأن بيانات المؤسسة غير متاحة. يرجى إعادة تسجيل الدخول ثم المحاولة مرة أخرى.');
+      return;
+    }
 
     if (!serverForm.name.trim()) {
       alert('يرجى إدخال اسم السيرفر');
@@ -97,7 +106,7 @@ export function Settings() {
     console.log('[Settings] submit edge server form', {
       ...serverForm,
       editingServerId: editingServer?.id,
-      organizationId: organization.id,
+      organizationId: orgId,
     });
 
     try {
@@ -110,6 +119,7 @@ export function Settings() {
         showSuccess('تم التحديث بنجاح', `تم تحديث بيانات السيرفر ${serverForm.name} بنجاح`);
       } else {
         const newServer = await edgeServersApi.createEdgeServer({
+          organization_id: orgId,
           name: serverForm.name,
           location: serverForm.location || undefined,
           ip_address: serverForm.ip_address || undefined,

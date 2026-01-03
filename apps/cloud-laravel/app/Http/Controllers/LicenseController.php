@@ -5,16 +5,22 @@ namespace App\Http\Controllers;
 use App\Helpers\RoleHelper;
 use App\Http\Requests\LicenseStoreRequest;
 use App\Http\Requests\LicenseUpdateRequest;
+use App\Exceptions\DomainActionException;
+use App\Services\LicenseService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Carbon;
-use App\Models\License;
 use Illuminate\Support\Str;
+use App\Models\License;
 use App\Models\EdgeServer;
 use Illuminate\Support\Facades\Log;
 
 class LicenseController extends Controller
 {
+    public function __construct(private LicenseService $licenseService)
+    {
+    }
+
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -58,39 +64,26 @@ class LicenseController extends Controller
 
     public function store(LicenseStoreRequest $request): JsonResponse
     {
-        // Authorization is handled by LicenseStoreRequest
         $data = $request->validated();
 
-        $isTrial = (bool) ($data['is_trial'] ?? false);
-        unset($data['is_trial']);
-
-        $licenseKey = $data['license_key'] ?? Str::uuid()->toString();
-
-        $expiresAt = $data['expires_at'] ?? Carbon::now()->addYear();
-        $trialEndsAt = $isTrial
-            ? Carbon::now()->addDays(14)
-            : ($data['trial_ends_at'] ?? null);
-
-        unset($data['trial_ends_at']);
-        unset($data['expires_at']);
-
-        $license = License::create([
-            ...$data,
-            'license_key' => $licenseKey,
-            'status' => $isTrial ? 'trial' : ($data['status'] ?? 'active'),
-            'trial_ends_at' => $trialEndsAt,
-            'expires_at' => $expiresAt,
-        ]);
+        try {
+            $license = $this->licenseService->createLicense($data, $request->user());
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
 
         return response()->json($license, 201);
     }
 
     public function update(LicenseUpdateRequest $request, License $license): JsonResponse
     {
-        // Authorization is handled by LicenseUpdateRequest
         $data = $request->validated();
 
-        $license->update($data);
+        try {
+            $license = $this->licenseService->updateLicense($license, $data, $request->user());
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
 
         return response()->json($license);
     }
@@ -99,22 +92,37 @@ class LicenseController extends Controller
     {
         // Use Policy for authorization
         $this->authorize('delete', $license);
-        
-        $license->delete();
+
+        try {
+            $this->licenseService->deleteLicense($license, request()->user());
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
+
         return response()->json(['message' => 'License deleted']);
     }
 
     public function activate(License $license): JsonResponse
     {
         $this->ensureSuperAdmin(request());
-        $license->update(['status' => 'active', 'activated_at' => now()]);
+        try {
+            $license = $this->licenseService->updateLicense($license, ['status' => 'active', 'activated_at' => now()], request()->user());
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
+
         return response()->json($license);
     }
 
     public function suspend(License $license): JsonResponse
     {
         $this->ensureSuperAdmin(request());
-        $license->update(['status' => 'suspended']);
+        try {
+            $license = $this->licenseService->updateLicense($license, ['status' => 'suspended'], request()->user());
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
+
         return response()->json($license);
     }
 
@@ -122,14 +130,24 @@ class LicenseController extends Controller
     {
         $this->ensureSuperAdmin($request);
         $request->validate(['expires_at' => 'required|date']);
-        $license->update(['expires_at' => $request->expires_at, 'status' => 'active']);
+        try {
+            $license = $this->licenseService->updateLicense($license, ['expires_at' => $request->expires_at, 'status' => 'active'], $request->user());
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
+
         return response()->json($license);
     }
 
     public function regenerateKey(License $license): JsonResponse
     {
         $this->ensureSuperAdmin(request());
-        $license->update(['license_key' => Str::uuid()->toString()]);
+        try {
+            $license = $this->licenseService->updateLicense($license, ['license_key' => Str::uuid()->toString()], request()->user());
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
+
         return response()->json($license);
     }
 
