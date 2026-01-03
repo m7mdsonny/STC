@@ -59,12 +59,12 @@ export const freeTrialApi = {
 
   // Super Admin: List all requests
   list: async (params?: { status?: string; assigned_admin_id?: number }): Promise<FreeTrialRequest[]> => {
-    const response = await apiClient.request<FreeTrialRequest[]>({
-      method: 'GET',
-      url: '/free-trial-requests',
-      params,
-    });
-    return response;
+    // TASK 1.C: Use get method with params for proper query string handling
+    const response = await apiClient.get<FreeTrialRequest[]>('/free-trial-requests', params);
+    if (response.error || !response.data) {
+      throw new Error(response.error || 'Failed to load free trial requests');
+    }
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   // Super Admin: Get single request

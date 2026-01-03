@@ -31,7 +31,8 @@ import {
   UploadCloud,
   Type,
   BookOpen,
-  ShoppingBag
+  ShoppingBag,
+  ClipboardList
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { canManageOrganization, canEdit, normalizeRole } from '../../lib/rbac';
@@ -70,6 +71,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { to: '/admin/updates', icon: UploadCloud, label: 'إعلانات التحديثات' },
     { to: '/admin/system-updates', icon: UploadCloud, label: 'نظام التحديثات' },
     { to: '/admin/backups', icon: Database, label: 'النسخ الاحتياطية' },
+    { to: '/admin/free-trial-requests', icon: ClipboardList, label: 'طلبات التجربة المجانية' },
   ];
 
   const orgLinks = [

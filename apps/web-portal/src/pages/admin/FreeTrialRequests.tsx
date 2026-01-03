@@ -22,9 +22,12 @@ const FreeTrialRequests: React.FC = () => {
       setLoading(true);
       const params = filterStatus ? { status: filterStatus } : undefined;
       const data = await freeTrialApi.list(params);
-      setRequests(data);
+      // TASK 1.C: Ensure data is always an array
+      setRequests(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to load free trial requests:', error);
+      // TASK 1.C: Set empty array on error to prevent UI issues
+      setRequests([]);
     } finally {
       setLoading(false);
     }
