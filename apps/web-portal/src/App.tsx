@@ -40,6 +40,7 @@ import { PlatformWordings } from './pages/admin/PlatformWordings';
 import { EdgeServers } from './pages/admin/EdgeServers';
 import { Resellers } from './pages/admin/Resellers';
 import { SystemMonitor } from './pages/admin/SystemMonitor';
+import FreeTrialRequests from './pages/admin/FreeTrialRequests';
 import { Loader2 } from 'lucide-react';
 import { BrandingProvider } from './contexts/BrandingContext';
 import { ToastProvider, useToast } from './contexts/ToastContext';
@@ -170,6 +171,7 @@ function AppRoutesWithToast() {
         <Route path="/admin/system-updates" element={<SystemUpdates />} />
         <Route path="/admin/backups" element={<AdminBackups />} />
         <Route path="/admin/ai-commands" element={<AiCommandCenter />} />
+        <Route path="/admin/free-trial-requests" element={<FreeTrialRequests />} />
       </Route>
 
       <Route
