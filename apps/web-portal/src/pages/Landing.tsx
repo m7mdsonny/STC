@@ -10,7 +10,6 @@ import {
   ShoppingBag,
   HardHat,
   Factory,
-  Package,
   Clock,
   ChevronLeft,
   Check,
