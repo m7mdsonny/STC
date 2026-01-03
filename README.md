@@ -1,194 +1,164 @@
-# STC AI-VAP - منصة تحليل الفيديو بالذكاء الاصطناعي
+# STC AI-VAP Platform
 
-## 📖 نظرة عامة
+## منصة تحليل الفيديو بالذكاء الاصطناعي
 
-**STC AI-VAP** (STC AI Video Analytics Platform) هي منصة SaaS متكاملة لتحليل الفيديو بالذكاء الاصطناعي. تتكون المنصة من 4 تطبيقات رئيسية:
+منصة SaaS متكاملة لتحليل الفيديو بالذكاء الاصطناعي، تتكون من 4 تطبيقات رئيسية:
 
 1. **Cloud API** (Laravel) - Backend API المركزي
-2. **Web Portal** (React) - واجهة الويب الإدارية
+2. **Web Portal** (React) - واجهة الويب الإدارية  
 3. **Mobile App** (Flutter) - تطبيق الهاتف المحمول
 4. **Edge Server** (Python) - سيرفر محلي للمعالجة
 
 ---
 
-## 🏗️ البنية المعمارية
-
-```
-┌─────────────┐
-│  Web Portal │
-│   (React)   │
-└──────┬──────┘
-       │
-       ├─────────────────┐
-       │                 │
-┌──────▼──────┐   ┌──────▼──────┐
-│  Cloud API  │   │ Mobile App   │
-│  (Laravel)  │   │  (Flutter)   │
-└──────┬──────┘   └──────┬───────┘
-       │                 │
-       │                 │
-       └────────┬────────┘
-                │
-         ┌──────▼──────┐
-         │ Edge Server │
-         │  (Python)   │
-         └─────────────┘
-```
-
----
-
 ## 🚀 البدء السريع
 
-### المتطلبات
-- PHP 8.3+
-- Node.js 18+
-- Flutter 3.0+
-- Python 3.10+
-- PostgreSQL 14+
+### التنصيب الكامل
 
-### 1. Cloud API
-```bash
-cd apps/cloud-laravel
-composer install
-cp .env.example .env
-php artisan key:generate
-php artisan migrate
-php artisan serve
-```
+راجع **[دليل التنصيب الشامل](INSTALLATION.md)** للحصول على تعليمات مفصلة لتنصيب جميع المكونات.
 
-### 2. Web Portal
-```bash
-cd apps/web-portal
-npm install
-npm run dev
-```
-
-### 3. Mobile App
-```bash
-cd apps/mobile-app
-flutter pub get
-flutter run
-```
-
-### 4. Edge Server
-```bash
-cd apps/edge-server
-pip install -r requirements.txt
-python main.py
-```
-
----
-
-## 📚 Documentation
-
-### Installation Guides
-- **[Cloud Backend Installation](docs/INSTALL_CLOUD.md)** - Laravel backend setup
-- **[Web Portal Installation](docs/INSTALL_WEB.md)** - React frontend setup
-- **[Edge Server Installation](docs/INSTALL_EDGE.md)** - Python edge server setup
-
-### Deployment & Operations
-- **[Production Runbook](docs/RUNBOOK.md)** - Complete production deployment guide
-- **[Quick Start Guide](docs/QUICK_START.md)** - 5-minute setup guide
-
-### System Documentation
-- **[System Map](docs/SYSTEM_MAP.md)** - Complete API route mapping
-- **[Flow Map](docs/FLOW_MAP.md)** - Core business flows
-- **[Reality Matrix](docs/REALITY_MATRIX.md)** - UI to backend mapping
-
-### Development
-- **[Final Code Review](docs/FINAL_CODE_REVIEW.md)** - Pre-release code review
-- **[Completion Report](docs/FINAL_COMPLETION_REPORT.md)** - Overall completion status
-
----
-
-## 🔐 Authentication
-
-جميع التطبيقات تستخدم نفس Cloud API للـ authentication:
-
-- **Endpoint**: `/api/v1/auth/login`
-- **Method**: POST
-- **Body**: `{ "email": "...", "password": "..." }`
-- **Response**: `{ "token": "...", "user": {...} }`
-
-### الصلاحيات (Roles)
-- `super_admin` - مدير النظام
-- `owner` - مالك المؤسسة
-- `admin` - مدير المؤسسة
-- `editor` - محرر
-- `viewer` - مشاهد
-
----
-
-## 🔔 الإشعارات
-
-### Firebase (Mobile App)
-- ✅ موجود ومُعد
-- ✅ FCM token registration
-- ✅ Push notifications
-
-### Web Portal
-- ⚠️ Browser Notification API (بدون Firebase)
-- ⚠️ يمكن إضافة Firebase لاحقاً
-
----
-
-## 🔗 Integration
-
-### Cloud ↔ Edge Server
-- Heartbeat
-- Camera sync
-- AI commands
-- Event ingestion
-
-### Cloud ↔ Mobile App
-- Authentication
-- Alerts
-- Cameras
-- Notifications
-
-### Cloud ↔ Web Portal
-- Authentication
-- All CRUD operations
-- Real-time data
-
----
-
-## 🎯 المميزات الرئيسية
-
-### AI Modules (9 modules)
-1. Face Recognition
-2. People Counter
-3. Fire Detection
-4. Intrusion Detection
-5. Vehicle Recognition
-6. Attendance
-7. Loitering Detection
-8. Crowd Detection
-9. Object Detection
-
-### Management
-- Organizations
-- Users
-- Licenses
-- Edge Servers
-- Cameras
-- Alerts
-- Analytics
+### المسارات على السيرفر:
+- **Cloud API**: `/www/wwwroot/api.stcsolutions.online`
+- **Web Portal**: `/www/wwwroot/stcsolutions.online`
 
 ---
 
 ## 📁 هيكلة المشروع
 
 ```
-STCSAAS/
+STC/
 ├── apps/
-│   ├── cloud-laravel/      # Laravel Backend
+│   ├── cloud-laravel/      # Laravel Backend API
 │   ├── web-portal/         # React Web App
 │   ├── mobile-app/         # Flutter Mobile App
 │   └── edge-server/        # Python Edge Server
 ├── docs/                   # Documentation
-└── scripts/               # Build scripts
+├── scripts/               # Build & Deployment Scripts
+├── stc_cloud_mysql_complete_latest.sql  # Database Dump
+└── INSTALLATION.md         # دليل التنصيب الشامل
 ```
+
+---
+
+## 🔧 المتطلبات
+
+### Cloud API (Laravel)
+- PHP 8.3+
+- Composer
+- MySQL 8.0+ / MariaDB 10.3+
+- Nginx / Apache
+
+### Web Portal (React)
+- Node.js 18+
+- npm / yarn
+
+### Mobile App (Flutter)
+- Flutter 3.16+
+- Android Studio / Xcode
+- Firebase Account
+
+### Edge Server (Python)
+- Python 3.10+
+- OpenCV
+- FFmpeg
+
+---
+
+## 📚 الوثائق
+
+### التنصيب
+- **[دليل التنصيب الشامل](INSTALLATION.md)** - تنصيب كامل لجميع المكونات
+- **[تنصيب Cloud API](docs/INSTALL_CLOUD.md)** - تفاصيل تنصيب Laravel
+- **[تنصيب Edge Server](docs/INSTALL_EDGE.md)** - تفاصيل تنصيب Python Edge
+
+### التطوير
+- **[Cloud API README](apps/cloud-laravel/README.md)** - دليل Laravel Backend
+- **[Web Portal README](apps/web-portal/README.md)** - دليل React Frontend
+- **[Mobile App README](apps/mobile-app/README.md)** - دليل Flutter App
+- **[Edge Server README](apps/edge-server/README.md)** - دليل Python Edge
+
+### قاعدة البيانات
+- **[Database Schema](docs/FINAL_DATABASE_SCHEMA.md)** - هيكل قاعدة البيانات
+- **[Database Update Guide](docs/DATABASE_UPDATE_SECURITY_PATCH.md)** - تحديثات قاعدة البيانات
+
+---
+
+## 🎯 المميزات الرئيسية
+
+### AI Modules (9 modules)
+1. Face Recognition - التعرف على الوجوه
+2. People Counter - عداد الأشخاص
+3. Fire Detection - كشف الحرائق
+4. Intrusion Detection - كشف التسلل
+5. Vehicle Recognition - التعرف على المركبات
+6. Attendance - الحضور والانصراف
+7. Loitering Detection - كشف التجمهر
+8. Crowd Detection - كشف الازدحام
+9. Object Detection - كشف الأجسام
+
+### Enterprise Monitoring
+- **Market Module** - مراقبة المتاجر (سلوك مشبوه، سرقة، عدم دفع)
+- **Factory Module** - مراقبة المصانع (سلامة العمال، خطوط الإنتاج)
+
+### Analytics & Reporting
+- تحليلات زمنية
+- تقارير يومية/أسبوعية/شهرية
+- تصدير PDF و CSV
+
+### Management
+- Organizations - إدارة المؤسسات
+- Users - إدارة المستخدمين
+- Licenses - إدارة التراخيص
+- Edge Servers - إدارة السيرفرات المحلية
+- Cameras - إدارة الكاميرات
+- Alerts - إدارة التنبيهات
+
+---
+
+## 🔐 الأمان
+
+### Security Features
+- ✅ HMAC Authentication للـ Edge Servers
+- ✅ Replay Attack Protection (Nonce)
+- ✅ Encrypted Edge Secrets
+- ✅ Role-Based Access Control (RBAC)
+- ✅ Tenant Isolation
+- ✅ SSL/TLS Encryption
+
+### Compliance
+- ✅ لا تخزين بيانات حيوية (Biometric Data)
+- ✅ تشفير البيانات الحساسة
+- ✅ حماية من Replay Attacks
+
+---
+
+## 🔔 الإشعارات
+
+### Firebase Cloud Messaging (FCM)
+- ✅ Push Notifications للموبايل
+- ✅ Web Notifications (اختياري)
+- ✅ Notification Channels (Push, SMS, Email, WhatsApp)
+
+---
+
+## 🔗 Integration
+
+### Cloud ↔ Edge Server
+- Heartbeat - نبضات الحياة
+- Camera Sync - مزامنة الكاميرات
+- AI Commands - أوامر الذكاء الاصطناعي
+- Event Ingestion - استقبال الأحداث
+
+### Cloud ↔ Mobile App
+- Authentication - المصادقة
+- Alerts - التنبيهات
+- Cameras - الكاميرات
+- Notifications - الإشعارات
+
+### Cloud ↔ Web Portal
+- Authentication - المصادقة
+- CRUD Operations - جميع العمليات
+- Real-time Data - البيانات المباشرة
 
 ---
 
@@ -197,44 +167,70 @@ STCSAAS/
 ### Cloud API
 ```bash
 cd apps/cloud-laravel
-php artisan test
+composer install
+php artisan serve
 ```
 
 ### Web Portal
 ```bash
 cd apps/web-portal
-npm run lint
-npm run typecheck
+npm install
+npm run dev
 ```
 
 ### Mobile App
 ```bash
 cd apps/mobile-app
-flutter analyze
+flutter pub get
+flutter run
 ```
 
 ### Edge Server
 ```bash
-cd apps/edge-server
-pytest tests/
+cd apps/edge-server/edge
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8080
 ```
 
 ---
 
-## 📝 الترخيص
+## 📝 قاعدة البيانات
 
-© 2024 STC Solutions. جميع الحقوق محفوظة.
+### استيراد قاعدة البيانات
+
+```bash
+mysql -u username -p database_name < stc_cloud_mysql_complete_latest.sql
+```
+
+### Migrations
+
+```bash
+cd apps/cloud-laravel
+php artisan migrate
+php artisan db:seed
+```
+
+---
+
+## 🔄 التحديثات
+
+راجع **[دليل التنصيب](INSTALLATION.md)** قسم "التحديثات" للحصول على تعليمات تحديث كل مكون.
 
 ---
 
 ## 📞 الدعم
 
-للحصول على الدعم، يرجى التواصل:
-- Email: support@stcsolutions.net
-- Phone: 01016154999
-- Website: www.stcsolutions.net
+للحصول على الدعم:
+- **Email**: support@stcsolutions.net
+- **Phone**: 01016154999
+- **Website**: www.stcsolutions.net
 
 ---
 
-**آخر تحديث**: 2024-12-20
+## 📄 الترخيص
 
+© 2025 STC Solutions. جميع الحقوق محفوظة.
+
+---
+
+**آخر تحديث**: 2025-01-28
