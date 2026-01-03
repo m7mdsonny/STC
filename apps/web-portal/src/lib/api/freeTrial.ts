@@ -40,21 +40,20 @@ export interface UpdateFreeTrialRequest {
 export const freeTrialApi = {
   // Public: Create free trial request
   create: async (data: CreateFreeTrialRequest): Promise<{ success: boolean; message: string; request_id?: number }> => {
-    const response = await apiClient.request<{ message: string; success: boolean; request_id?: number }>({
-      method: 'POST',
-      url: '/public/free-trial',
-      data,
-    });
-    return response;
+    const response = await apiClient.post<{ message: string; success: boolean; request_id?: number }>('/public/free-trial', data);
+    if (response.error || !response.data) {
+      throw new Error(response.error || 'Failed to create free trial request');
+    }
+    return response.data;
   },
 
   // Get available modules for selection
   getAvailableModules: async (): Promise<Array<{ key: string; name: string; description: string; category: string }>> => {
-    const response = await apiClient.request<Array<{ key: string; name: string; description: string; category: string }>>({
-      method: 'GET',
-      url: '/public/free-trial/modules',
-    });
-    return Array.isArray(response) ? response : [];
+    const response = await apiClient.get<Array<{ key: string; name: string; description: string; category: string }>>('/public/free-trial/modules');
+    if (response.error || !response.data) {
+      return [];
+    }
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   // Super Admin: List all requests
@@ -69,29 +68,28 @@ export const freeTrialApi = {
 
   // Super Admin: Get single request
   get: async (id: number): Promise<FreeTrialRequest> => {
-    const response = await apiClient.request<FreeTrialRequest>({
-      method: 'GET',
-      url: `/free-trial-requests/${id}`,
-    });
-    return response;
+    const response = await apiClient.get<FreeTrialRequest>(`/free-trial-requests/${id}`);
+    if (response.error || !response.data) {
+      throw new Error(response.error || 'Failed to load free trial request');
+    }
+    return response.data;
   },
 
   // Super Admin: Update request
   update: async (id: number, data: UpdateFreeTrialRequest): Promise<FreeTrialRequest> => {
-    const response = await apiClient.request<FreeTrialRequest>({
-      method: 'PUT',
-      url: `/free-trial-requests/${id}`,
-      data,
-    });
-    return response;
+    const response = await apiClient.put<FreeTrialRequest>(`/free-trial-requests/${id}`, data);
+    if (response.error || !response.data) {
+      throw new Error(response.error || 'Failed to update free trial request');
+    }
+    return response.data;
   },
 
   // Super Admin: Create organization from request
   createOrganization: async (id: number): Promise<{ organization: any; message: string }> => {
-    const response = await apiClient.request<{ organization: any; message: string }>({
-      method: 'POST',
-      url: `/free-trial-requests/${id}/create-organization`,
-    });
-    return response;
+    const response = await apiClient.post<{ organization: any; message: string }>(`/free-trial-requests/${id}/create-organization`);
+    if (response.error || !response.data) {
+      throw new Error(response.error || 'Failed to create organization');
+    }
+    return response.data;
   },
 };
