@@ -215,17 +215,21 @@ export function Landing() {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(settings?.features?.length ? settings.features : modules).map((module, index) => {
-              const iconValue = (module as { icon?: unknown }).icon;
-              const IconComponent = typeof iconValue === 'function'
-                ? iconValue as ComponentType<{ className?: string }>
-                : null;
+            {modules.map((module, index) => {
+              // CRITICAL FIX: Always use modules array with updated icons
+              // If settings.features exists, merge titles/descriptions but keep icons from modules
+              const settingsFeature = settings?.features?.[index];
+              const displayModule = settingsFeature 
+                ? { 
+                    ...module, 
+                    title: settingsFeature.title || module.title,
+                    description: settingsFeature.description || module.description
+                  }
+                : module;
+              
+              const IconComponent = displayModule.icon as ComponentType<{ className?: string }>;
               const iconContent = IconComponent ? (
                 <IconComponent className="w-10 h-10 text-stc-gold mb-4" />
-              ) : typeof iconValue === 'string' && iconValue ? (
-                <div className="w-10 h-10 text-3xl text-stc-gold mb-4 flex items-center justify-center">
-                  {iconValue}
-                </div>
               ) : (
                 <Zap className="w-10 h-10 text-stc-gold mb-4" />
               );
@@ -233,8 +237,8 @@ export function Landing() {
               return (
               <div key={index} className="card p-6 hover:scale-105 transition-transform">
                 {iconContent}
-                <h3 className="text-lg font-semibold text-white mb-2">{module.title}</h3>
-                <p className="text-white/60 text-sm">{module.description}</p>
+                <h3 className="text-lg font-semibold text-white mb-2">{displayModule.title}</h3>
+                <p className="text-white/60 text-sm">{displayModule.description}</p>
               </div>
             );
             })}
