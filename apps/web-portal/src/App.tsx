@@ -5,6 +5,7 @@ import { Layout } from './components/layout/Layout';
 import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
 import { ForgotPassword } from './pages/ForgotPassword';
+import { RequestDemo } from './pages/RequestDemo';
 import { Dashboard } from './pages/Dashboard';
 import { Automation } from './pages/Automation';
 import { Cameras } from './pages/Cameras';
@@ -138,6 +139,14 @@ function AppRoutesWithToast() {
         element={
           <PublicRoute>
             <ForgotPassword />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/request-demo"
+        element={
+          <PublicRoute>
+            <RequestDemo />
           </PublicRoute>
         }
       />

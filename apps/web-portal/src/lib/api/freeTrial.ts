@@ -49,12 +49,12 @@ export const freeTrialApi = {
   },
 
   // Get available modules for selection
-  getAvailableModules: async (): Promise<string[]> => {
-    const response = await apiClient.request<{ modules: string[] }>({
+  getAvailableModules: async (): Promise<Array<{ key: string; name: string; description: string; category: string }>> => {
+    const response = await apiClient.request<Array<{ key: string; name: string; description: string; category: string }>>({
       method: 'GET',
       url: '/public/free-trial/modules',
     });
-    return response.modules || [];
+    return Array.isArray(response) ? response : [];
   },
 
   // Super Admin: List all requests

@@ -45,10 +45,12 @@ export function AIModulesAdmin() {
 
   const [editForm, setEditForm] = useState({
     name: '',
+    display_name: '',
+    display_name_ar: '',
     description: '',
-    is_premium: false,
-    min_plan_level: 1,
-    is_enabled: true,
+    description_ar: '',
+    is_active: true, // CRITICAL FIX: Use is_active not is_enabled
+    display_order: 0,
   });
 
   useEffect(() => {
@@ -71,10 +73,11 @@ export function AIModulesAdmin() {
 
   const handleToggleModule = async (module: AiModule) => {
     try {
+      // CRITICAL FIX: Use is_active not is_enabled
       await aiModulesApi.updateModule(module.id, {
-        is_enabled: !module.is_enabled,
+        is_active: !module.is_active,
       });
-      showSuccess('تم التحديث', `تم ${module.is_enabled ? 'تعطيل' : 'تفعيل'} الموديول بنجاح`);
+      showSuccess('تم التحديث', `تم ${module.is_active ? 'تعطيل' : 'تفعيل'} الموديول بنجاح`);
       await fetchModules();
     } catch (error) {
       console.error('Error toggling module:', error);
@@ -87,10 +90,12 @@ export function AIModulesAdmin() {
     setEditingModule(module);
     setEditForm({
       name: module.name,
+      display_name: module.display_name || '',
+      display_name_ar: module.display_name_ar || '',
       description: module.description || '',
-      is_premium: module.is_premium,
-      min_plan_level: module.min_plan_level,
-      is_enabled: module.is_enabled,
+      description_ar: module.description_ar || '',
+      is_active: module.is_active, // CRITICAL FIX: Use is_active
+      display_order: module.display_order || 0,
     });
     setShowEditModal(true);
   };
@@ -115,41 +120,21 @@ export function AIModulesAdmin() {
     }
   };
 
-  const categories = ['all', ...new Set(modules.map(m => m.category || 'uncategorized').filter(Boolean))];
-
+  // CRITICAL FIX: Remove category filter (category doesn't exist in DB)
   const filteredModules = modules.filter(module => {
     if (!module) return false;
     const matchesSearch = (module.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (module.module_key || '').toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || (module.category || 'uncategorized') === categoryFilter;
-    return matchesSearch && matchesCategory;
+      (module.display_name || '').toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
   });
 
   const stats = {
     total: modules.length,
-    enabled: modules.filter(m => m.is_enabled).length,
-    premium: modules.filter(m => m.is_premium).length,
-    free: modules.filter(m => !m.is_premium).length,
+    enabled: modules.filter(m => m.is_active).length, // CRITICAL FIX: Use is_active
+    disabled: modules.filter(m => !m.is_active).length,
   };
 
-  const getPlanLevelText = (level: number) => {
-    switch (level) {
-      case 1: return 'أساسي';
-      case 2: return 'احترافي';
-      case 3: return 'مؤسسي';
-      default: return `المستوى ${level}`;
-    }
-  };
-
-  const getCategoryBadgeColor = (category: string) => {
-    switch (category) {
-      case 'security': return 'bg-red-500/20 text-red-400';
-      case 'safety': return 'bg-orange-500/20 text-orange-400';
-      case 'analytics': return 'bg-blue-500/20 text-blue-400';
-      case 'operations': return 'bg-green-500/20 text-green-400';
-      default: return 'bg-white/20 text-white/70';
-    }
-  };
+  // Removed getPlanLevelText and getCategoryBadgeColor (fields don't exist)
 
   return (
     <div className="space-y-6">
@@ -185,23 +170,12 @@ export function AIModulesAdmin() {
         </div>
         <div className="stat-card">
           <div className="flex items-center gap-3">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-500/5">
-              <Brain className="w-6 h-6 text-amber-400" />
+            <div className="p-3 rounded-xl bg-gradient-to-br from-red-500/20 to-red-500/5">
+              <Brain className="w-6 h-6 text-red-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{stats.premium}</p>
-              <p className="text-sm text-white/60">مميز</p>
-            </div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-500/5">
-              <Brain className="w-6 h-6 text-blue-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.free}</p>
-              <p className="text-sm text-white/60">مجاني</p>
+              <p className="text-2xl font-bold">{stats.disabled}</p>
+              <p className="text-sm text-white/60">معطّل</p>
             </div>
           </div>
         </div>
@@ -219,17 +193,6 @@ export function AIModulesAdmin() {
               className="input pl-12 w-full"
             />
           </div>
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="input"
-          >
-            {categories.map(cat => (
-              <option key={cat} value={cat}>
-                {cat === 'all' ? 'جميع الفئات' : cat === 'security' ? 'الأمان' : cat === 'safety' ? 'السلامة' : cat === 'analytics' ? 'التحليلات' : cat === 'operations' ? 'العمليات' : cat}
-              </option>
-            ))}
-          </select>
         </div>
       </div>
 
@@ -246,7 +209,7 @@ export function AIModulesAdmin() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {filteredModules.map((module) => {
-            const Icon = moduleIcons[module.module_key] || Brain;
+            const Icon = Brain; // Use Brain icon for all modules
             return (
               <div key={module.id} className="card p-6 hover:bg-white/5 transition-colors">
                 <div className="flex items-start justify-between mb-4">
@@ -255,8 +218,8 @@ export function AIModulesAdmin() {
                       <Icon className="w-6 h-6 text-blue-400" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-lg">{module.name}</h3>
-                      <p className="text-sm text-white/50 font-mono">{module.module_key}</p>
+                      <h3 className="font-semibold text-lg">{module.display_name || module.name}</h3>
+                      <p className="text-sm text-white/50 font-mono">{module.name}</p>
                     </div>
                   </div>
                   <button
@@ -268,36 +231,22 @@ export function AIModulesAdmin() {
                 </div>
 
                 <p className="text-white/70 text-sm mb-4 line-clamp-2">
-                  {module.description || 'No description available'}
+                  {module.description || 'لا يوجد وصف متاح'}
                 </p>
-
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${getCategoryBadgeColor(module.category || 'uncategorized')}`}>
-                    {module.category || 'غير مصنف'}
-                  </span>
-                  {module.is_premium && (
-                    <span className="px-2 py-1 rounded text-xs font-medium bg-amber-500/20 text-amber-400">
-                      مميز
-                    </span>
-                  )}
-                  <span className="px-2 py-1 rounded text-xs font-medium bg-blue-500/20 text-blue-400">
-                    {getPlanLevelText(module.min_plan_level)}
-                  </span>
-                </div>
 
                 <div className="flex items-center justify-between pt-4 border-t border-white/10">
                   <span className="text-sm text-white/60">
-                    الحالة: {module.is_enabled ? 'مفعّل' : 'معطّل'}
+                    الحالة: {module.is_active ? 'مفعّل' : 'معطّل'}
                   </span>
                   <button
                     onClick={() => handleToggleModule(module)}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      module.is_enabled ? 'bg-blue-500' : 'bg-white/20'
+                      module.is_active ? 'bg-blue-500' : 'bg-white/20'
                     }`}
                   >
                     <span
                       className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        module.is_enabled ? 'translate-x-6' : 'translate-x-1'
+                        module.is_active ? 'translate-x-6' : 'translate-x-1'
                       }`}
                     />
                   </button>
@@ -318,13 +267,35 @@ export function AIModulesAdmin() {
       >
         <form onSubmit={handleSaveEdit} className="space-y-4">
           <div>
-            <label className="label">اسم الموديول</label>
+            <label className="label">اسم الموديول (مفتاح فريد)</label>
             <input
               type="text"
               value={editForm.name}
               onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
               className="input"
               required
+              disabled
+            />
+            <p className="text-xs text-white/50 mt-1">لا يمكن تغيير المفتاح الفريد</p>
+          </div>
+
+          <div>
+            <label className="label">اسم العرض (عربي)</label>
+            <input
+              type="text"
+              value={editForm.display_name}
+              onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
+              className="input"
+            />
+          </div>
+
+          <div>
+            <label className="label">اسم العرض (إنجليزي)</label>
+            <input
+              type="text"
+              value={editForm.display_name_ar}
+              onChange={(e) => setEditForm({ ...editForm, display_name_ar: e.target.value })}
+              className="input"
             />
           </div>
 
@@ -339,42 +310,37 @@ export function AIModulesAdmin() {
           </div>
 
           <div>
-            <label className="label">الحد الأدنى لمستوى الخطة</label>
-            <select
-              value={editForm.min_plan_level}
-              onChange={(e) => setEditForm({ ...editForm, min_plan_level: parseInt(e.target.value) })}
+            <label className="label">الوصف (عربي)</label>
+            <textarea
+              value={editForm.description_ar}
+              onChange={(e) => setEditForm({ ...editForm, description_ar: e.target.value })}
+              className="input min-h-[100px]"
+              rows={3}
+            />
+          </div>
+
+          <div>
+            <label className="label">ترتيب العرض</label>
+            <input
+              type="number"
+              value={editForm.display_order}
+              onChange={(e) => setEditForm({ ...editForm, display_order: parseInt(e.target.value) || 0 })}
               className="input"
-            >
-              <option value={1}>أساسي (المستوى 1)</option>
-              <option value={2}>احترافي (المستوى 2)</option>
-              <option value={3}>مؤسسي (المستوى 3)</option>
-            </select>
+              min="0"
+            />
           </div>
 
           <div className="space-y-3">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                checked={editForm.is_premium}
-                onChange={(e) => setEditForm({ ...editForm, is_premium: e.target.checked })}
-                className="w-5 h-5 rounded border-white/20 bg-white/5"
-              />
-              <div>
-                <p className="font-medium">موديول مميز</p>
-                <p className="text-sm text-white/50">يتطلب اشتراك مميز</p>
-              </div>
-            </label>
-
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={editForm.is_enabled}
-                onChange={(e) => setEditForm({ ...editForm, is_enabled: e.target.checked })}
+                checked={editForm.is_active}
+                onChange={(e) => setEditForm({ ...editForm, is_active: e.target.checked })}
                 className="w-5 h-5 rounded border-white/20 bg-white/5"
               />
               <div>
                 <p className="font-medium">تفعيل الموديول</p>
-                <p className="text-sm text-white/50">جعل الموديول متاحاً للمؤسسات</p>
+                <p className="text-sm text-white/50">جعل الموديول متاحاً على مستوى المنصة</p>
               </div>
             </label>
           </div>

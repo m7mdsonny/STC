@@ -80,7 +80,9 @@ export function AdminBackups() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = backup.file_path.split('/').pop() || 'backup.sql';
+      // CRITICAL FIX: Ensure file_path is a string before calling split
+      const filePath = typeof backup.file_path === 'string' ? backup.file_path : String(backup.file_path || '');
+      a.download = filePath.split('/').pop() || 'backup.sql';
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -118,7 +120,13 @@ export function AdminBackups() {
                 <div className="flex items-center gap-3">
                   <HardDrive className="w-5 h-5 text-stc-gold" />
                   <div>
-                    <p className="font-semibold">{backup.file_path.split('/').pop() || backup.file_path}</p>
+                    {/* CRITICAL FIX: Ensure file_path is a string before calling split */}
+                    <p className="font-semibold">
+                      {(() => {
+                        const filePath = typeof backup.file_path === 'string' ? backup.file_path : String(backup.file_path || '');
+                        return filePath.split('/').pop() || filePath || 'backup.sql';
+                      })()}
+                    </p>
                     <p className="text-xs text-white/50">
                       {new Date(backup.created_at).toLocaleString('ar-EG')}
                     </p>

@@ -2,20 +2,21 @@ import { apiClient } from '../apiClient';
 
 export interface AiModule {
   id: number;
-  module_key: string;
-  name: string;
+  name: string; // CRITICAL FIX: Use 'name' as unique identifier (not module_key)
+  display_name?: string;
+  display_name_ar?: string;
   description: string | null;
-  category: string;
-  is_enabled: boolean;
-  is_premium: boolean;
-  min_plan_level: number;
-  config_schema: Record<string, unknown>;
-  default_config: Record<string, unknown>;
-  required_camera_type: string | null;
-  min_fps: number;
-  min_resolution: string;
-  icon: string | null;
+  description_ar?: string | null;
+  is_active: boolean; // CRITICAL FIX: Backend uses 'is_active' not 'is_enabled'
   display_order: number;
+  config_schema?: Record<string, unknown>;
+  default_config?: Record<string, unknown>;
+  required_camera_type?: string | null;
+  min_fps?: number;
+  min_resolution?: string;
+  icon?: string | null;
+  // Removed fields that don't exist in database:
+  // module_key, category, is_premium, min_plan_level
 }
 
 export interface AiModuleConfig {
