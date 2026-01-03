@@ -37,6 +37,9 @@ cp "$CURRENT_DIR/AiModule.php" "$SERVER_PATH/app/Models/AiModule.php"
 echo "  → نسخ AiModuleSeeder.php"
 cp "$CURRENT_DIR/AiModuleSeeder.php" "$SERVER_PATH/database/seeders/AiModuleSeeder.php"
 
+echo "  → نسخ DatabaseSeeder.php"
+cp "$CURRENT_DIR/DatabaseSeeder.php" "$SERVER_PATH/database/seeders/DatabaseSeeder.php"
+
 # نسخ Controllers
 echo "  → نسخ FreeTrialRequestController.php"
 cp "$CURRENT_DIR/FreeTrialRequestController.php" "$SERVER_PATH/app/Http/Controllers/FreeTrialRequestController.php"
