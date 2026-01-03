@@ -34,12 +34,20 @@ export function AdminBackups() {
   const createBackup = async () => {
     setWorking(true);
     try {
-      await backupsApi.create();
-      showSuccess('تم الإنشاء', 'تم إنشاء النسخة الاحتياطية بنجاح');
+      const backup = await backupsApi.create();
+      showSuccess('تم الإنشاء', `تم إنشاء النسخة الاحتياطية بنجاح: ${backup.file_path}`);
       await load();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating backup:', error);
-      const errorMessage = error instanceof Error ? error.message : 'فشل إنشاء النسخة الاحتياطية';
+      // CRITICAL FIX: Extract error message properly
+      let errorMessage = 'فشل إنشاء النسخة الاحتياطية';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
       showError('خطأ في الإنشاء', errorMessage);
     } finally {
       setWorking(false);

@@ -31,13 +31,27 @@ export const backupsApi = {
   },
 
   create: async (description?: string): Promise<SystemBackup> => {
+    // CRITICAL FIX: Use proper error handling and response parsing
     const response = await apiClient.post<SystemBackup>('/backups', {
       description,
     });
-    if (response.error || !response.data) {
-      throw new Error(response.error || 'Failed to create backup');
+    if (response.error) {
+      // Extract error message from response
+      const errorMsg = typeof response.error === 'string' 
+        ? response.error 
+        : (response.error?.message || 'Failed to create backup');
+      throw new Error(errorMsg);
     }
-    return response.data;
+    if (!response.data) {
+      throw new Error('No data received from server');
+    }
+    // Ensure file_path is string
+    return {
+      ...response.data,
+      file_path: typeof response.data.file_path === 'string' 
+        ? response.data.file_path 
+        : String(response.data.file_path || 'backup.sql'),
+    };
   },
 
   restore: async (id: number, confirmed: boolean = false): Promise<{ message: string }> => {
