@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class AiModule extends BaseModel
 {
-    // Note: SoftDeletes removed - table doesn't have deleted_at column
-    // If soft deletes are needed, add deleted_at column via migration first
+    use SoftDeletes;
 
     protected $table = 'ai_modules';
 
