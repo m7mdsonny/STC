@@ -23,10 +23,10 @@ class DatabaseSeeder extends Seeder
 
         // 1. Create Distributors (only if not exists)
         // Note: distributors table only has: id, name, contact_email, timestamps, softDeletes
-        if (DB::table('distributors')->where('id', 1)->doesntExist()) {
+        if (DB::table('distributors')->where('name', 'STC Solutions Master Distributor')->doesntExist()) {
             DB::table('distributors')->insert([
             [
-                'id' => 1,
+                // 'id' => 1, // REMOVED - let database auto-increment to avoid duplicate key errors
                 'name' => 'STC Solutions Master Distributor',
                 'contact_email' => 'partner@stc-solutions.com',
                 'created_at' => now(),
@@ -39,11 +39,24 @@ class DatabaseSeeder extends Seeder
         // Note: organizations table has: id, distributor_id, reseller_id, name, name_en, logo_url, 
         // address, city, phone, email, tax_number, subscription_plan, max_cameras, max_edge_servers, 
         // is_active, timestamps, softDeletes
-        if (DB::table('organizations')->where('id', 1)->doesntExist()) {
+        // Get distributor_id (first distributor or create one)
+        $distributor = DB::table('distributors')->first();
+        if (!$distributor) {
+            $distributorId = DB::table('distributors')->insertGetId([
+                'name' => 'STC Solutions Master Distributor',
+                'contact_email' => 'partner@stc-solutions.com',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } else {
+            $distributorId = $distributor->id;
+        }
+        
+        if (DB::table('organizations')->where('name', 'Demo Corporation')->doesntExist()) {
             DB::table('organizations')->insert([
             [
-                'id' => 1,
-                'distributor_id' => 1,
+                // 'id' => 1, // REMOVED - let database auto-increment
+                'distributor_id' => $distributorId,
                 'reseller_id' => null,
                 'name' => 'Demo Corporation',
                 'name_en' => 'Demo Corporation',
@@ -142,11 +155,18 @@ class DatabaseSeeder extends Seeder
         // Note: licenses table has: id, organization_id, subscription_plan_id, plan, license_key, 
         // status, edge_server_id, max_cameras, modules, trial_ends_at, activated_at, expires_at, 
         // timestamps, softDeletes
-        if (DB::table('licenses')->where('id', 1)->doesntExist()) {
+        // Get organization_id (first organization)
+        $organization = DB::table('organizations')->where('name', 'Demo Corporation')->first();
+        if (!$organization) {
+            return; // Can't create license without organization
+        }
+        $organizationId = $organization->id;
+        
+        if (DB::table('licenses')->where('license_key', 'DEMO-CORP-2024-FULL-ACCESS')->doesntExist()) {
             DB::table('licenses')->insert([
             [
-                'id' => 1,
-                'organization_id' => 1,
+                // 'id' => 1, // REMOVED - let database auto-increment
+                'organization_id' => $organizationId,
                 'subscription_plan_id' => null,
                 'plan' => 'basic',
                 'license_key' => 'DEMO-CORP-2024-FULL-ACCESS',
@@ -164,12 +184,13 @@ class DatabaseSeeder extends Seeder
         }
 
         // 5. Create Edge Servers (only if not exists)
+        // Note: Don't specify 'id' - let database auto-increment to avoid duplicate key errors
         if (DB::table('edge_servers')->where('edge_id', 'EDGE-DEMO-MAIN-001')->doesntExist()) {
             DB::table('edge_servers')->insert([
             [
-                'id' => 1,
+                // 'id' => 1, // REMOVED - let database auto-increment
                 'edge_id' => 'EDGE-DEMO-MAIN-001',
-                'organization_id' => 1,
+                'organization_id' => $organizationId,
                 'name' => 'Main Building Edge Server',
                 'location' => 'Building A - Server Room',
                 'version' => '1.0.0',
@@ -192,9 +213,9 @@ class DatabaseSeeder extends Seeder
         if (DB::table('edge_servers')->where('edge_id', 'EDGE-DEMO-GATE-002')->doesntExist()) {
             DB::table('edge_servers')->insert([
             [
-                'id' => 2,
+                // 'id' => 2, // REMOVED - let database auto-increment
                 'edge_id' => 'EDGE-DEMO-GATE-002',
-                'organization_id' => 1,
+                'organization_id' => $organizationId,
                 'name' => 'Gate Entrance Edge Server',
                 'location' => 'Main Gate',
                 'version' => '1.0.0',
@@ -231,7 +252,7 @@ class DatabaseSeeder extends Seeder
             $daysAgo = rand(0, 30);
             $events[] = [
                 'edge_id' => rand(1, 2) === 1 ? 'EDGE-DEMO-MAIN-001' : 'EDGE-DEMO-GATE-002',
-                'organization_id' => 1,
+                'organization_id' => $organizationId,
                 'camera_id' => 'CAM-' . str_pad(rand(1, 10), 3, '0', STR_PAD_LEFT),
                 'event_type' => $eventType['type'],
                 'severity' => $eventType['severity'],
@@ -259,7 +280,7 @@ class DatabaseSeeder extends Seeder
             $daysAgo = rand(0, 15);
             $notifications[] = [
                 'user_id' => rand(2, 4),
-                'organization_id' => 1,
+                'organization_id' => $organizationId,
                 'channel' => ['push', 'email', 'sms', 'whatsapp'][rand(0, 3)],
                 'title' => 'Alert Notification',
                 'message' => 'You have a new alert that requires attention',
