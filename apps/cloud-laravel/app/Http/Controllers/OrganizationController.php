@@ -10,12 +10,18 @@ use App\Models\User;
 use App\Http\Requests\OrganizationStoreRequest;
 use App\Http\Requests\OrganizationUpdateRequest;
 use App\Helpers\RoleHelper;
+use App\Exceptions\DomainActionException;
+use App\Services\OrganizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class OrganizationController extends Controller
 {
+    public function __construct(private OrganizationService $organizationService)
+    {
+    }
+
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -63,25 +69,12 @@ class OrganizationController extends Controller
 
     public function store(OrganizationStoreRequest $request): JsonResponse
     {
-        // Authorization is handled by OrganizationStoreRequest
         $data = $request->validated();
 
-        $plan = SubscriptionPlan::where('name', $data['subscription_plan'])->first();
-        if (!$plan) {
-            $plan = SubscriptionPlan::first();
-        }
-
-        if ($plan) {
-            $data['max_cameras'] = $data['max_cameras'] ?? $plan->max_cameras;
-            $data['max_edge_servers'] = $data['max_edge_servers'] ?? $plan->max_edge_servers;
-        }
-
-        $organization = Organization::create($data);
-        if ($plan && property_exists($plan, 'sms_quota')) {
-            $organization->smsQuota()->create([
-                'monthly_limit' => $plan->sms_quota ?? 0,
-                'used_this_month' => 0,
-            ]);
+        try {
+            $organization = $this->organizationService->createOrganization($data, $request->user());
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
 
         return response()->json($organization, 201);
@@ -89,10 +82,13 @@ class OrganizationController extends Controller
 
     public function update(OrganizationUpdateRequest $request, Organization $organization): JsonResponse
     {
-        // Authorization is handled by OrganizationUpdateRequest
         $data = $request->validated();
 
-        $organization->update($data);
+        try {
+            $organization = $this->organizationService->updateOrganization($organization, $data, $request->user());
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
 
         return response()->json($organization);
     }
@@ -101,8 +97,13 @@ class OrganizationController extends Controller
     {
         // Use Policy for authorization
         $this->authorize('delete', $organization);
-        
-        $organization->delete();
+
+        try {
+            $this->organizationService->deleteOrganization($organization, request()->user());
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
+
         return response()->json(['message' => 'Organization deleted']);
     }
 
@@ -110,9 +111,12 @@ class OrganizationController extends Controller
     {
         // Use Policy for authorization
         $this->authorize('toggleActive', $organization);
-        
-        $organization->is_active = !$organization->is_active;
-        $organization->save();
+
+        try {
+            $organization = $this->organizationService->toggleOrganization($organization, request()->user());
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
 
         return response()->json($organization);
     }
@@ -126,14 +130,10 @@ class OrganizationController extends Controller
             'max_edge_servers' => 'nullable|integer|min:1',
         ]);
 
-        $organization->update($data);
-
-        $plan = SubscriptionPlan::where('name', $data['subscription_plan'])->first();
-        if ($plan && property_exists($plan, 'sms_quota')) {
-            $organization->smsQuota()->updateOrCreate(
-                ['organization_id' => $organization->id],
-                ['monthly_limit' => $plan->sms_quota ?? 0]
-            );
+        try {
+            $organization = $this->organizationService->updatePlan($organization, $data, $request->user());
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
 
         return response()->json($organization);

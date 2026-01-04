@@ -41,6 +41,23 @@ class EdgeServerUpdateRequest extends FormRequest
             'organization_id' => 'sometimes|exists:organizations,id',
             'license_id' => 'nullable|exists:licenses,id',
             'edge_id' => ['sometimes', 'string', Rule::unique('edge_servers', 'edge_id')->ignore($edgeServerId)],
+            'ip_address' => [
+                'nullable',
+                'string',
+                'max:255',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    if ($value === null || $value === '') {
+                        return;
+                    }
+
+                    $isIp = filter_var($value, FILTER_VALIDATE_IP) !== false;
+                    $isHostname = preg_match('/^([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+$/', $value) === 1;
+
+                    if (!$isIp && !$isHostname) {
+                        $fail('The ' . str_replace('_', ' ', $attribute) . ' must be a valid IP address or hostname.');
+                    }
+                },
+            ],
             'location' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'internal_ip' => 'nullable|ip',
