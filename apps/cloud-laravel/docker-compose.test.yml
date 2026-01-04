@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  laravel-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      APP_ENV: testing
+      APP_DEBUG: false
+      APP_KEY: base64:qZnJtyvgoVyzwj4oRN94sqOmay/5X1pTmYqXG24ov80=
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /tmp/sqlite-testing.sqlite
+      CACHE_DRIVER: array
+      QUEUE_CONNECTION: sync
+      SESSION_DRIVER: array
+    working_dir: /app
+    command: ["php", "artisan", "test"]
