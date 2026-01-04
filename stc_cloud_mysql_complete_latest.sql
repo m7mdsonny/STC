@@ -1012,7 +1012,7 @@ INSERT INTO `organizations` (`id`, `distributor_id`, `reseller_id`, `name`, `nam
 
 -- 4. Users (Super Admin)
 INSERT INTO `users` (`id`, `organization_id`, `name`, `email`, `password`, `role`, `is_super_admin`, `is_active`, `phone`) VALUES
-(1, NULL, 'Super Admin', 'superadmin@stc-solutions.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'super_admin', TRUE, TRUE, '+20 100 000 0000');
+(1, NULL, 'Super Administrator', 'superadmin@demo.local', '$2y$12$LT9IHub60ZTvgPU0qc9qpe5KaLapgbxlo0U9FAot9Z.ASUEGBRJuK', 'super_admin', TRUE, TRUE, '+966 50 000 0001');
 
 -- 5. Users (Organization Owners & Other Roles)
 INSERT INTO `users` (`id`, `organization_id`, `name`, `email`, `password`, `role`, `is_super_admin`, `is_active`, `phone`) VALUES
