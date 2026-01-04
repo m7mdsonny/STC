@@ -101,12 +101,12 @@
 
 ## 📋 بيانات الدخول من SQL Dump (محدثة)
 
-إذا استخدمت `stc_cloud_mysql_complete.sql`:
+إذا استخدمت `stc_cloud_mysql_canonical_latest.sql` أو `stc_cloud_mysql_complete_latest.sql`:
 
 ### Super Admin:
 ```
-Email: superadmin@stc-solutions.com
-Password: password
+Email: superadmin@demo.local
+Password: Super@12345
 Role: super_admin
 is_super_admin: TRUE
 Organization ID: NULL
