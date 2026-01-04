@@ -1135,13 +1135,12 @@ INSERT INTO `ai_modules` (`id`, `name`, `display_name`, `display_name_ar`, `desc
 (9, 'abandoned_object', 'Abandoned Object', 'الأشياء المتروكة', 'Detect abandoned objects', 'كشف الأشياء المتروكة', TRUE, 9),
 (10, 'fire_detection', 'Fire Detection', 'كشف الحرائق', 'Detect fires in video', 'كشف الحرائق في الفيديو', TRUE, 10);
 
--- 16. AI Module Configs
-INSERT INTO `ai_module_configs` (`id`, `organization_id`, `ai_module_id`, `config`, `is_enabled`) VALUES
-(1, 1, 2, '{"threshold": 0.85, "max_faces": 10}', TRUE),
-(2, 1, 4, '{"threshold": 0.80, "vehicle_types": ["car", "truck"]}', TRUE),
-(3, 1, 5, '{"threshold": 0.90, "regions": ["saudi", "uae"]}', TRUE),
-(4, 2, 2, '{"threshold": 0.90, "max_faces": 20}', TRUE),
-(5, 2, 4, '{"threshold": 0.85, "vehicle_types": ["all"]}', TRUE);
+INSERT INTO `ai_module_configs` (`id`, `organization_id`, `module_id`, `config`, `is_enabled`, `is_licensed`, `confidence_threshold`, `alert_threshold`, `cooldown_seconds`, `schedule_enabled`, `schedule`) VALUES
+(1, 1, 2, '{"threshold": 0.85, "max_faces": 10}', TRUE, TRUE, 0.85, NULL, 0, FALSE, NULL),
+(2, 1, 4, '{"threshold": 0.80, "vehicle_types": ["car", "truck"]}', TRUE, TRUE, 0.80, NULL, 0, FALSE, NULL),
+(3, 1, 5, '{"threshold": 0.90, "regions": ["saudi", "uae"]}', TRUE, TRUE, 0.90, NULL, 0, FALSE, NULL),
+(4, 2, 2, '{"threshold": 0.90, "max_faces": 20}', TRUE, TRUE, 0.90, NULL, 0, FALSE, NULL),
+(5, 2, 4, '{"threshold": 0.85, "vehicle_types": ["all"]}', TRUE, TRUE, 0.85, NULL, 0, FALSE, NULL);
 
 -- 17. AI Commands
 INSERT INTO `ai_commands` (`id`, `organization_id`, `title`, `status`, `payload`) VALUES
