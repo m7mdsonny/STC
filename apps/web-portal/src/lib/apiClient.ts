@@ -1,5 +1,4 @@
 // Default API URL - can be overridden by VITE_API_URL environment variable
-// Prefer same-origin API when available to avoid cross-host network failures
 // Production fallback: https://api.stcsolutions.online/api/v1
 const DEFAULT_API_URL = 'https://api.stcsolutions.online/api/v1';
 
@@ -8,10 +7,7 @@ const resolveDefaultApiUrl = () => {
     return import.meta.env.VITE_API_URL as string;
   }
 
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    return `${window.location.origin}/api/v1`;
-  }
-
+  // In production we must always hit the dedicated API domain; do not infer from window.location
   return DEFAULT_API_URL;
 };
 
