@@ -233,7 +233,7 @@ CREATE TABLE `licenses` (
     `plan` VARCHAR(100) DEFAULT 'basic',
     `license_key` VARCHAR(255) UNIQUE NOT NULL,
     `status` VARCHAR(50) DEFAULT 'active',
-    `edge_server_id` VARCHAR(255) NULL,
+    `edge_server_id` BIGINT UNSIGNED NULL,
     `max_cameras` INT UNSIGNED DEFAULT 4,
     `modules` JSON NULL,
     `trial_ends_at` TIMESTAMP NULL,
@@ -246,7 +246,8 @@ CREATE TABLE `licenses` (
     FOREIGN KEY (`subscription_plan_id`) REFERENCES `subscription_plans`(`id`) ON DELETE SET NULL,
     INDEX `idx_licenses_organization` (`organization_id`),
     INDEX `idx_licenses_key` (`license_key`),
-    INDEX `idx_licenses_status` (`status`)
+    INDEX `idx_licenses_status` (`status`),
+    INDEX `idx_licenses_edge_server` (`edge_server_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
@@ -257,9 +258,15 @@ CREATE TABLE `edge_servers` (
     `organization_id` BIGINT UNSIGNED NOT NULL,
     `license_id` BIGINT UNSIGNED NULL,
     `edge_id` VARCHAR(255) UNIQUE NOT NULL,
+    `edge_key` VARCHAR(255) UNIQUE NULL,
+    `edge_secret` VARCHAR(255) NULL,
+    `secret_delivered_at` TIMESTAMP NULL,
     `name` VARCHAR(255) NULL,
     `hardware_id` VARCHAR(255) NULL,
     `ip_address` VARCHAR(45) NULL,
+    `internal_ip` VARCHAR(45) NULL,
+    `public_ip` VARCHAR(45) NULL,
+    `hostname` VARCHAR(255) NULL,
     `version` VARCHAR(50) NULL,
     `location` VARCHAR(255) NULL,
     `notes` TEXT NULL,
@@ -273,8 +280,14 @@ CREATE TABLE `edge_servers` (
     FOREIGN KEY (`license_id`) REFERENCES `licenses`(`id`) ON DELETE SET NULL,
     INDEX `idx_edge_servers_organization` (`organization_id`),
     INDEX `idx_edge_servers_edge_id` (`edge_id`),
+    INDEX `idx_edge_servers_license` (`license_id`),
     INDEX `idx_edge_servers_online` (`online`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Link licenses to edge servers after both tables exist
+ALTER TABLE `licenses`
+    ADD CONSTRAINT `fk_licenses_edge_server`
+        FOREIGN KEY (`edge_server_id`) REFERENCES `edge_servers`(`id`) ON DELETE SET NULL;
 
 -- ============================================
 -- 8. CAMERAS
@@ -425,6 +438,7 @@ CREATE TABLE `events` (
     FOREIGN KEY (`registered_face_id`) REFERENCES `registered_faces`(`id`) ON DELETE SET NULL,
     FOREIGN KEY (`registered_vehicle_id`) REFERENCES `registered_vehicles`(`id`) ON DELETE SET NULL,
     INDEX `idx_events_organization` (`organization_id`),
+    INDEX `idx_events_edge_server` (`edge_server_id`),
     INDEX `idx_events_edge_id` (`edge_id`),
     INDEX `idx_events_occurred_at` (`occurred_at`),
     INDEX `idx_events_severity` (`severity`),
@@ -455,6 +469,7 @@ CREATE TABLE `notifications` (
     FOREIGN KEY (`edge_server_id`) REFERENCES `edge_servers`(`id`) ON DELETE SET NULL,
     INDEX `idx_notifications_organization` (`organization_id`),
     INDEX `idx_notifications_user` (`user_id`),
+    INDEX `idx_notifications_edge_server` (`edge_server_id`),
     INDEX `idx_notifications_status` (`status`),
     INDEX `idx_notifications_read` (`read_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -464,6 +479,7 @@ CREATE TABLE `notifications` (
 -- ============================================
 CREATE TABLE `ai_modules` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `module_key` VARCHAR(255) UNIQUE NULL,
     `name` VARCHAR(100) UNIQUE NOT NULL,
     `display_name` VARCHAR(255) NOT NULL,
     `display_name_ar` VARCHAR(255) NULL,
@@ -479,6 +495,7 @@ CREATE TABLE `ai_modules` (
     `is_active` BOOLEAN DEFAULT TRUE,
     `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_at` TIMESTAMP NULL,
     INDEX `idx_ai_modules_active` (`is_active`),
     INDEX `idx_ai_modules_display_order` (`display_order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -489,16 +506,22 @@ CREATE TABLE `ai_modules` (
 CREATE TABLE `ai_module_configs` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `organization_id` BIGINT UNSIGNED NOT NULL,
-    `ai_module_id` BIGINT UNSIGNED NOT NULL,
+    `module_id` BIGINT UNSIGNED NOT NULL,
     `config` JSON NULL,
     `is_enabled` BOOLEAN DEFAULT FALSE,
+    `is_licensed` BOOLEAN DEFAULT FALSE,
+    `confidence_threshold` DECIMAL(5,2) NULL,
+    `alert_threshold` INT UNSIGNED NULL,
+    `cooldown_seconds` INT UNSIGNED DEFAULT 0,
+    `schedule_enabled` BOOLEAN DEFAULT FALSE,
+    `schedule` JSON NULL,
     `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`organization_id`) REFERENCES `organizations`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`ai_module_id`) REFERENCES `ai_modules`(`id`) ON DELETE CASCADE,
-    UNIQUE KEY `unique_org_module` (`organization_id`, `ai_module_id`),
+    FOREIGN KEY (`module_id`) REFERENCES `ai_modules`(`id`) ON DELETE CASCADE,
+    UNIQUE KEY `unique_org_module` (`organization_id`, `module_id`),
     INDEX `idx_module_configs_organization` (`organization_id`),
-    INDEX `idx_module_configs_module` (`ai_module_id`)
+    INDEX `idx_module_configs_module` (`module_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
@@ -525,6 +548,7 @@ CREATE TABLE `ai_commands` (
 CREATE TABLE `integrations` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `organization_id` BIGINT UNSIGNED NOT NULL,
+    `edge_server_id` BIGINT UNSIGNED NULL,
     `type` VARCHAR(100) NOT NULL,
     `name` VARCHAR(255) NOT NULL,
     `connection_config` JSON NULL,
@@ -533,7 +557,9 @@ CREATE TABLE `integrations` (
     `updated_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `deleted_at` TIMESTAMP NULL,
     FOREIGN KEY (`organization_id`) REFERENCES `organizations`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`edge_server_id`) REFERENCES `edge_servers`(`id`) ON DELETE SET NULL,
     INDEX `idx_integrations_organization` (`organization_id`),
+    INDEX `idx_integrations_edge_server` (`edge_server_id`),
     INDEX `idx_integrations_type` (`type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -1109,13 +1135,12 @@ INSERT INTO `ai_modules` (`id`, `name`, `display_name`, `display_name_ar`, `desc
 (9, 'abandoned_object', 'Abandoned Object', 'الأشياء المتروكة', 'Detect abandoned objects', 'كشف الأشياء المتروكة', TRUE, 9),
 (10, 'fire_detection', 'Fire Detection', 'كشف الحرائق', 'Detect fires in video', 'كشف الحرائق في الفيديو', TRUE, 10);
 
--- 16. AI Module Configs
-INSERT INTO `ai_module_configs` (`id`, `organization_id`, `ai_module_id`, `config`, `is_enabled`) VALUES
-(1, 1, 2, '{"threshold": 0.85, "max_faces": 10}', TRUE),
-(2, 1, 4, '{"threshold": 0.80, "vehicle_types": ["car", "truck"]}', TRUE),
-(3, 1, 5, '{"threshold": 0.90, "regions": ["saudi", "uae"]}', TRUE),
-(4, 2, 2, '{"threshold": 0.90, "max_faces": 20}', TRUE),
-(5, 2, 4, '{"threshold": 0.85, "vehicle_types": ["all"]}', TRUE);
+INSERT INTO `ai_module_configs` (`id`, `organization_id`, `module_id`, `config`, `is_enabled`, `is_licensed`, `confidence_threshold`, `alert_threshold`, `cooldown_seconds`, `schedule_enabled`, `schedule`) VALUES
+(1, 1, 2, '{"threshold": 0.85, "max_faces": 10}', TRUE, TRUE, 0.85, NULL, 0, FALSE, NULL),
+(2, 1, 4, '{"threshold": 0.80, "vehicle_types": ["car", "truck"]}', TRUE, TRUE, 0.80, NULL, 0, FALSE, NULL),
+(3, 1, 5, '{"threshold": 0.90, "regions": ["saudi", "uae"]}', TRUE, TRUE, 0.90, NULL, 0, FALSE, NULL),
+(4, 2, 2, '{"threshold": 0.90, "max_faces": 20}', TRUE, TRUE, 0.90, NULL, 0, FALSE, NULL),
+(5, 2, 4, '{"threshold": 0.85, "vehicle_types": ["all"]}', TRUE, TRUE, 0.85, NULL, 0, FALSE, NULL);
 
 -- 17. AI Commands
 INSERT INTO `ai_commands` (`id`, `organization_id`, `title`, `status`, `payload`) VALUES
