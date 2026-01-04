@@ -15,7 +15,7 @@ return new class extends Migration
 
         $database = DB::getDatabaseName();
 
-        // Drop any foreign keys that reference edge_server_id regardless of their name.
+        // Drop any foreign keys that still reference edge_server_id (ghost or otherwise)
         $foreignKeys = DB::table('information_schema.KEY_COLUMN_USAGE')
             ->where('TABLE_SCHEMA', $database)
             ->where('TABLE_NAME', 'licenses')
@@ -31,11 +31,11 @@ return new class extends Migration
                     $table->dropForeign($constraint);
                 });
             } catch (\Throwable $e) {
-                // Best-effort cleanup: MariaDB may report ghost constraints
+                // Ignore drop failures on MariaDB ghost constraints
             }
         }
 
-        // Drop any indexes on edge_server_id without assuming names.
+        // Drop any indexes on edge_server_id regardless of their generated name
         $indexes = DB::table('information_schema.STATISTICS')
             ->select('INDEX_NAME')
             ->where('TABLE_SCHEMA', $database)
@@ -77,11 +77,7 @@ return new class extends Migration
                 || $column->IS_NULLABLE !== 'YES';
 
             if ($needsAlter) {
-                try {
-                    DB::statement('ALTER TABLE `licenses` MODIFY COLUMN `edge_server_id` BIGINT UNSIGNED NULL');
-                } catch (\Throwable $e) {
-                    // Leave column untouched if alter is blocked
-                }
+                DB::statement('ALTER TABLE `licenses` MODIFY COLUMN `edge_server_id` BIGINT UNSIGNED NULL');
             }
         }
 
@@ -93,13 +89,9 @@ return new class extends Migration
             ->exists();
 
         if (!$hasForeign && Schema::hasTable('edge_servers')) {
-            try {
-                Schema::table('licenses', function (Blueprint $table) {
-                    $table->foreign('edge_server_id')->references('id')->on('edge_servers')->nullOnDelete();
-                });
-            } catch (\Throwable $e) {
-                // If constraint already exists under another name, ignore
-            }
+            Schema::table('licenses', function (Blueprint $table) {
+                $table->foreign('edge_server_id')->references('id')->on('edge_servers')->nullOnDelete();
+            });
         }
     }
 
@@ -126,14 +118,14 @@ return new class extends Migration
                     $table->dropForeign($constraint);
                 });
             } catch (\Throwable $e) {
-                // Best-effort only
+                // Best-effort cleanup only
             }
         }
 
         try {
             DB::statement('ALTER TABLE `licenses` MODIFY COLUMN `edge_server_id` VARCHAR(255) NULL');
         } catch (\Throwable $e) {
-            // If downgrade is unsafe, leave column as-is
+            // Leave column as-is if downgrade is unsafe
         }
     }
 };
