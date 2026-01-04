@@ -6,6 +6,7 @@
 ## الحلول المطبقة
 
 ### 1. تصحيح API URL الافتراضي
+- تم تفضيل عنوان API من نفس النطاق (`{window.location.origin}/api/v1`) إذا لم يتم ضبط `VITE_API_URL`
 - تم تغيير `DEFAULT_API_URL` من `https://stcsolutions.online/api/v1` إلى `https://api.stcsolutions.online/api/v1`
 
 ### 2. تحسين معالجة الأخطاء
@@ -23,8 +24,10 @@
 
 افتح Developer Console في المتصفح (F12) وتحقق من:
 ```javascript
-// يجب أن يظهر:
-API Base URL: https://api.stcsolutions.online/api/v1
+// يجب أن يظهر أحد الخيارين حسب البيئة:
+// 1) نفس النطاق (مثلاً http://your-host/api/v1)
+// 2) القيمة المضبوطة في VITE_API_URL أو القيمة الافتراضية https://api.stcsolutions.online/api/v1
+console.log('API Base URL:', import.meta.env.VITE_API_URL || `${window.location.origin}/api/v1`);
 ```
 
 ### الخطوة 2: التحقق من CORS في Backend
