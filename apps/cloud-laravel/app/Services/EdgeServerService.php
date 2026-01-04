@@ -2,14 +2,147 @@
 
 namespace App\Services;
 
-use App\Models\EdgeServer;
+use App\Exceptions\DomainActionException;
+use App\Helpers\RoleHelper;
 use App\Models\Camera;
+use App\Models\EdgeServer;
+use App\Models\License;
+use App\Models\User;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Str;
 
 class EdgeServerService
 {
+    public function __construct(private OrganizationCapabilitiesResolver $capabilities)
+    {
+    }
+
+    public function createEdgeServer(array $data, User $actor): array
+    {
+        $organizationId = RoleHelper::isSuperAdmin($actor->role, $actor->is_super_admin ?? false)
+            ? ($data['organization_id'] ?? $actor->organization_id)
+            : $actor->organization_id;
+
+        if (!$organizationId) {
+            throw new DomainActionException('Organization is required to create an edge server', 422);
+        }
+
+        $organization = $this->capabilities->ensureEdgeServerCreation($actor, (int) $organizationId);
+
+        $licenseId = $data['license_id'] ?? null;
+        if ($licenseId) {
+            $license = License::find($licenseId);
+            if (!$license || $license->organization_id !== $organization->id) {
+                throw new DomainActionException('License does not belong to this organization', 403);
+            }
+
+            $existing = EdgeServer::where('license_id', $licenseId)->first();
+            if ($existing) {
+                throw new DomainActionException('License is already bound to another edge server', 409);
+            }
+        }
+
+        $edgeKey = 'edge_' . Str::random(32);
+        $edgeSecret = Str::random(64);
+        $encryptedSecret = Crypt::encryptString($edgeSecret);
+
+        try {
+            $edgeServer = DB::transaction(function () use ($data, $organization, $licenseId, $edgeKey, $encryptedSecret) {
+                $edgeServer = EdgeServer::create([
+                    'name' => $data['name'] ?? null,
+                    'organization_id' => $organization->id,
+                    'license_id' => $licenseId,
+                    'edge_id' => $data['edge_id'] ?? Str::uuid()->toString(),
+                    'edge_key' => $edgeKey,
+                    'ip_address' => $data['ip_address'] ?? null,
+                    'internal_ip' => $data['internal_ip'] ?? null,
+                    'public_ip' => $data['public_ip'] ?? null,
+                    'hostname' => $data['hostname'] ?? null,
+                    'location' => $data['location'] ?? null,
+                    'notes' => $data['notes'] ?? null,
+                    'online' => false,
+                ]);
+
+                $edgeServer->setAttribute('edge_secret', $encryptedSecret);
+                $edgeServer->save();
+
+                if ($licenseId) {
+                    License::where('id', $licenseId)->update(['edge_server_id' => $edgeServer->id]);
+                }
+
+                $edgeServer->update(['secret_delivered_at' => now()]);
+
+                return $edgeServer;
+            });
+        } catch (QueryException $e) {
+            throw new DomainActionException('Failed to create edge server: ' . $e->getMessage(), 500);
+        }
+
+        $edgeServer->load(['organization', 'license']);
+
+        return [
+            'edge_server' => $edgeServer,
+            'edge_key' => $edgeKey,
+            'edge_secret' => $edgeSecret,
+        ];
+    }
+
+    public function updateEdgeServer(EdgeServer $edgeServer, array $data, User $actor): EdgeServer
+    {
+        $this->capabilities->ensureEdgeServerCreation($actor, $edgeServer->organization_id);
+
+        return DB::transaction(function () use ($edgeServer, $data) {
+            if (array_key_exists('license_id', $data)) {
+                $newLicenseId = $data['license_id'];
+
+                if ($newLicenseId === null || $newLicenseId === '') {
+                    if ($edgeServer->license_id) {
+                        License::where('id', $edgeServer->license_id)->update(['edge_server_id' => null]);
+                    }
+                    $data['license_id'] = null;
+                } else {
+                    $license = License::findOrFail($newLicenseId);
+                    if ($license->organization_id !== $edgeServer->organization_id) {
+                        throw new DomainActionException('License does not belong to this edge server\'s organization', 403);
+                    }
+
+                    $existingEdge = EdgeServer::where('license_id', $newLicenseId)
+                        ->where('id', '!=', $edgeServer->id)
+                        ->first();
+                    if ($existingEdge) {
+                        throw new DomainActionException('License is already bound to another edge server', 409);
+                    }
+
+                    if ($edgeServer->license_id && $edgeServer->license_id != $newLicenseId) {
+                        License::where('id', $edgeServer->license_id)->update(['edge_server_id' => null]);
+                    }
+
+                    $license->update(['edge_server_id' => $edgeServer->id]);
+                }
+            }
+
+            $edgeServer->update($data);
+
+            return $edgeServer->load(['organization', 'license']);
+        });
+    }
+
+    public function deleteEdgeServer(EdgeServer $edgeServer, User $actor): void
+    {
+        $this->capabilities->ensureEdgeServerCreation($actor, $edgeServer->organization_id);
+
+        DB::transaction(function () use ($edgeServer) {
+            if ($edgeServer->license_id) {
+                License::where('id', $edgeServer->license_id)->update(['edge_server_id' => null]);
+            }
+
+            $edgeServer->delete();
+        });
+    }
     /**
      * Send camera configuration to Edge Server
      * 

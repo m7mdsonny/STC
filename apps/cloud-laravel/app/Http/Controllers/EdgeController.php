@@ -5,22 +5,17 @@ namespace App\Http\Controllers;
 use App\Helpers\RoleHelper;
 use App\Http\Requests\EdgeServerStoreRequest;
 use App\Http\Requests\EdgeServerUpdateRequest;
-use App\Services\SubscriptionService;
+use App\Exceptions\DomainActionException;
+use App\Services\EdgeServerService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\EdgeServer;
 use App\Models\EdgeServerLog;
-use App\Models\License;
-use App\Models\Organization;
-use Illuminate\Support\Str;
 
 class EdgeController extends Controller
 {
-    protected SubscriptionService $subscriptionService;
-
-    public function __construct(SubscriptionService $subscriptionService)
+    public function __construct(private EdgeServerService $edgeServerService)
     {
-        $this->subscriptionService = $subscriptionService;
     }
     public function index(Request $request): JsonResponse
     {
@@ -78,167 +73,35 @@ class EdgeController extends Controller
 
     public function store(EdgeServerStoreRequest $request): JsonResponse
     {
-        // Authorization is handled by EdgeServerStoreRequest
         $data = $request->validated();
-        
         $user = $request->user();
-        
-        // CRITICAL FIX: Ensure organization_id is ALWAYS set correctly for Organization Owner/Admin
-        // For non-super-admin users (Owner, Admin, etc.), ALWAYS use their organization_id
-        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
-            // Force organization_id from authenticated user (Owner/Admin can only create for their org)
-            $organizationId = $user->organization_id;
-            $data['organization_id'] = $user->organization_id;
-            
-            // Validate user has organization
-            if (!$organizationId) {
-                return response()->json([
-                    'message' => 'User must be assigned to an organization to create edge servers'
-                ], 403);
-            }
-        } else {
-            // Super admin can specify organization_id, but validate it exists
-            $organizationId = $data['organization_id'] ?? null;
-            if (!$organizationId) {
-                return response()->json([
-                    'message' => 'organization_id is required'
-                ], 422);
-            }
-        }
 
-        // Check subscription limit enforcement
         try {
-            $org = Organization::findOrFail($organizationId);
-            $subscriptionService = app(\App\Services\SubscriptionService::class);
-            $subscriptionService->assertCanCreateEdge($org);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage()
-            ], 403);
+            $result = $this->edgeServerService->createEdgeServer($data, $user);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
 
-        // If license_id provided, verify it belongs to the organization
-        if (!empty($data['license_id'])) {
-            $license = License::findOrFail($data['license_id']);
-            if ($license->organization_id !== (int) $organizationId) {
-                return response()->json(['message' => 'License does not belong to the specified organization'], 403);
-            }
+        $edgeServer = $result['edge_server'];
+        $response = $edgeServer->toArray();
+        unset($response['edge_secret']);
+        $response['edge_key'] = $result['edge_key'];
+        $response['edge_secret'] = $result['edge_secret'];
 
-            // Check if license is already bound to another edge server
-            $existingEdge = EdgeServer::where('license_id', $data['license_id'])->first();
-            if ($existingEdge) {
-                return response()->json(['message' => 'License is already bound to another edge server'], 409);
-            }
-        }
-
-        // Generate edge_key and edge_secret for HMAC authentication
-        $edgeKey = 'edge_' . Str::random(32);
-        $edgeSecret = Str::random(64);
-
-        // SECURITY: Encrypt edge_secret before storing
-        $encryptedSecret = \Illuminate\Support\Facades\Crypt::encryptString($edgeSecret);
-
-        $edgeServer = EdgeServer::create([
-            'name' => $data['name'],
-            'organization_id' => $organizationId,
-            'license_id' => $data['license_id'] ?? null,
-            'edge_id' => $data['edge_id'] ?? Str::uuid()->toString(),
-            'edge_key' => $edgeKey,
-            // edge_secret stored encrypted (not in fillable, set directly)
-            'location' => $data['location'] ?? null,
-            'notes' => $data['notes'] ?? null,
-            'internal_ip' => $data['internal_ip'] ?? null,
-            'public_ip' => $data['public_ip'] ?? null,
-            'hostname' => $data['hostname'] ?? null,
-            'online' => false,
-        ]);
-        
-        // Set encrypted secret directly (bypassing fillable)
-        $edgeServer->setAttribute('edge_secret', $encryptedSecret);
-        $edgeServer->save();
-
-        // If license_id was provided, update the license to link it to this edge server
-        if (!empty($data['license_id'])) {
-            $license = License::findOrFail($data['license_id']);
-            $license->update(['edge_server_id' => $edgeServer->id]);
-        } else {
-            // Auto-link first available license if no license was specified
-            $availableLicense = License::where('organization_id', $organizationId)
-                ->where('status', 'active')
-                ->whereNull('edge_server_id')
-                ->first();
-            
-            if ($availableLicense) {
-                $edgeServer->update(['license_id' => $availableLicense->id]);
-                $availableLicense->update(['edge_server_id' => $edgeServer->id]);
-            }
-        }
-
-        // Return edge server with keys (only on creation, never on update)
-        // SECURITY: Mark secret as delivered immediately to prevent re-exposure
-        $edgeServer->update(['secret_delivered_at' => now()]);
-        
-        $response = $edgeServer->load(['organization', 'license'])->toArray();
-        unset($response['edge_secret']); // Remove encrypted secret from response
-        $response['edge_key'] = $edgeKey;
-        $response['edge_secret'] = $edgeSecret; // Return plaintext secret ONLY ONCE on creation
-        
-        \Illuminate\Support\Facades\Log::info('Edge server created with secret', [
-            'edge_server_id' => $edgeServer->id,
-            'edge_key' => $edgeKey,
-        ]);
-        
         return response()->json($response, 201);
     }
 
     public function update(EdgeServerUpdateRequest $request, EdgeServer $edgeServer): JsonResponse
     {
-        // Authorization is handled by EdgeServerUpdateRequest
         $data = $request->validated();
 
-        // If license_id is being updated, verify ownership and uniqueness
-        if (isset($data['license_id'])) {
-            // If setting to null, unlink current license
-            if ($data['license_id'] === null || $data['license_id'] === '') {
-                if ($edgeServer->license_id) {
-                    $oldLicense = License::find($edgeServer->license_id);
-                    if ($oldLicense) {
-                        $oldLicense->update(['edge_server_id' => null]);
-                    }
-                }
-                $data['license_id'] = null;
-            } else {
-                $license = License::findOrFail($data['license_id']);
-                
-                // Verify license belongs to the edge server's organization
-                if ($license->organization_id !== $edgeServer->organization_id) {
-                    return response()->json(['message' => 'License does not belong to this edge server\'s organization'], 403);
-                }
-
-                // Check if license is already bound to another edge server
-                $existingEdge = EdgeServer::where('license_id', $data['license_id'])
-                    ->where('id', '!=', $edgeServer->id)
-                    ->first();
-                if ($existingEdge) {
-                    return response()->json(['message' => 'License is already bound to another edge server'], 409);
-                }
-
-                // Unlink old license if exists
-                if ($edgeServer->license_id && $edgeServer->license_id != $data['license_id']) {
-                    $oldLicense = License::find($edgeServer->license_id);
-                    if ($oldLicense) {
-                        $oldLicense->update(['edge_server_id' => null]);
-                    }
-                }
-
-                // Link new license
-                $license->update(['edge_server_id' => $edgeServer->id]);
-            }
+        try {
+            $updated = $this->edgeServerService->updateEdgeServer($edgeServer, $data, $request->user());
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
 
-        $edgeServer->update($data);
-
-        return response()->json($edgeServer->load(['organization', 'license']));
+        return response()->json($updated);
     }
 
     public function destroy(EdgeServer $edgeServer): JsonResponse
@@ -246,7 +109,12 @@ class EdgeController extends Controller
         // Use Policy for authorization
         $this->authorize('delete', $edgeServer);
 
-        $edgeServer->delete();
+        try {
+            $this->edgeServerService->deleteEdgeServer($edgeServer, request()->user());
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
+
         return response()->json(['message' => 'Edge server deleted']);
     }
 
