@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react';
 import { Key, Plus, Search, Trash2, Copy, CheckCircle, XCircle, Calendar, Building2 } from 'lucide-react';
 import { licensesApi, organizationsApi } from '../../lib/api';
 import { Modal } from '../../components/ui/Modal';
+import { useToast } from '../../contexts/ToastContext';
+import { getDetailedErrorMessage } from '../../lib/errorMessages';
 import type { License, Organization } from '../../types/database';
 
 export function Licenses() {
+  const { showSuccess, showError } = useToast();
   const [licenses, setLicenses] = useState<(License & { organization?: Organization })[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +68,7 @@ export function Licenses() {
 
     const expiresAt = new Date();
     expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+    const licenseKey = generateLicenseKey();
 
     try {
       await licensesApi.createLicense({
@@ -73,13 +77,18 @@ export function Licenses() {
         max_cameras: formData.max_cameras,
         modules: formData.modules,
         expires_at: expiresAt.toISOString(),
+        license_key: licenseKey,
+        is_trial: formData.is_trial,
       });
 
       setShowModal(false);
       resetForm();
       fetchData();
+      showSuccess('تم إنشاء الترخيص', `تم إنشاء الترخيص ${licenseKey} بنجاح وربطه بالمؤسسة المحددة.`);
     } catch (error) {
       console.error('Error creating license:', error);
+      const { title, message } = getDetailedErrorMessage(error, 'إنشاء الترخيص', 'فشل إنشاء الترخيص');
+      showError(title, message);
     }
   };
 

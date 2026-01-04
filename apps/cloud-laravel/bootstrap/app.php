@@ -18,6 +18,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [
             RequireHttps::class,
             SubstituteBindings::class,
+            \App\Http\Middleware\EnforceDomainServices::class,
+        ]);
+
+        $middleware->web(prepend: [
+            \App\Http\Middleware\EnforceDomainServices::class,
         ]);
 
         $middleware->alias([
