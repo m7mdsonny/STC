@@ -251,6 +251,7 @@ CREATE TABLE `licenses` (
     `deleted_at` TIMESTAMP NULL,
     FOREIGN KEY (`organization_id`) REFERENCES `organizations`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`subscription_plan_id`) REFERENCES `subscription_plans`(`id`) ON DELETE SET NULL,
+    CONSTRAINT `licenses_edge_server_fk` FOREIGN KEY (`edge_server_id`) REFERENCES `edge_servers`(`id`) ON DELETE SET NULL,
     INDEX `idx_licenses_organization` (`organization_id`),
     INDEX `idx_licenses_key` (`license_key`),
     INDEX `idx_licenses_status` (`status`)
