@@ -1,17 +1,33 @@
 // Default API URL - can be overridden by VITE_API_URL environment variable
-// Production fallback: https://api.stcsolutions.online/api/v1
+// Prefer the current origin when no explicit API URL is provided, but fall
+// back to the local Laravel dev server when running the Vite dev server
+// (common fresh-install workflow: frontend on :5173, backend on :8000).
 const DEFAULT_API_URL = 'https://api.stcsolutions.online/api/v1';
 
-const resolveDefaultApiUrl = () => {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL as string;
+const resolveApiBaseUrl = () => {
+  const configured = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
+  if (configured) {
+    return configured;
   }
 
-  // In production we must always hit the dedicated API domain; do not infer from window.location
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    const origin = window.location.origin.replace(/\/$/, '');
+    const port = window.location.port;
+
+    // Auto-detect common dev setup: Vite on :5173, Laravel on :8000
+    if (port === '5173' || origin.includes('localhost:5173') || origin.includes('127.0.0.1:5173')) {
+      return 'http://localhost:8000/api/v1';
+    }
+
+    // Use same-origin API by default (works for on-prem and production installs)
+    return `${origin}/api/v1`;
+  }
+
+  // Fallback for non-browser contexts
   return DEFAULT_API_URL;
 };
 
-const API_BASE_URL = resolveDefaultApiUrl().replace(/\/$/, '');
+export const API_BASE_URL = resolveApiBaseUrl().replace(/\/$/, '');
 
 // Log API URL for debugging (only in development)
 if (import.meta.env.DEV) {
