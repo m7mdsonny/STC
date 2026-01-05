@@ -3,11 +3,13 @@
 namespace App\Services;
 
 use App\Exceptions\DomainActionException;
+use App\Helpers\RoleHelper;
 use App\Support\DomainExecutionContext;
 use Closure;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class DomainActionService
 {
@@ -24,8 +26,18 @@ class DomainActionService
     {
         DomainExecutionContext::markServiceUsed($request);
 
-        $user = Auth::user();
-        if ($user && $user->organization_id === null && !$user->is_super_admin) {
+        $user = $request->user() ?? Auth::user();
+        if (!$user) {
+            throw new DomainActionException('Authentication required', 401);
+        }
+
+        $isSuperAdmin = RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false);
+        if ($user->organization_id === null && !$isSuperAdmin) {
+            Log::warning('Mutation blocked because organization context is missing', [
+                'user_id' => $user->id,
+                'role' => $user->role,
+                'route' => $request->path(),
+            ]);
             throw new DomainActionException('Organization context is required for this action');
         }
 
