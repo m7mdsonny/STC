@@ -1,7 +1,10 @@
 // Default API URL - can be overridden by VITE_API_URL environment variable
-// Prefer the current origin when no explicit API URL is provided, but fall
-// back to the local Laravel dev server when running the Vite dev server
-// (common fresh-install workflow: frontend on :5173, backend on :8000).
+// Prefer an explicit override, otherwise:
+//  - use the local Laravel dev server when running the Vite dev server
+//  - use the public API domain when the portal is served from the production
+//    marketing host (stcsolutions.online)
+//  - fall back to same-origin for on-prem installs that expose the API on the
+//    same host as the UI
 const DEFAULT_API_URL = 'https://api.stcsolutions.online/api/v1';
 
 const resolveApiBaseUrl = () => {
@@ -13,13 +16,28 @@ const resolveApiBaseUrl = () => {
   if (typeof window !== 'undefined' && window.location?.origin) {
     const origin = window.location.origin.replace(/\/$/, '');
     const port = window.location.port;
+    const hostname = window.location.hostname.toLowerCase();
 
     // Auto-detect common dev setup: Vite on :5173, Laravel on :8000
     if (port === '5173' || origin.includes('localhost:5173') || origin.includes('127.0.0.1:5173')) {
       return 'http://localhost:8000/api/v1';
     }
 
-    // Use same-origin API by default (works for on-prem and production installs)
+    const isLocal = hostname === 'localhost'
+      || hostname === '127.0.0.1'
+      || hostname === '::1';
+
+    // Use same-host API for localhost / on-prem setups
+    if (isLocal || hostname.startsWith('api.')) {
+      return `${origin}/api/v1`;
+    }
+
+    // Production portal host should target the public API domain
+    if (hostname === 'stcsolutions.online' || hostname.endsWith('.stcsolutions.online')) {
+      return DEFAULT_API_URL;
+    }
+
+    // Default to same-origin for other custom domains
     return `${origin}/api/v1`;
   }
 
