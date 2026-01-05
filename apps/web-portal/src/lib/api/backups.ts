@@ -1,4 +1,4 @@
-import { apiClient } from '../apiClient';
+import { API_BASE_URL, apiClient } from '../apiClient';
 
 export interface SystemBackup {
   id: number;
@@ -90,9 +90,9 @@ export const backupsApi = {
   },
 
   download: async (id: number): Promise<Blob> => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/backups/${id}/download`, {
+    const response = await fetch(`${API_BASE_URL}/backups/${id}/download`, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        'Authorization': `Bearer ${localStorage.getItem('auth_token') || localStorage.getItem('token') || ''}`,
       },
     });
     if (!response.ok) throw new Error('Download failed');
