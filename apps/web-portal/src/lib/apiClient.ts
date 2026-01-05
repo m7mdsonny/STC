@@ -32,9 +32,10 @@ const resolveApiBaseUrl = () => {
       return `${origin}/api/v1`;
     }
 
-    // Production portal host should use same-origin to keep CORS aligned
+    // Hosted production portal should call the dedicated API domain to avoid
+    // static site servers rejecting POST requests on the portal host
     if (hostname === 'stcsolutions.online' || hostname.endsWith('.stcsolutions.online')) {
-      return `${origin}/api/v1`;
+      return 'https://api.stcsolutions.online/api/v1';
     }
 
     // Default to same-origin for other custom domains
