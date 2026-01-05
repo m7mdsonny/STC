@@ -1,8 +1,8 @@
 // Default API URL - can be overridden by VITE_API_URL environment variable
 // Prefer an explicit override, otherwise:
 //  - use the local Laravel dev server when running the Vite dev server
-//  - use the public API domain when the portal is served from the production
-//    marketing host (stcsolutions.online)
+//  - prefer same-origin for production hosts (stcsolutions.online) to avoid
+//    cross-host CORS failures
 //  - fall back to same-origin for on-prem installs that expose the API on the
 //    same host as the UI
 const DEFAULT_API_URL = 'https://api.stcsolutions.online/api/v1';
@@ -32,9 +32,9 @@ const resolveApiBaseUrl = () => {
       return `${origin}/api/v1`;
     }
 
-    // Production portal host should target the public API domain
+    // Production portal host should use same-origin to keep CORS aligned
     if (hostname === 'stcsolutions.online' || hostname.endsWith('.stcsolutions.online')) {
-      return DEFAULT_API_URL;
+      return `${origin}/api/v1`;
     }
 
     // Default to same-origin for other custom domains
