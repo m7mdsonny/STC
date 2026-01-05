@@ -3,6 +3,7 @@ import { BarChart3, TrendingUp, Users, Car, AlertTriangle, Calendar, Download, L
 import { analyticsApi } from '../lib/api/analytics';
 import { alertsApi } from '../lib/api/alerts';
 import { vehiclesApi } from '../lib/api/vehicles';
+import { API_BASE_URL } from '../lib/apiClient';
 import { useAuth } from '../contexts/AuthContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import { format, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
@@ -275,11 +276,11 @@ export function Analytics() {
       };
 
       // Call backend to generate PDF
-      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/analytics/export-pdf`, {
+      const response = await fetch(`${API_BASE_URL}/analytics/export-pdf`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token') || localStorage.getItem('token') || ''}`,
         },
         body: JSON.stringify(reportData),
       });
