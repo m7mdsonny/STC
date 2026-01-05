@@ -2,8 +2,10 @@
 
 namespace App\Exceptions;
 
+use App\Exceptions\DomainActionException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Request;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -26,6 +28,24 @@ class Handler extends ExceptionHandler
     {
         $this->reportable(function (Throwable $e) {
             // You may report additional exceptions here.
+        });
+
+        $this->renderable(function (DomainActionException $e, Request $request) {
+            $payload = [
+                'message' => $e->getMessage(),
+            ];
+
+            $context = $e->getContext();
+            if (!empty($context)) {
+                $payload['context'] = $context;
+            }
+
+            // Always surface domain errors with their intended status code
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json($payload, $e->getStatus());
+            }
+
+            return response($payload['message'], $e->getStatus());
         });
     }
 

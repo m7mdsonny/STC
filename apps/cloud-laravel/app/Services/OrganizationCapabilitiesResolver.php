@@ -65,6 +65,24 @@ class OrganizationCapabilitiesResolver
         return $organization;
     }
 
+    /**
+     * Generic organization mutation guard used by DomainActionService
+     */
+    public function ensureOrganizationCanMutate(int $organizationId): Organization
+    {
+        $organization = Organization::find($organizationId);
+
+        if (!$organization) {
+            throw new DomainActionException('Organization not found', 404);
+        }
+
+        if (!$organization->is_active) {
+            throw new DomainActionException('Organization is inactive', 403);
+        }
+
+        return $organization;
+    }
+
     private function ensureOrganizationAccess(User $actor, Organization $organization, bool $allowAdmin = false): void
     {
         if (RoleHelper::isSuperAdmin($actor->role, $actor->is_super_admin ?? false)) {
