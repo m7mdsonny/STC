@@ -1,17 +1,52 @@
 // Default API URL - can be overridden by VITE_API_URL environment variable
-// Production fallback: https://api.stcsolutions.online/api/v1
+// Prefer an explicit override, otherwise:
+//  - use the local Laravel dev server when running the Vite dev server
+//  - prefer same-origin for production hosts (stcsolutions.online) to avoid
+//    cross-host CORS failures
+//  - fall back to same-origin for on-prem installs that expose the API on the
+//    same host as the UI
 const DEFAULT_API_URL = 'https://api.stcsolutions.online/api/v1';
 
-const resolveDefaultApiUrl = () => {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL as string;
+const resolveApiBaseUrl = () => {
+  const configured = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
+  if (configured) {
+    return configured;
   }
 
-  // In production we must always hit the dedicated API domain; do not infer from window.location
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    const origin = window.location.origin.replace(/\/$/, '');
+    const port = window.location.port;
+    const hostname = window.location.hostname.toLowerCase();
+
+    // Auto-detect common dev setup: Vite on :5173, Laravel on :8000
+    if (port === '5173' || origin.includes('localhost:5173') || origin.includes('127.0.0.1:5173')) {
+      return 'http://localhost:8000/api/v1';
+    }
+
+    const isLocal = hostname === 'localhost'
+      || hostname === '127.0.0.1'
+      || hostname === '::1';
+
+    // Use same-host API for localhost / on-prem setups
+    if (isLocal || hostname.startsWith('api.')) {
+      return `${origin}/api/v1`;
+    }
+
+    // Hosted production portal should call the dedicated API domain to avoid
+    // static site servers rejecting POST requests on the portal host
+    if (hostname === 'stcsolutions.online' || hostname.endsWith('.stcsolutions.online')) {
+      return 'https://api.stcsolutions.online/api/v1';
+    }
+
+    // Default to same-origin for other custom domains
+    return `${origin}/api/v1`;
+  }
+
+  // Fallback for non-browser contexts
   return DEFAULT_API_URL;
 };
 
-const API_BASE_URL = resolveDefaultApiUrl().replace(/\/$/, '');
+export const API_BASE_URL = resolveApiBaseUrl().replace(/\/$/, '');
 
 // Log API URL for debugging (only in development)
 if (import.meta.env.DEV) {
