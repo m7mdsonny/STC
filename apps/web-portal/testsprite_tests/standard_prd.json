@@ -1,0 +1,446 @@
+{
+  "meta": {
+    "project": "STC AI-VAP Platform",
+    "date": "2026-01-09",
+    "prepared_by": "STC Solutions Product Management"
+  },
+  "product_overview": "STC AI-VAP Platform is a comprehensive SaaS solution for AI-powered video analysis, featuring real-time camera monitoring, alerts, analytics, and extensive administration controls with robust authentication and role-based access control mechanisms.",
+  "core_goals": [
+    "Provide secure and seamless user authentication and session management.",
+    "Implement strict role-based access control ensuring proper permission enforcement across all user roles.",
+    "Enable smooth navigation across platform modules including dashboards, live views, camera and alert management.",
+    "Ensure robust error handling to gracefully manage unauthorized access, invalid routes, and network issues.",
+    "Deliver comprehensive management features for organizations, teams, users, devices, and AI modules.",
+    "Support scalable system management for super admins including monitoring, backups, and licensing."
+  ],
+  "key_features": [
+    "Robust Authentication System with login, logout, password reset, and session persistence.",
+    "Role-Based Access Control (RBAC) supporting multiple user roles from viewer to super admin with tailored permissions.",
+    "Dynamic and responsive Dashboard presenting real-time statistics, charts, and activity summaries.",
+    "Comprehensive Camera Management including CRUD, live view, snapshots, and server configuration.",
+    "Alerts System with filtering, status updates, real-time notifications, and export capabilities.",
+    "Analytics Module offering detailed insights, trends, and report generation.",
+    "People and Vehicle Management with face recognition and plate recognition capabilities.",
+    "Attendance Tracking with check-in/out and report filtering.",
+    "Market and Automation Modules for event management and AI-driven automation rules.",
+    "Full Team and Organization Management with subscription plans and roles.",
+    "Extensive Admin Console for super admins managing organizations, users, licenses, edge servers, AI modules, plans, integrations, SMS settings, notifications, system updates, and backups.",
+    "Platform Branding and Wording customization to reflect organizational identity.",
+    "Integrated global Toast Notification system and dynamic theming with Branding Context."
+  ],
+  "user_flow_summary": [
+    "User navigates to the login page, authenticates successfully, and is redirected based on role (Super Admin to /admin, others to /dashboard).",
+    "Authenticated users access various modules via sidebar navigation appropriate to their roles.",
+    "Super Admin accesses administrative routes for managing organizations, users, licenses, and system settings.",
+    "Users interact with dashboard widgets displaying real-time data, navigate to live video feeds and manage cameras, alerts, people, vehicles, and attendance.",
+    "Users encounter appropriate error messages upon unauthorized access attempts or navigation to invalid routes.",
+    "Session persistence ensures users remain logged in after page reloads, with secured session termination via logout.",
+    "Admin users manage AI modules configuration, model training, integrations, and automation rules from dedicated sections.",
+    "System administrators perform backups, monitor system health, and manage platform settings and updates through admin interfaces."
+  ],
+  "validation_criteria": [
+    "Successful login and logout flows for all roles with secure session handling.",
+    "Role-based access control enforcing correct permissions; super admin full access; regular users restricted accordingly.",
+    "Navigation flows allow seamless page transitions and correct sidebar/menu visibility per role.",
+    "Error handling displays user-friendly messages for unauthorized access, network errors, and invalid routes.",
+    "All critical APIs respond correctly, enabling CRUD operations on cameras, alerts, people, vehicles, and team management.",
+    "Real-time updates and notifications function reliably across all modules.",
+    "System management interfaces allow creation, modification, and deletion of organizations, licenses, users, and edge servers.",
+    "AI modules and automation rules can be configured, executed, and logged properly.",
+    "Platform branding and wording customization updates reflect immediately across the UI.",
+    "Automated tests achieve expected success rates (75-100%) post-release deployments, confirming system stability and correctness."
+  ],
+  "code_summary": {
+    "tech_stack": [
+      "TypeScript",
+      "React 18.3.1",
+      "Vite 5.4.2",
+      "React Router DOM 7.10.1",
+      "@tanstack/react-query 5.90.12",
+      "Tailwind CSS 3.4.1",
+      "Laravel Sanctum",
+      "MySQL",
+      "REST API"
+    ],
+    "features": [
+      {
+        "name": "Authentication System",
+        "description": "User authentication with login, logout, password reset, and session management",
+        "files": [
+          "src/pages/Login.tsx",
+          "src/pages/ForgotPassword.tsx",
+          "src/contexts/AuthContext.tsx",
+          "src/lib/api/auth.ts",
+          "src/lib/rbac.ts"
+        ]
+      },
+      {
+        "name": "Dashboard",
+        "description": "Main dashboard with statistics, charts, and overview widgets",
+        "files": [
+          "src/pages/Dashboard.tsx",
+          "src/lib/api/dashboard.ts",
+          "src/components/ui/StatCard.tsx"
+        ]
+      },
+      {
+        "name": "Camera Management",
+        "description": "CRUD operations for cameras, live view, snapshots, and camera configuration",
+        "files": [
+          "src/pages/Cameras.tsx",
+          "src/pages/LiveView.tsx",
+          "src/lib/api/cameras.ts",
+          "src/lib/edgeServer.ts"
+        ]
+      },
+      {
+        "name": "Alerts System",
+        "description": "Alert management, filtering, status updates, and real-time notifications",
+        "files": [
+          "src/pages/Alerts.tsx",
+          "src/lib/api/alerts.ts",
+          "src/components/layout/Header.tsx"
+        ]
+      },
+      {
+        "name": "Analytics",
+        "description": "Data analytics with charts, visitor data, age/gender distribution, and module statistics",
+        "files": [
+          "src/pages/Analytics.tsx",
+          "src/lib/api/analytics.ts",
+          "src/pages/AdvancedAnalytics.tsx"
+        ]
+      },
+      {
+        "name": "People Management",
+        "description": "Registered faces management, face encoding, categories (employee, VIP, visitor, blacklist)",
+        "files": [
+          "src/pages/People.tsx",
+          "src/lib/api/people.ts"
+        ]
+      },
+      {
+        "name": "Vehicles Management",
+        "description": "Vehicle registration, plate recognition, categories, and vehicle types",
+        "files": [
+          "src/pages/Vehicles.tsx",
+          "src/lib/api/vehicles.ts"
+        ]
+      },
+      {
+        "name": "Attendance System",
+        "description": "Attendance tracking, records, check-in/check-out, and date filtering",
+        "files": [
+          "src/pages/Attendance.tsx",
+          "src/lib/api/attendance.ts"
+        ]
+      },
+      {
+        "name": "Market Module",
+        "description": "Market events, risk analysis, dashboard, and event filtering",
+        "files": [
+          "src/pages/Market.tsx",
+          "src/lib/api/market.ts"
+        ]
+      },
+      {
+        "name": "Automation Rules",
+        "description": "AI automation rules, triggers, actions, and rule management",
+        "files": [
+          "src/pages/Automation.tsx",
+          "src/lib/api/automationRules.ts"
+        ]
+      },
+      {
+        "name": "Team Management",
+        "description": "User management within organization, roles, permissions, and team settings",
+        "files": [
+          "src/pages/Team.tsx",
+          "src/lib/api/users.ts"
+        ]
+      },
+      {
+        "name": "Settings",
+        "description": "Organization settings, edge servers, notifications, priorities, and security",
+        "files": [
+          "src/pages/Settings.tsx",
+          "src/components/settings/OrganizationSettings.tsx",
+          "src/components/settings/NotificationSettings.tsx",
+          "src/components/settings/AlertPrioritySettings.tsx",
+          "src/components/settings/SecuritySettings.tsx",
+          "src/lib/api/settings.ts"
+        ]
+      },
+      {
+        "name": "Admin Dashboard",
+        "description": "Super admin dashboard with system-wide statistics and management",
+        "files": [
+          "src/pages/admin/AdminDashboard.tsx",
+          "src/lib/api/dashboard.ts"
+        ]
+      },
+      {
+        "name": "Organizations Management",
+        "description": "Organization CRUD, subscription plans, and organization settings",
+        "files": [
+          "src/pages/admin/Organizations.tsx",
+          "src/lib/api/organizations.ts"
+        ]
+      },
+      {
+        "name": "Users Management",
+        "description": "System-wide user management, roles, and permissions",
+        "files": [
+          "src/pages/admin/Users.tsx",
+          "src/lib/api/users.ts"
+        ]
+      },
+      {
+        "name": "Licenses Management",
+        "description": "License management, activation, and license linking to edge servers",
+        "files": [
+          "src/pages/admin/Licenses.tsx",
+          "src/lib/api/licenses.ts"
+        ]
+      },
+      {
+        "name": "Edge Servers Management",
+        "description": "Edge server management, status monitoring, and server configuration",
+        "files": [
+          "src/pages/admin/EdgeServers.tsx",
+          "src/lib/api/edgeServers.ts",
+          "src/components/ui/EdgeServerStatus.tsx",
+          "src/components/ui/EdgeServerMonitor.tsx",
+          "src/lib/edgeServer.ts"
+        ]
+      },
+      {
+        "name": "AI Modules Admin",
+        "description": "AI module configuration, module management, and module settings",
+        "files": [
+          "src/pages/admin/AIModulesAdmin.tsx",
+          "src/lib/api/aiModules.ts",
+          "src/pages/AIModulesConfig.tsx"
+        ]
+      },
+      {
+        "name": "Model Training",
+        "description": "AI model training interface and training management",
+        "files": [
+          "src/pages/admin/ModelTraining.tsx",
+          "src/lib/api/modelTraining.ts"
+        ]
+      },
+      {
+        "name": "Integrations",
+        "description": "Third-party integrations management and configuration",
+        "files": [
+          "src/pages/admin/AdminIntegrations.tsx",
+          "src/lib/api/integrations.ts"
+        ]
+      },
+      {
+        "name": "SMS Settings",
+        "description": "SMS provider configuration, quotas, and SMS settings",
+        "files": [
+          "src/pages/admin/AdminSmsSettings.tsx",
+          "src/lib/api/smsQuota.ts"
+        ]
+      },
+      {
+        "name": "Notifications",
+        "description": "System notifications management and notification settings",
+        "files": [
+          "src/pages/admin/AdminNotifications.tsx",
+          "src/lib/api/notifications.ts"
+        ]
+      },
+      {
+        "name": "Admin Settings",
+        "description": "System-wide admin settings and configuration",
+        "files": [
+          "src/pages/admin/AdminSettings.tsx",
+          "src/lib/api/settings.ts"
+        ]
+      },
+      {
+        "name": "Super Admin Management",
+        "description": "Super admin user management and super admin settings",
+        "files": [
+          "src/pages/admin/SuperAdminManagement.tsx",
+          "src/pages/admin/SuperAdminSettings.tsx",
+          "src/lib/api/superAdmin.ts"
+        ]
+      },
+      {
+        "name": "Platform Branding",
+        "description": "Platform branding customization, colors, logos, and themes",
+        "files": [
+          "src/pages/admin/PlatformBranding.tsx",
+          "src/lib/api/branding.ts",
+          "src/contexts/BrandingContext.tsx"
+        ]
+      },
+      {
+        "name": "Platform Wordings",
+        "description": "Platform text customization and wording management",
+        "files": [
+          "src/pages/admin/PlatformWordings.tsx"
+        ]
+      },
+      {
+        "name": "Landing Page Settings",
+        "description": "Landing page configuration and content management",
+        "files": [
+          "src/pages/admin/LandingSettings.tsx",
+          "src/pages/admin/LandingPageConfig.tsx",
+          "src/lib/api/landingPage.ts",
+          "src/pages/Landing.tsx"
+        ]
+      },
+      {
+        "name": "System Updates",
+        "description": "System update management and update notifications",
+        "files": [
+          "src/pages/admin/AdminUpdates.tsx",
+          "src/pages/admin/SystemUpdates.tsx",
+          "src/lib/api/updates.ts",
+          "src/lib/api/systemUpdates.ts"
+        ]
+      },
+      {
+        "name": "Backups",
+        "description": "System backup management and backup operations",
+        "files": [
+          "src/pages/admin/AdminBackups.tsx",
+          "src/lib/api/backups.ts"
+        ]
+      },
+      {
+        "name": "AI Command Center",
+        "description": "AI command execution and command management",
+        "files": [
+          "src/pages/admin/AiCommandCenter.tsx",
+          "src/lib/api/aiCommands.ts"
+        ]
+      },
+      {
+        "name": "Free Trial Requests",
+        "description": "Free trial request management and approval workflow",
+        "files": [
+          "src/pages/admin/FreeTrialRequests.tsx",
+          "src/pages/RequestDemo.tsx",
+          "src/lib/api/freeTrial.ts"
+        ]
+      },
+      {
+        "name": "System Monitor",
+        "description": "System monitoring, health checks, and system status",
+        "files": [
+          "src/pages/admin/SystemMonitor.tsx"
+        ]
+      },
+      {
+        "name": "Resellers Management",
+        "description": "Reseller management and reseller configuration",
+        "files": [
+          "src/pages/admin/Resellers.tsx"
+        ]
+      },
+      {
+        "name": "Plans Management",
+        "description": "Subscription plans management and plan configuration",
+        "files": [
+          "src/pages/admin/Plans.tsx"
+        ]
+      },
+      {
+        "name": "Owner Guide",
+        "description": "Step-by-step guide for platform owners",
+        "files": [
+          "src/pages/OwnerGuide.tsx"
+        ]
+      },
+      {
+        "name": "Layout Components",
+        "description": "Main layout structure with sidebar, header, and navigation",
+        "files": [
+          "src/components/layout/Layout.tsx",
+          "src/components/layout/Sidebar.tsx",
+          "src/components/layout/Header.tsx"
+        ]
+      },
+      {
+        "name": "UI Components",
+        "description": "Reusable UI components including modals, tables, cards, and status indicators",
+        "files": [
+          "src/components/ui/Modal.tsx",
+          "src/components/ui/DataTable.tsx",
+          "src/components/ui/StatCard.tsx",
+          "src/components/ui/Toast.tsx",
+          "src/components/ui/EdgeServerStatus.tsx",
+          "src/components/ui/EdgeServerMonitor.tsx"
+        ]
+      },
+      {
+        "name": "API Client",
+        "description": "Centralized API client with authentication, error handling, and request interceptors",
+        "files": [
+          "src/lib/apiClient.ts",
+          "src/lib/errorMessages.ts"
+        ]
+      },
+      {
+        "name": "RBAC Utilities",
+        "description": "Role-based access control utilities and permission checking",
+        "files": [
+          "src/lib/rbac.ts"
+        ]
+      },
+      {
+        "name": "Edge Server Service",
+        "description": "Edge server communication, status checking, and server operations",
+        "files": [
+          "src/lib/edgeServer.ts"
+        ]
+      },
+      {
+        "name": "Toast Context",
+        "description": "Global toast notification system for success/error messages",
+        "files": [
+          "src/contexts/ToastContext.tsx",
+          "src/components/ui/Toast.tsx"
+        ]
+      },
+      {
+        "name": "Branding Context",
+        "description": "Dynamic branding system with theme customization",
+        "files": [
+          "src/contexts/BrandingContext.tsx",
+          "src/lib/api/branding.ts"
+        ]
+      },
+      {
+        "name": "Enterprise Monitoring",
+        "description": "Enterprise-level monitoring and reporting",
+        "files": [
+          "src/lib/api/enterpriseMonitoring.ts"
+        ]
+      },
+      {
+        "name": "Reports",
+        "description": "Report generation and report management",
+        "files": [
+          "src/lib/api/reports.ts"
+        ]
+      },
+      {
+        "name": "AI Policies",
+        "description": "AI policy management and policy configuration",
+        "files": [
+          "src/lib/api/aiPolicies.ts"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+FROM php:8.1-cli
+
+# Install system dependencies needed for Composer and common PHP extensions
+RUN apt-get update \
+    && apt-get install -y git unzip libzip-dev libonig-dev libxml2-dev sqlite3 \
+    && docker-php-ext-install pdo_mysql pdo_sqlite zip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /app
+COPY . /app
+
+# Install PHP dependencies for the Laravel app
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader
+
+# Default command runs the test suite using the testing environment
+CMD ["php", "artisan", "test"]

@@ -1,0 +1,18 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:5173",
+  "loginUser": "superadmin@demo.local",
+  "loginPassword": "Super@12345",
+  "executionArgs": {
+    "projectName": "STC AI-VAP",
+    "projectPath": "D:\\STC\\STC AI",
+    "testIds": [],
+    "additionalInstruction": "Execute comprehensive end-to-end tests focusing on:\n1. Authentication: Login with superadmin@demo.local (Super@12345) and owner@org1.local (Owner@12345), logout functionality, session persistence\n2. RBAC: Test super_admin access to /admin routes, regular user blocked from admin routes, viewer read-only access, owner full organization access\n3. Navigation: Test dashboard navigation for both super admin and regular users, sidebar menu functionality\n4. Error Handling: Test unauthorized access handling, protected route redirects, invalid route handling\n\nGenerate detailed screenshots for each test step and comprehensive logs. Ensure all tests are executed and results are documented.",
+    "envs": {
+      "API_KEY": "sk-user-nYXMTl4ZljMn5pR8wQlaEsTxKrzwY_Lp76j0M7OcUvBauq0C6uxjpQ2WIXYWmjbrrmvoPdkZPYTbvTjpelTXwcSJDiplFGS74HbJ2_V3a-mH5g4hIb2zPH4tB5Gca_hIFSs"
+    }
+  },
+  "proxy": "http://7f2d8211-b45d-466b-90f9-9a68627bfc5a:mgFvwegx0L5jnevHHOunw4p7M19Md1NQ@tun.testsprite.com:8080"
+}

@@ -1,0 +1,678 @@
+[
+  {
+    "id": "TC001",
+    "title": "Login Success with Valid Credentials",
+    "description": "Verify that users can successfully login using valid credentials and are redirected according to their role.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page."
+      },
+      {
+        "type": "action",
+        "description": "Enter valid username/email and password."
+      },
+      {
+        "type": "action",
+        "description": "Click the login button."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user is authenticated and redirected to /admin page if super admin, or /dashboard for other roles."
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Login Failure with Invalid Credentials",
+    "description": "Verify that login fails with invalid username or password and appropriate error message is displayed.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page."
+      },
+      {
+        "type": "action",
+        "description": "Enter invalid username/email or password."
+      },
+      {
+        "type": "action",
+        "description": "Click the login button."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify login fails and a descriptive error message about invalid credentials is shown."
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Password Reset Flow",
+    "description": "Verify users can successfully request and complete password reset procedure.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the forgot password page."
+      },
+      {
+        "type": "action",
+        "description": "Enter registered email and submit reset request."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system sends password reset email."
+      },
+      {
+        "type": "action",
+        "description": "Open the password reset link received via email."
+      },
+      {
+        "type": "action",
+        "description": "Enter new valid password and submit."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify password is successfully reset and user can login with new password."
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Session Persistence After Page Reload",
+    "description": "Verify that user session persists after page reload and tokens are securely maintained.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login with valid credentials."
+      },
+      {
+        "type": "action",
+        "description": "Reload the browser page."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user remains logged in without requiring reauthentication."
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Logout Terminates Session",
+    "description": "Verify that logout properly clears session and redirects the user to the login page.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login with valid credentials."
+      },
+      {
+        "type": "action",
+        "description": "Click the logout button."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify session is cleared and user is redirected to the login screen."
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Role-Based Access Control: Super Admin Full Access",
+    "description": "Verify super admin user has full access to all modules including admin dashboard and settings.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as super admin user."
+      },
+      {
+        "type": "action",
+        "description": "Navigate through admin modules: organizations, users, licenses, edge servers, AI modules, system settings."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access is granted and functionality is available for all administrative features."
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Role-Based Access Control: Restricted Access for Regular Users",
+    "description": "Verify that regular users cannot access super admin or unauthorized areas and receive proper error messages.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as a regular user (non-super admin)."
+      },
+      {
+        "type": "action",
+        "description": "Attempt to access /admin routes and other restricted pages."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access is denied and user is presented with an unauthorized access error message."
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Navigation Sidebar Visibility Based on User Role",
+    "description": "Verify sidebar menu items and navigation options are displayed correctly according to user role permissions.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as different user roles: viewer, admin, super admin."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify only permitted menu items are visible and accessible for each role."
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Dashboard Widgets Display Real-Time Data",
+    "description": "Verify that dashboard widgets show real-time statistics, charts, and data summaries properly and update dynamically.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login and navigate to the dashboard page."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify all widgets load real-time statistics and update as data changes."
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Camera Management CRUD Operations",
+    "description": "Verify create, read, update and delete operations for cameras function correctly, including live view and snapshot features.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to Cameras management page."
+      },
+      {
+        "type": "action",
+        "description": "Create a new camera with valid input data."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the camera appears in the list with correct details."
+      },
+      {
+        "type": "action",
+        "description": "Update camera details."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the camera details update accordingly."
+      },
+      {
+        "type": "action",
+        "description": "Access live view of selected camera."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify live video stream loads and snapshots can be taken."
+      },
+      {
+        "type": "action",
+        "description": "Delete the camera."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the camera is removed from the list."
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Alerts System Functionality",
+    "description": "Verify alert creation, filtering, status updates, real-time notifications, and export features function correctly.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to Alerts page."
+      },
+      {
+        "type": "action",
+        "description": "Filter alerts using multiple parameters (date, status, type)."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify filtered alerts match criteria."
+      },
+      {
+        "type": "action",
+        "description": "Update alert status (acknowledge, resolve)."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify alert status changes reflected immediately."
+      },
+      {
+        "type": "assertion",
+        "description": "Trigger conditions that generate real-time alerts and verify notifications appear."
+      },
+      {
+        "type": "action",
+        "description": "Export alert data to CSV or Excel."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify exported file contains correct alert data."
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Analytics Dashboards and Report Generation",
+    "description": "Verify analytics pages show detailed insights, charts, trends, and support report export.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to Analytics and Advanced Analytics pages."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify charts, visitor data, and trends load with correct data."
+      },
+      {
+        "type": "action",
+        "description": "Generate reports for specified date ranges and filters."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify reports are generated and export options function correctly."
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "People and Vehicle Management including Recognition Features",
+    "description": "Verify CRUD operations for people and vehicles, including face and plate recognition and category assignments.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to People management page."
+      },
+      {
+        "type": "action",
+        "description": "Add a new person with face encoding and assign category."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify person appears with correct data and face recognition functionality."
+      },
+      {
+        "type": "action",
+        "description": "Navigate to Vehicles management page."
+      },
+      {
+        "type": "action",
+        "description": "Add a new vehicle with plate recognition."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify vehicle appears correctly and plate recognition works."
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Attendance Tracking Check-in and Report Filtering",
+    "description": "Verify attendance check-in/check-out works and attendance records can be filtered and reported accurately.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to Attendance page."
+      },
+      {
+        "type": "action",
+        "description": "Perform check-in and check-out actions."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify attendance records update accordingly."
+      },
+      {
+        "type": "action",
+        "description": "Apply date filters to attendance records."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify filtered attendance reports reflect correct data."
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Market Module Event Management and Risk Analysis",
+    "description": "Verify event creation, filtering, risk dashboards and analysis function as expected.",
+    "category": "functional",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to Market page."
+      },
+      {
+        "type": "action",
+        "description": "Create new market event with required details."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify event is listed and visible in risk dashboards."
+      },
+      {
+        "type": "action",
+        "description": "Apply filters to events and risk data."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify filtered data matches user criteria."
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Automation Rules Creation, Editing and Execution",
+    "description": "Verify AI automation rules can be created, edited, triggered, and logged properly.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to Automation Rules page."
+      },
+      {
+        "type": "action",
+        "description": "Create new automation rule with triggers and actions."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify rule is saved and active."
+      },
+      {
+        "type": "action",
+        "description": "Trigger conditions that execute the automation rule."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify associated actions occur and execution is logged."
+      },
+      {
+        "type": "action",
+        "description": "Edit existing automation rule."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify updates are saved and reflected."
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Team and Organization Management Operations",
+    "description": "Verify creation, modification, role assignment, and deletion of users and organizations work correctly with subscription management.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to Team and Organization management pages."
+      },
+      {
+        "type": "action",
+        "description": "Create new organization and assign subscription plans."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify organization is created with correct plan."
+      },
+      {
+        "type": "action",
+        "description": "Add users to organization with assigned roles."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify users have correct permissions based on role."
+      },
+      {
+        "type": "action",
+        "description": "Modify organization and user details."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify changes are saved and reflected."
+      },
+      {
+        "type": "action",
+        "description": "Delete users and organizations."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify entities are removed from the system."
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "Admin Console Management Features",
+    "description": "Verify super admin functions including monitoring, backups, licensing, system updates, SMS settings, and notifications work correctly.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as super admin."
+      },
+      {
+        "type": "action",
+        "description": "Perform organization, user, license, and edge server management operations."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify operations succeed with expected results."
+      },
+      {
+        "type": "action",
+        "description": "Initiate system backup and verify backup status."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify backup completes successfully and is listed."
+      },
+      {
+        "type": "action",
+        "description": "Apply system updates and configure notification settings."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify updates are applied and notifications behave as configured."
+      },
+      {
+        "type": "action",
+        "description": "Configure SMS provider and quotas."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify SMS sending respects quotas and provider settings."
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "Unauthorized Access and Invalid Route Error Handling",
+    "description": "Verify that unauthorized access and invalid URL routes show user-friendly error pages or messages.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Attempt to access restricted pages without logging in."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify redirection to login page or showing appropriate error."
+      },
+      {
+        "type": "action",
+        "description": "Login with role that does not have permission for certain pages and try to access them."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an unauthorized access error message or page is shown."
+      },
+      {
+        "type": "action",
+        "description": "Navigate to invalid or non-existent routes."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a 404 or not found page is displayed."
+      }
+    ]
+  },
+  {
+    "id": "TC020",
+    "title": "Network Failure and API Error Handling",
+    "description": "Simulate network failures or API errors and verify the system gracefully handles errors and shows appropriate messages.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Disable network connectivity or mock API returning errors."
+      },
+      {
+        "type": "action",
+        "description": "Perform key operations like login, data fetch, and save."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user-friendly error messages are shown and UI remains stable."
+      }
+    ]
+  },
+  {
+    "id": "TC021",
+    "title": "Platform Branding and Wording Customization",
+    "description": "Verify that branding colors, logos, themes, and platform wording customizations reflect immediately across the UI.",
+    "category": "functional",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as super admin and navigate to Platform Branding and Wordings settings."
+      },
+      {
+        "type": "action",
+        "description": "Change branding colors, logos, and theme settings."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify UI updates immediately to reflect branding changes."
+      },
+      {
+        "type": "action",
+        "description": "Update platform wording text."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text changes appear in all relevant UI components."
+      }
+    ]
+  },
+  {
+    "id": "TC022",
+    "title": "Real-Time Toast Notifications Display",
+    "description": "Verify global toast notifications display success, error, and informational messages consistently across the platform.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Trigger actions resulting in success, error, and info notifications."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify correct toast notifications appear with appropriate message, style, and auto-dismiss behavior."
+      }
+    ]
+  },
+  {
+    "id": "TC023",
+    "title": "AI Modules Configuration and Model Training",
+    "description": "Verify AI modules can be configured, models can be trained and managed through the AI modules admin interfaces.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to AI Modules Admin and Model Training pages."
+      },
+      {
+        "type": "action",
+        "description": "Create and configure AI modules."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify module settings are saved correctly."
+      },
+      {
+        "type": "action",
+        "description": "Start training new AI model."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify training process initiates, shows progress, and completes successfully."
+      }
+    ]
+  },
+  {
+    "id": "TC024",
+    "title": "System Monitor and Health Check Interface",
+    "description": "Verify system health and monitoring pages display accurate real-time status and statistics.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as super admin and navigate to System Monitor page."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system health data, status metrics, logs, and alerts are displayed and update in real time."
+      }
+    ]
+  }
+]

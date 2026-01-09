@@ -1,0 +1,18 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:5173",
+  "loginUser": "superadmin@demo.local",
+  "loginPassword": "Super@12345",
+  "executionArgs": {
+    "projectName": "web-portal",
+    "projectPath": "D:\\STC\\STC AI\\apps\\web-portal",
+    "testIds": [],
+    "additionalInstruction": "",
+    "envs": {
+      "API_KEY": "sk-user-nYXMTl4ZljMn5pR8wQlaEsTxKrzwY_Lp76j0M7OcUvBauq0C6uxjpQ2WIXYWmjbrrmvoPdkZPYTbvTjpelTXwcSJDiplFGS74HbJ2_V3a-mH5g4hIb2zPH4tB5Gca_hIFSs"
+    }
+  },
+  "proxy": "http://daeb8d2f-b968-4e88-acd5-c575299e7cbe:h83bGaGwWG9Jvno4BpYX5S1HGaevIgDP@tun.testsprite.com:8080"
+}
