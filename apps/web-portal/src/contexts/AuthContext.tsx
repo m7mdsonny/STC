@@ -70,15 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(storedUser);
       }
 
-      // Set timeout to prevent hanging
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Auth check timeout')), 8000);
-      });
-
-      const { user: currentUser, unauthorized } = await Promise.race([
-        authApi.getCurrentUserDetailed({ skipRedirect: true }),
-        timeoutPromise,
-      ]);
+      const { user: currentUser, unauthorized } = await authApi.getCurrentUserDetailed({ skipRedirect: true });
 
       if (unauthorized) {
         authApi.clearSession();
@@ -96,16 +88,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         setOrganization(null);
       }
-    } catch (error) {
-      console.warn('Auth check failed:', error);
+    } catch {
       // Preserve stored session on transient failures; clearing happens only on explicit unauthorized responses
-      // If we have stored user, keep it; otherwise, clear everything
-      const storedUser = loadStoredUser();
-      if (!storedUser) {
-        setUser(null);
-        setProfile(null);
-        setOrganization(null);
-      }
     } finally {
       setLoading(false);
     }
@@ -136,19 +120,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const handleTokenLogin = async (token: string) => {
     setLoading(true);
     try {
-      // Set timeout to prevent hanging
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Token authentication timeout')), 8000);
-      });
-
-      const authenticatedUser = await Promise.race([
-        authApi.authenticateWithToken(token),
-        timeoutPromise,
-      ]);
-
+      const authenticatedUser = await authApi.authenticateWithToken(token);
       await setAuthenticatedUser(authenticatedUser);
-    } catch (error) {
-      console.warn('Token authentication failed:', error);
+    } catch {
       setUser(null);
       setProfile(null);
       setOrganization(null);

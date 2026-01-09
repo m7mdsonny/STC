@@ -3,7 +3,6 @@ import { Upload, Download, RefreshCw, AlertCircle, CheckCircle, XCircle, Package
 import { systemUpdatesApi } from '../../lib/api/systemUpdates';
 import { useToast } from '../../contexts/ToastContext';
 import { getDetailedErrorMessage } from '../../lib/errorMessages';
-import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import type { SystemUpdate, UpdateManifest } from '../../lib/api/systemUpdates';
 
 export function SystemUpdates() {
@@ -13,7 +12,6 @@ export function SystemUpdates() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [installing, setInstalling] = useState<string | null>(null);
-  const [confirmInstall, setConfirmInstall] = useState<{ open: boolean; updateId: string | null; version: string }>({ open: false, updateId: null, version: '' });
 
   useEffect(() => {
     fetchUpdates();
@@ -78,19 +76,12 @@ export function SystemUpdates() {
     }
   };
 
-  const handleInstallClick = (updateId: string, version: string) => {
-    // FIXED: Use ConfirmDialog instead of window.confirm
-    setConfirmInstall({ open: true, updateId, version });
-  };
+  const handleInstall = async (updateId: string, version: string) => {
+    if (!confirm(`هل أنت متأكد من تثبيت التحديث ${version}؟\nسيتم إنشاء نسخة احتياطية تلقائياً.`)) {
+      return;
+    }
 
-  const handleInstallConfirm = async () => {
-    if (!confirmInstall.updateId || !confirmInstall.version) return;
-    
-    const updateId = confirmInstall.updateId;
-    const version = confirmInstall.version;
-    setConfirmInstall({ open: false, updateId: null, version: '' });
     setInstalling(updateId);
-    
     try {
       await systemUpdatesApi.installUpdate(updateId);
       showSuccess('تم التثبيت بنجاح', `تم تثبيت التحديث ${version} بنجاح`);
@@ -273,7 +264,7 @@ export function SystemUpdates() {
                   <div className="flex flex-col gap-2">
                     {!update.installed && (
                       <button
-                        onClick={() => handleInstallClick(update.id, update.manifest.version)}
+                        onClick={() => handleInstall(update.id, update.manifest.version)}
                         disabled={installing === update.id}
                         className="btn-primary flex items-center gap-2 whitespace-nowrap"
                       >
@@ -317,18 +308,6 @@ export function SystemUpdates() {
           <p>7. ارفع الملف من هنا</p>
         </div>
       </div>
-
-      {/* FIXED: Use ConfirmDialog instead of window.confirm */}
-      <ConfirmDialog
-        open={confirmInstall.open}
-        title="تأكيد تثبيت التحديث"
-        message={`هل أنت متأكد من تثبيت التحديث ${confirmInstall.version}؟\n\nسيتم إنشاء نسخة احتياطية تلقائياً.\n\nسيتم إعادة تشغيل النظام بعد التثبيت.`}
-        type="warning"
-        confirmText="تثبيت"
-        cancelText="إلغاء"
-        onConfirm={handleInstallConfirm}
-        onCancel={() => setConfirmInstall({ open: false, updateId: null, version: '' })}
-      />
     </div>
   );
 }

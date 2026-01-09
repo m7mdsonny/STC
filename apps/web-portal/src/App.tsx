@@ -46,7 +46,6 @@ import { Loader2 } from 'lucide-react';
 import { BrandingProvider } from './contexts/BrandingContext';
 import { ToastProvider, useToast } from './contexts/ToastContext';
 import { ToastContainer } from './components/ui/Toast';
-import { AutoRedirect } from './components/AutoRedirect';
 
 function PrivateRoute({ 
   children, 
@@ -82,17 +81,11 @@ function PrivateRoute({
   // Routes requiring manage permissions (owner or admin)
   if (requireManage && !isSuperAdminUser && !canManageOrganization(userRole)) {
     return (
-      <div className="min-h-screen bg-stc-bg-dark flex items-center justify-center p-4">
-        <div className="text-center max-w-md">
+      <div className="min-h-screen bg-stc-bg-dark flex items-center justify-center">
+        <div className="text-center">
           <h2 className="text-2xl font-bold text-white mb-2">غير مصرح</h2>
-          <p className="text-white/60 mb-6">ليس لديك صلاحية للوصول إلى هذه الصفحة. يجب أن تكون مالك أو مدير للمنظمة.</p>
-          <button
-            onClick={() => window.history.back()}
-            className="btn-secondary mb-3"
-          >
-            العودة للخلف
-          </button>
-          <AutoRedirect to="/dashboard" delay={3000} />
+          <p className="text-white/60">ليس لديك صلاحية للوصول إلى هذه الصفحة</p>
+          <Navigate to="/dashboard" replace />
         </div>
       </div>
     );
@@ -238,35 +231,15 @@ function AppRoutes() {
 }
 
 export default function App() {
-  // Add error boundary wrapper to catch any initialization errors
-  try {
-    return (
-      <BrowserRouter>
-        <BrandingProvider>
-          <ToastProvider>
-            <AuthProvider>
-              <AppRoutes />
-            </AuthProvider>
-          </ToastProvider>
-        </BrandingProvider>
-      </BrowserRouter>
-    );
-  } catch (error) {
-    console.error('App initialization error:', error);
-    // Return a fallback UI if initialization fails
-    return (
-      <div className="min-h-screen bg-stc-bg-dark flex items-center justify-center p-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-2">خطأ في تحميل التطبيق</h1>
-          <p className="text-white/70 mb-4">يرجى تحديث الصفحة أو الاتصال بالدعم الفني</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-stc-gold text-stc-navy rounded hover:bg-stc-gold-light transition-colors"
-          >
-            تحديث الصفحة
-          </button>
-        </div>
-      </div>
-    );
-  }
+  return (
+    <BrowserRouter>
+      <BrandingProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </ToastProvider>
+      </BrandingProvider>
+    </BrowserRouter>
+  );
 }

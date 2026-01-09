@@ -36,7 +36,6 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AiScenarioController;
 use App\Http\Controllers\AiAlertPolicyController;
 use App\Http\Controllers\FreeTrialRequestController;
-use App\Http\Controllers\TrainingDatasetController;
 
 Route::prefix('v1')->group(function () {
     // Public endpoints (no authentication required)
@@ -369,14 +368,5 @@ Route::prefix('v1')->group(function () {
         Route::get('/automation-rules/{automationRule}/logs', [AutomationRuleController::class, 'getLogs']);
         Route::get('/automation-rules/triggers', [AutomationRuleController::class, 'getAvailableTriggers']);
         Route::get('/automation-rules/actions', [AutomationRuleController::class, 'getAvailableActions']);
-
-        // Training Datasets for model training
-        // These endpoints allow organizations to manage their own datasets used for AI model training.
-        // Super admins can view datasets across organizations, while organization users are restricted to their own datasets.
-        Route::get('/training/datasets', [TrainingDatasetController::class, 'index']);
-        Route::post('/training/datasets', [TrainingDatasetController::class, 'store']);
-        Route::get('/training/datasets/{dataset}', [TrainingDatasetController::class, 'show']);
-        Route::put('/training/datasets/{dataset}', [TrainingDatasetController::class, 'update']);
-        Route::delete('/training/datasets/{dataset}', [TrainingDatasetController::class, 'destroy']);
     });
 });

@@ -51,39 +51,16 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let mounted = true;
-    let timeoutId: NodeJS.Timeout;
-
-    // Set a timeout to stop loading even if API call fails
-    timeoutId = setTimeout(() => {
-      if (mounted) {
-        setLoading(false);
-      }
-    }, 5000); // Max 5 seconds loading
-
     brandingApi
       .getPublicBranding()
       .then((data) => {
-        if (mounted) {
-          clearTimeout(timeoutId);
-          setBranding(data);
-          applyBrandingTheme(data);
-          setLoading(false);
-        }
+        setBranding(data);
+        applyBrandingTheme(data);
       })
-      .catch((error) => {
-        console.warn('Failed to load branding:', error);
-        if (mounted) {
-          clearTimeout(timeoutId);
-          setBranding(null);
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      mounted = false;
-      clearTimeout(timeoutId);
-    };
+      .catch(() => {
+        setBranding(null);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   return (

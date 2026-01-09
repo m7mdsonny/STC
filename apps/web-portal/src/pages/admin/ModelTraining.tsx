@@ -6,7 +6,6 @@ import {
   Pause, Settings, Package, Rocket, Archive
 } from 'lucide-react';
 import { Modal } from '../../components/ui/Modal';
-import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { modelTrainingApi } from '../../lib/api/modelTraining';
 import { useToast } from '../../contexts/ToastContext';
 import type { TrainingDataset, TrainingJob, AiModelVersion, ModelDeployment } from '../../lib/api/modelTraining';
@@ -58,12 +57,6 @@ export function ModelTraining() {
   });
 
   const [uploadFile, setUploadFile] = useState<File | null>(null);
-
-  // FIXED: Add confirmation states for ConfirmDialog
-  const [confirmDeleteDataset, setConfirmDeleteDataset] = useState<{ open: boolean; datasetId: string | null }>({ open: false, datasetId: null });
-  const [confirmCancelJob, setConfirmCancelJob] = useState<{ open: boolean; jobId: string | null }>({ open: false, jobId: null });
-  const [confirmDeprecate, setConfirmDeprecate] = useState<{ open: boolean; modelId: string | null }>({ open: false, modelId: null });
-  const [confirmDeployAll, setConfirmDeployAll] = useState<{ open: boolean; modelId: string | null }>({ open: false, modelId: null });
 
   useEffect(() => {
     fetchData();
@@ -136,17 +129,8 @@ export function ModelTraining() {
     }
   };
 
-  const handleDeleteDatasetClick = (id: string) => {
-    // FIXED: Use ConfirmDialog instead of window.confirm
-    setConfirmDeleteDataset({ open: true, datasetId: id });
-  };
-
-  const handleDeleteDatasetConfirm = async () => {
-    if (!confirmDeleteDataset.datasetId) return;
-    
-    const id = confirmDeleteDataset.datasetId;
-    setConfirmDeleteDataset({ open: false, datasetId: null });
-    
+  const handleDeleteDataset = async (id: string) => {
+    if (!confirm('هل أنت متأكد من حذف مجموعة البيانات هذه؟')) return;
     try {
       await modelTrainingApi.deleteDataset(id);
       showSuccess('تم الحذف', 'تم حذف مجموعة البيانات بنجاح');
@@ -183,17 +167,8 @@ export function ModelTraining() {
     }
   };
 
-  const handleCancelJobClick = (id: string) => {
-    // FIXED: Use ConfirmDialog instead of window.confirm
-    setConfirmCancelJob({ open: true, jobId: id });
-  };
-
-  const handleCancelJobConfirm = async () => {
-    if (!confirmCancelJob.jobId) return;
-    
-    const id = confirmCancelJob.jobId;
-    setConfirmCancelJob({ open: false, jobId: null });
-    
+  const handleCancelJob = async (id: string) => {
+    if (!confirm('هل أنت متأكد من إلغاء هذه المهمة؟')) return;
     try {
       await modelTrainingApi.cancelJob(id);
       showSuccess('تم الإلغاء', 'تم إلغاء المهمة بنجاح');
@@ -244,25 +219,13 @@ export function ModelTraining() {
     }
   };
 
-  const handleDeprecateModelClick = (id: string) => {
-    // FIXED: Use ConfirmDialog instead of window.confirm
-    setConfirmDeprecate({ open: true, modelId: id });
-  };
-
-  const handleDeprecateModelConfirm = async () => {
-    if (!confirmDeprecate.modelId) return;
-    
-    const id = confirmDeprecate.modelId;
-    setConfirmDeprecate({ open: false, modelId: null });
-    
+  const handleDeprecateModel = async (id: string) => {
+    if (!confirm('هل أنت متأكد من إيقاف استخدام هذا النموذج؟')) return;
     try {
       await modelTrainingApi.deprecateModelVersion(id);
-      showSuccess('تم الإيقاف', 'تم إيقاف استخدام النموذج بنجاح');
       fetchData();
     } catch (error) {
       console.error('Error deprecating model:', error);
-      const errorMessage = error instanceof Error ? error.message : 'فشل إيقاف استخدام النموذج';
-      showError('خطأ', errorMessage);
     }
   };
 
@@ -276,26 +239,14 @@ export function ModelTraining() {
     }
   };
 
-  const handleDeployToAllClick = () => {
+  const handleDeployToAll = async () => {
     if (!selectedModel) return;
-    // FIXED: Use ConfirmDialog instead of window.confirm
-    setConfirmDeployAll({ open: true, modelId: selectedModel.id });
-  };
-
-  const handleDeployToAllConfirm = async () => {
-    if (!confirmDeployAll.modelId) return;
-    
-    const id = confirmDeployAll.modelId;
-    setConfirmDeployAll({ open: false, modelId: null });
-    
+    if (!confirm('Deploy this model to all edge servers?')) return;
     try {
-      await modelTrainingApi.deployToAllEdgeServers(id);
-      showSuccess('تم النشر', 'تم نشر النموذج إلى جميع Edge Servers بنجاح');
+      await modelTrainingApi.deployToAllEdgeServers(selectedModel.id);
       fetchData();
     } catch (error) {
       console.error('Error deploying model:', error);
-      const errorMessage = error instanceof Error ? error.message : 'فشل نشر النموذج';
-      showError('خطأ', errorMessage);
     }
   };
 
@@ -393,7 +344,7 @@ export function ModelTraining() {
                 Upload
               </button>
               <button
-                onClick={() => handleDeleteDatasetClick(dataset.id)}
+                onClick={() => handleDeleteDataset(dataset.id)}
                 className="btn-secondary text-red-400 hover:bg-red-500/20 p-2"
               >
                 <Trash2 className="w-4 h-4" />
@@ -486,7 +437,7 @@ export function ModelTraining() {
                       </button>
                       {job.status === 'running' && (
                         <button
-                          onClick={() => handleCancelJobClick(job.id)}
+                          onClick={() => handleCancelJob(job.id)}
                           className="btn-secondary text-red-400 hover:bg-red-500/20 p-2"
                           title="Cancel Job"
                         >
@@ -595,7 +546,7 @@ export function ModelTraining() {
                     Deploy
                   </button>
                   <button
-                    onClick={() => handleDeprecateModelClick(model.id)}
+                    onClick={() => handleDeprecateModel(model.id)}
                     className="btn-secondary text-orange-400 hover:bg-orange-500/20 flex items-center gap-2"
                   >
                     <Archive className="w-4 h-4" />
@@ -619,7 +570,7 @@ export function ModelTraining() {
         </div>
         {selectedModel && (
           <button
-            onClick={handleDeployToAllClick}
+            onClick={handleDeployToAll}
             className="btn-primary flex items-center gap-2"
           >
             <Server className="w-4 h-4" />
@@ -1036,7 +987,6 @@ export function ModelTraining() {
                   })}
                   className="input"
                   min="1"
-                  max="1000"
                 />
               </div>
               <div>
@@ -1050,7 +1000,6 @@ export function ModelTraining() {
                   })}
                   className="input"
                   min="1"
-                  max="256"
                 />
               </div>
               <div>
@@ -1064,8 +1013,6 @@ export function ModelTraining() {
                     hyperparameters: { ...newJob.hyperparameters, learning_rate: parseFloat(e.target.value) }
                   })}
                   className="input"
-                  min="0.0001"
-                  max="1"
                 />
               </div>
             </div>
@@ -1130,51 +1077,6 @@ export function ModelTraining() {
           </div>
         </div>
       </Modal>
-
-      {/* FIXED: Use ConfirmDialog instead of window.confirm */}
-      <ConfirmDialog
-        open={confirmDeleteDataset.open}
-        title="تأكيد الحذف"
-        message="هل أنت متأكد من حذف مجموعة البيانات هذه؟\n\nسيتم حذف جميع العينات المرتبطة بهذه المجموعة.\n\nهذه العملية لا يمكن التراجع عنها."
-        type="danger"
-        confirmText="حذف"
-        cancelText="إلغاء"
-        onConfirm={handleDeleteDatasetConfirm}
-        onCancel={() => setConfirmDeleteDataset({ open: false, datasetId: null })}
-      />
-
-      <ConfirmDialog
-        open={confirmCancelJob.open}
-        title="تأكيد الإلغاء"
-        message="هل أنت متأكد من إلغاء هذه المهمة؟\n\nسيتم إيقاف التدريب وفقدان التقدم الحالي.\n\nهذه العملية لا يمكن التراجع عنها."
-        type="warning"
-        confirmText="إلغاء المهمة"
-        cancelText="إبقاء المهمة"
-        onConfirm={handleCancelJobConfirm}
-        onCancel={() => setConfirmCancelJob({ open: false, jobId: null })}
-      />
-
-      <ConfirmDialog
-        open={confirmDeprecate.open}
-        title="تأكيد إيقاف الاستخدام"
-        message="هل أنت متأكد من إيقاف استخدام هذا النموذج؟\n\nسيتم إيقاف استخدام النموذج في جميع الأنظمة المرتبطة.\n\nيمكن إعادة تفعيله لاحقاً إذا لزم الأمر."
-        type="warning"
-        confirmText="إيقاف الاستخدام"
-        cancelText="إلغاء"
-        onConfirm={handleDeprecateModelConfirm}
-        onCancel={() => setConfirmDeprecate({ open: false, modelId: null })}
-      />
-
-      <ConfirmDialog
-        open={confirmDeployAll.open}
-        title="تأكيد النشر"
-        message="هل أنت متأكد من نشر هذا النموذج إلى جميع Edge Servers؟\n\nسيتم نشر النموذج إلى جميع السيرفرات المتصلة.\n\nهذه العملية قد تستغرق بضع دقائق."
-        type="info"
-        confirmText="نشر للجميع"
-        cancelText="إلغاء"
-        onConfirm={handleDeployToAllConfirm}
-        onCancel={() => setConfirmDeployAll({ open: false, modelId: null })}
-      />
     </div>
   );
 }

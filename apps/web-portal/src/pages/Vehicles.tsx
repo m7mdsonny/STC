@@ -5,7 +5,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { getDetailedErrorMessage } from '../lib/errorMessages';
 import { Modal } from '../components/ui/Modal';
-import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import type { RegisteredVehicle } from '../types/database';
 
 const CATEGORIES = [
@@ -34,7 +33,6 @@ export function Vehicles() {
   const [editingVehicle, setEditingVehicle] = useState<RegisteredVehicle | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; vehicleId: string | null; plateNumber: string }>({ open: false, vehicleId: null, plateNumber: '' });
 
   const [formData, setFormData] = useState({
     plate_number: '',
@@ -105,22 +103,12 @@ export function Vehicles() {
     }
   };
 
-  const handleDeleteClick = (id: string) => {
-    // FIXED: Use ConfirmDialog instead of window.confirm
+  const handleDelete = async (id: string) => {
     const vehicle = vehicles.find(v => v.id === id);
-    setConfirmDelete({ open: true, vehicleId: id, plateNumber: vehicle?.plate_number || '' });
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!confirmDelete.vehicleId) return;
-    
-    const id = confirmDelete.vehicleId;
-    const plateNumber = confirmDelete.plateNumber;
-    setConfirmDelete({ open: false, vehicleId: null, plateNumber: '' });
-    
+    if (!confirm(`هل أنت متأكد من حذف المركبة ${vehicle?.plate_number || ''}؟`)) return;
     try {
       await vehiclesApi.deleteVehicle(id);
-      showSuccess('تم الحذف بنجاح', `تم حذف المركبة ${plateNumber} من النظام`);
+      showSuccess('تم الحذف بنجاح', `تم حذف المركبة ${vehicle?.plate_number || ''} من النظام`);
       fetchVehicles();
     } catch (error) {
       console.error('Failed to delete vehicle:', error);
@@ -344,7 +332,7 @@ export function Vehicles() {
                               <CheckCircle className="w-4 h-4 text-emerald-400" />
                             )}
                           </button>
-                          <button onClick={() => handleDeleteClick(vehicle.id)} className="p-2 hover:bg-red-500/20 rounded">
+                          <button onClick={() => handleDelete(vehicle.id)} className="p-2 hover:bg-red-500/20 rounded">
                             <Trash2 className="w-4 h-4 text-red-400" />
                           </button>
                         </div>
@@ -459,18 +447,6 @@ export function Vehicles() {
           </div>
         </form>
       </Modal>
-
-      {/* FIXED: Use ConfirmDialog instead of window.confirm */}
-      <ConfirmDialog
-        open={confirmDelete.open}
-        title="تأكيد الحذف"
-        message={`هل أنت متأكد من حذف المركبة ${confirmDelete.plateNumber}؟\n\nسيتم حذف المركبة بشكل نهائي من النظام.`}
-        type="danger"
-        confirmText="حذف"
-        cancelText="إلغاء"
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => setConfirmDelete({ open: false, vehicleId: null, plateNumber: '' })}
-      />
     </div>
   );
 }

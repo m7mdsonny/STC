@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Megaphone, Plus, Trash2, ToggleLeft, ToggleRight, Tag, Download, FileText, Calendar, AlertCircle } from 'lucide-react';
 import { updatesApi, organizationsApi } from '../../lib/api';
-import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import type { UpdateAnnouncement, Organization } from '../../types/database';
 
 export function AdminUpdates() {
@@ -25,7 +24,6 @@ export function AdminUpdates() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; updateId: number | null }>({ open: false, updateId: null });
 
   useEffect(() => {
     fetchAll();
@@ -96,17 +94,8 @@ export function AdminUpdates() {
     }
   };
 
-  const handleRemoveUpdateClick = (id: number) => {
-    // FIXED: Use ConfirmDialog instead of window.confirm
-    setConfirmDelete({ open: true, updateId: id });
-  };
-
-  const handleRemoveUpdateConfirm = async () => {
-    if (!confirmDelete.updateId) return;
-    
-    const id = confirmDelete.updateId;
-    setConfirmDelete({ open: false, updateId: null });
-    
+  const removeUpdate = async (id: number) => {
+    if (!confirm('حذف التحديث؟')) return;
     try {
       await updatesApi.remove(id);
       await fetchAll();
@@ -324,7 +313,7 @@ export function AdminUpdates() {
                       )}
                     </button>
                     <button
-                      onClick={() => handleRemoveUpdateClick(update.id)}
+                      onClick={() => removeUpdate(update.id)}
                       className="p-2 rounded-lg hover:bg-white/10 text-red-400"
                       title="حذف"
                     >
@@ -337,18 +326,6 @@ export function AdminUpdates() {
           </div>
         )}
       </div>
-
-      {/* FIXED: Use ConfirmDialog instead of window.confirm */}
-      <ConfirmDialog
-        open={confirmDelete.open}
-        title="تأكيد الحذف"
-        message="هل أنت متأكد من حذف التحديث؟\n\nسيتم حذف التحديث بشكل نهائي من النظام.\n\nهذه العملية لا يمكن التراجع عنها."
-        type="danger"
-        confirmText="حذف"
-        cancelText="إلغاء"
-        onConfirm={handleRemoveUpdateConfirm}
-        onCancel={() => setConfirmDelete({ open: false, updateId: null })}
-      />
     </div>
   );
 }

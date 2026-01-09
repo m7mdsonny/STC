@@ -111,71 +111,59 @@ export const landingPageApi = {
   },
 
   getSections: async (): Promise<LandingPageSection[]> => {
-    // FIXED: Remove duplicate /api/v1 prefix - apiClient already includes it
-    const response = await apiClient.get('/landing-page/sections');
+    const response = await apiClient.get('/api/v1/landing-page/sections');
     return response.data;
   },
 
   updateSection: async (id: string, data: Partial<LandingPageSection>): Promise<LandingPageSection> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.put(`/landing-page/sections/${id}`, data);
+    const response = await apiClient.put(`/api/v1/landing-page/sections/${id}`, data);
     return response.data;
   },
 
   reorderSections: async (order: string[]): Promise<void> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    await apiClient.post('/landing-page/sections/reorder', { order });
+    await apiClient.post('/api/v1/landing-page/sections/reorder', { order });
   },
 
   getFeatures: async (): Promise<LandingPageFeature[]> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.get('/landing-page/features');
+    const response = await apiClient.get('/api/v1/landing-page/features');
     return response.data;
   },
 
   createFeature: async (data: Omit<LandingPageFeature, 'id'>): Promise<LandingPageFeature> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.post('/landing-page/features', data);
+    const response = await apiClient.post('/api/v1/landing-page/features', data);
     return response.data;
   },
 
   updateFeature: async (id: string, data: Partial<LandingPageFeature>): Promise<LandingPageFeature> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.put(`/landing-page/features/${id}`, data);
+    const response = await apiClient.put(`/api/v1/landing-page/features/${id}`, data);
     return response.data;
   },
 
   deleteFeature: async (id: string): Promise<void> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    await apiClient.delete(`/landing-page/features/${id}`);
+    await apiClient.delete(`/api/v1/landing-page/features/${id}`);
   },
 
   getTestimonials: async (): Promise<LandingPageTestimonial[]> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.get('/landing-page/testimonials');
+    const response = await apiClient.get('/api/v1/landing-page/testimonials');
     return response.data;
   },
 
   createTestimonial: async (data: Omit<LandingPageTestimonial, 'id'>): Promise<LandingPageTestimonial> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.post('/landing-page/testimonials', data);
+    const response = await apiClient.post('/api/v1/landing-page/testimonials', data);
     return response.data;
   },
 
   updateTestimonial: async (id: string, data: Partial<LandingPageTestimonial>): Promise<LandingPageTestimonial> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.put(`/landing-page/testimonials/${id}`, data);
+    const response = await apiClient.put(`/api/v1/landing-page/testimonials/${id}`, data);
     return response.data;
   },
 
   deleteTestimonial: async (id: string): Promise<void> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    await apiClient.delete(`/landing-page/testimonials/${id}`);
+    await apiClient.delete(`/api/v1/landing-page/testimonials/${id}`);
   },
 
   getImages: async (): Promise<LandingPageImage[]> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.get('/landing-page/images');
+    const response = await apiClient.get('/api/v1/landing-page/images');
     return response.data;
   },
 
@@ -183,15 +171,13 @@ export const landingPageApi = {
     const formData = new FormData();
     formData.append('image_key', key);
     formData.append('file', file);
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.post('/landing-page/images', formData, {
+    const response = await apiClient.post('/api/v1/landing-page/images', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;
   },
 
   deleteImage: async (id: string): Promise<void> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    await apiClient.delete(`/landing-page/images/${id}`);
+    await apiClient.delete(`/api/v1/landing-page/images/${id}`);
   },
 };

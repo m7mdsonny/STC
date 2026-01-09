@@ -5,7 +5,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { getDetailedErrorMessage } from '../lib/errorMessages';
 import { Modal } from '../components/ui/Modal';
-import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { canManageOrganization, getRoleLabel, getRoleBadgeClass, normalizeRole } from '../lib/rbac';
 import type { User, UserRole } from '../types/database';
 
@@ -27,7 +26,6 @@ export function Team() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; userId: string | null; userName: string }>({ open: false, userId: null, userName: '' });
 
   const canManageUsers = canManageOrganization(profile?.role);
 
@@ -102,22 +100,12 @@ export function Team() {
     }
   };
 
-  const handleDeleteClick = (id: string) => {
-    // FIXED: Use ConfirmDialog instead of window.confirm
+  const deleteUser = async (id: string) => {
     const user = users.find(u => u.id === id);
-    setConfirmDelete({ open: true, userId: id, userName: user?.name || '' });
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!confirmDelete.userId) return;
-    
-    const id = confirmDelete.userId;
-    const userName = confirmDelete.userName;
-    setConfirmDelete({ open: false, userId: null, userName: '' });
-    
+    if (!confirm(`هل أنت متأكد من حذف المستخدم ${user?.name || ''}؟`)) return;
     try {
       await usersApi.deleteUser(id);
-      showSuccess('تم الحذف بنجاح', `تم حذف المستخدم ${userName} من الفريق`);
+      showSuccess('تم الحذف بنجاح', `تم حذف المستخدم ${user?.name || ''} من الفريق`);
       fetchUsers();
     } catch (error) {
       console.error('Failed to delete user:', error);
@@ -301,7 +289,7 @@ export function Team() {
                       <Edit2 className="w-4 h-4 text-blue-400" />
                     </button>
                     <button
-                      onClick={() => handleDeleteClick(user.id)}
+                      onClick={() => deleteUser(user.id)}
                       className="p-2 hover:bg-red-500/20 rounded"
                       title="حذف"
                     >
@@ -467,18 +455,6 @@ export function Team() {
           </div>
         </form>
       </Modal>
-
-      {/* FIXED: Use ConfirmDialog instead of window.confirm */}
-      <ConfirmDialog
-        open={confirmDelete.open}
-        title="تأكيد الحذف"
-        message={`هل أنت متأكد من حذف المستخدم ${confirmDelete.userName}؟\n\nسيتم حذف المستخدم بشكل نهائي من الفريق.`}
-        type="danger"
-        confirmText="حذف"
-        cancelText="إلغاء"
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => setConfirmDelete({ open: false, userId: null, userName: '' })}
-      />
     </div>
   );
 }

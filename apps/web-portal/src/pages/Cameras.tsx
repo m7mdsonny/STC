@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Camera, Plus, Settings, Trash2, Power, PowerOff, MapPin, Server, Search, Filter, Grid, List, Play, RefreshCw, Eye, Image, AlertTriangle } from 'lucide-react';
+import { Camera, Plus, Settings, Trash2, Power, PowerOff, MapPin, Server, Search, Filter, Grid, List, Play, RefreshCw, Eye, Image } from 'lucide-react';
 import { camerasApi } from '../lib/api/cameras';
 import { edgeServersApi } from '../lib/api/edgeServers';
 import { edgeServerService, CameraSnapshot } from '../lib/edgeServer';
@@ -7,7 +7,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { getDetailedErrorMessage } from '../lib/errorMessages';
 import { Modal } from '../components/ui/Modal';
-import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import type { Camera as CameraType, EdgeServer } from '../types/database';
 import { AI_MODULES } from '../types/database';
 
@@ -16,7 +15,6 @@ export function Cameras() {
   const [cameras, setCameras] = useState<CameraType[]>([]);
   const [servers, setServers] = useState<EdgeServer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null); // FIXED: Add error state
   const [showModal, setShowModal] = useState(false);
   const [editingCamera, setEditingCamera] = useState<CameraType | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,8 +25,6 @@ export function Cameras() {
   const [showLiveModal, setShowLiveModal] = useState(false);
   const [selectedCamera, setSelectedCamera] = useState<CameraType | null>(null);
   const [liveSnapshot, setLiveSnapshot] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; cameraId: string | null; cameraName: string }>({ open: false, cameraId: null, cameraName: '' });
-  const [confirmOfflineServer, setConfirmOfflineServer] = useState<{ open: boolean; serverName: string; onConfirm: () => void }>({ open: false, serverName: '', onConfirm: () => {} });
 
   const [formData, setFormData] = useState({
     name: '',
@@ -50,7 +46,6 @@ export function Cameras() {
 
   const fetchData = async () => {
     setLoading(true);
-    setError(null); // Clear previous errors
     try {
       const [camerasRes, serversRes] = await Promise.all([
         camerasApi.getCameras({ per_page: 100 }),
@@ -66,13 +61,8 @@ export function Cameras() {
       }
     } catch (error) {
       console.error('Error fetching data:', error);
-      // FIXED: Set error state and show user-friendly message
-      const errorMessage = error instanceof Error ? error.message : 'فشل تحميل البيانات';
-      setError(errorMessage);
-      showError('خطأ في التحميل', errorMessage);
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   const fetchSnapshot = useCallback(async (cameraId: string) => {
@@ -117,34 +107,18 @@ export function Cameras() {
       organization_id: organization.id,
     };
 
-    // Check if Edge Server is online before creating/updating camera
-    const selectedServer = servers.find(s => s.id === formData.edge_server_id);
-    if (selectedServer && !selectedServer.online) {
-      // FIXED: Use ConfirmDialog instead of window.confirm - store save callback
-      setConfirmOfflineServer({
-        open: true,
-        serverName: selectedServer.name,
-        onConfirm: () => {
-          setConfirmOfflineServer({ open: false, serverName: '', onConfirm: () => {} });
-          performSave(selectedServer);
-        },
-      });
-      return;
-    }
-
-    // Server is online or no server selected - proceed directly
-    performSave(selectedServer || null);
-  };
-
-  const performSave = async (selectedServer: EdgeServer | null) => {
-    if (!organization) return;
-
-    const payload = {
-      ...formData,
-      organization_id: organization.id,
-    };
-
     try {
+      // Check if Edge Server is online before creating/updating camera
+      const selectedServer = servers.find(s => s.id === formData.edge_server_id);
+      if (selectedServer && !selectedServer.online) {
+        const proceed = confirm(
+          `تحذير: السيرفر ${selectedServer.name} غير متصل حالياً.\n` +
+          `سيتم حفظ الكاميرا في قاعدة البيانات، لكن لن يتم مزامنتها مع Edge Server حتى يعود الاتصال.\n\n` +
+          `هل تريد المتابعة؟`
+        );
+        if (!proceed) return;
+      }
+
       if (editingCamera) {
         const response = await camerasApi.updateCamera(editingCamera.id, payload);
         showSuccess('تم التحديث بنجاح', `تم تحديث بيانات الكاميرا ${formData.name} بنجاح`);
@@ -172,21 +146,12 @@ export function Cameras() {
     }
   };
 
-  const handleDeleteClick = (id: string) => {
-    // FIXED: Use ConfirmDialog instead of window.confirm
+  const handleDelete = async (id: string) => {
     const camera = cameras.find(c => c.id === id);
-    setConfirmDelete({ open: true, cameraId: id, cameraName: camera?.name || '' });
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!confirmDelete.cameraId) return;
-    
-    const id = confirmDelete.cameraId;
-    setConfirmDelete({ open: false, cameraId: null, cameraName: '' });
-    
+    if (!confirm(`هل أنت متأكد من حذف الكاميرا ${camera?.name || ''}؟`)) return;
     try {
       await camerasApi.deleteCamera(id);
-      showSuccess('تم الحذف بنجاح', `تم حذف الكاميرا ${confirmDelete.cameraName} من النظام`);
+      showSuccess('تم الحذف بنجاح', `تم حذف الكاميرا ${camera?.name || ''} من النظام`);
       fetchData();
     } catch (error) {
       console.error('Error deleting camera:', error);
@@ -311,22 +276,6 @@ export function Cameras() {
         </div>
       </div>
 
-      {/* FIXED: Display error message with retry option */}
-      {error && (
-        <div className="card p-6 bg-red-500/10 border border-red-500/20">
-          <div className="flex items-start gap-4">
-            <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <h3 className="font-semibold text-red-500 mb-1">خطأ في تحميل البيانات</h3>
-              <p className="text-white/70 mb-3">{error}</p>
-              <button onClick={fetchData} className="btn-secondary text-sm">
-                إعادة المحاولة
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <div className="w-8 h-8 border-4 border-stc-gold border-t-transparent rounded-full animate-spin" />
@@ -404,7 +353,7 @@ export function Cameras() {
                         <Settings className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteClick(camera.id)}
+                        onClick={() => handleDelete(camera.id)}
                         className="p-2 bg-black/50 rounded hover:bg-red-500/50"
                       >
                         <Trash2 className="w-4 h-4 text-red-400" />
@@ -693,33 +642,6 @@ export function Cameras() {
           )}
         </div>
       </Modal>
-
-      {/* FIXED: Use ConfirmDialog instead of window.confirm */}
-      <ConfirmDialog
-        open={confirmDelete.open}
-        title="تأكيد الحذف"
-        message={`هل أنت متأكد من حذف الكاميرا "${confirmDelete.cameraName}"؟\n\nسيتم حذف الكاميرا بشكل نهائي من النظام.`}
-        type="danger"
-        confirmText="حذف"
-        cancelText="إلغاء"
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => setConfirmDelete({ open: false, cameraId: null, cameraName: '' })}
-      />
-
-      <ConfirmDialog
-        open={confirmOfflineServer.open}
-        title="تحذير: السيرفر غير متصل"
-        message={`السيرفر "${confirmOfflineServer.serverName}" غير متصل حالياً.\n\nسيتم حفظ الكاميرا في قاعدة البيانات، لكن لن يتم مزامنتها مع Edge Server حتى يعود الاتصال.\n\nهل تريد المتابعة؟`}
-        type="warning"
-        confirmText="نعم، المتابعة"
-        cancelText="إلغاء"
-        onConfirm={() => {
-          if (confirmOfflineServer.onConfirm) {
-            confirmOfflineServer.onConfirm();
-          }
-        }}
-        onCancel={() => setConfirmOfflineServer({ open: false, serverName: '', onConfirm: () => {} })}
-      />
     </div>
   );
 }

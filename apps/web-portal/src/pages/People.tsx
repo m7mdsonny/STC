@@ -7,7 +7,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { getDetailedErrorMessage } from '../lib/errorMessages';
 import { Modal } from '../components/ui/Modal';
-import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import type { RegisteredFace } from '../types/database';
 
 const CATEGORIES = [
@@ -30,7 +29,6 @@ export function People() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [encodingStatus, setEncodingStatus] = useState<'idle' | 'encoding' | 'success' | 'error'>('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; personId: string | null; personName: string }>({ open: false, personId: null, personName: '' });
 
   const [formData, setFormData] = useState({
     person_name: '',
@@ -157,22 +155,12 @@ export function People() {
     }
   };
 
-  const handleDeleteClick = (id: string) => {
-    // FIXED: Use ConfirmDialog instead of window.confirm
+  const handleDelete = async (id: string) => {
     const person = people.find(p => p.id === id);
-    setConfirmDelete({ open: true, personId: id, personName: person?.person_name || 'هذا الشخص' });
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!confirmDelete.personId) return;
-    
-    const id = confirmDelete.personId;
-    const personName = confirmDelete.personName;
-    setConfirmDelete({ open: false, personId: null, personName: '' });
-    
+    if (!confirm(`هل أنت متأكد من حذف ${person?.person_name || 'هذا الشخص'}؟`)) return;
     try {
       await peopleApi.deletePerson(id);
-      showSuccess('تم الحذف بنجاح', `تم حذف ${personName} من النظام`);
+      showSuccess('تم الحذف بنجاح', `تم حذف ${person?.person_name || 'الشخص'} من النظام`);
       fetchPeople();
     } catch (error) {
       console.error('Failed to delete person:', error);
@@ -382,7 +370,7 @@ export function People() {
                         )}
                       </button>
                       <button
-                        onClick={() => handleDeleteClick(person.id)}
+                        onClick={() => handleDelete(person.id)}
                         className="p-2 bg-black/50 rounded hover:bg-red-500/50"
                       >
                         <Trash2 className="w-4 h-4 text-red-400" />
@@ -530,18 +518,6 @@ export function People() {
           </div>
         </form>
       </Modal>
-
-      {/* FIXED: Use ConfirmDialog instead of window.confirm */}
-      <ConfirmDialog
-        open={confirmDelete.open}
-        title="تأكيد الحذف"
-        message={`هل أنت متأكد من حذف ${confirmDelete.personName}؟\n\nسيتم حذف الشخص بشكل نهائي من النظام.`}
-        type="danger"
-        confirmText="حذف"
-        cancelText="إلغاء"
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => setConfirmDelete({ open: false, personId: null, personName: '' })}
-      />
     </div>
   );
 }

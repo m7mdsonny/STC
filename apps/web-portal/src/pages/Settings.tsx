@@ -7,7 +7,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { getDetailedErrorMessage } from '../lib/errorMessages';
 import { Modal } from '../components/ui/Modal';
-import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { OrganizationSettings } from '../components/settings/OrganizationSettings';
 import { NotificationSettings } from '../components/settings/NotificationSettings';
 import { AlertPrioritySettings } from '../components/settings/AlertPrioritySettings';
@@ -44,7 +43,6 @@ export function Settings() {
   });
   const [availableLicenses, setAvailableLicenses] = useState<License[]>([]);
   const [loadingLicenses, setLoadingLicenses] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; serverId: string | null; serverName: string }>({ open: false, serverId: null, serverName: '' });
 
   useEffect(() => {
     if (organization) {
@@ -158,22 +156,12 @@ export function Settings() {
     setShowServerModal(true);
   };
 
-  const handleDeleteServerClick = (id: string) => {
-    // FIXED: Use ConfirmDialog instead of window.confirm
+  const deleteServer = async (id: string) => {
     const server = servers.find(s => s.id === id);
-    setConfirmDelete({ open: true, serverId: id, serverName: server?.name || '' });
-  };
-
-  const handleDeleteServerConfirm = async () => {
-    if (!confirmDelete.serverId) return;
-    
-    const id = confirmDelete.serverId;
-    const serverName = confirmDelete.serverName;
-    setConfirmDelete({ open: false, serverId: null, serverName: '' });
-    
+    if (!confirm(`هل أنت متأكد من حذف السيرفر ${server?.name || ''}؟ سيتم حذف جميع الكاميرات المرتبطة به.`)) return;
     try {
       await edgeServersApi.deleteEdgeServer(id);
-      showSuccess('تم الحذف بنجاح', `تم حذف السيرفر ${serverName} من النظام`);
+      showSuccess('تم الحذف بنجاح', `تم حذف السيرفر ${server?.name || ''} من النظام`);
       fetchData();
     } catch (error) {
       console.error('Failed to delete edge server:', error);
@@ -425,7 +413,7 @@ export function Settings() {
                                 <SettingsIcon className="w-4 h-4" />
                               </button>
                               <button
-                                onClick={() => handleDeleteServerClick(server.id)}
+                                onClick={() => deleteServer(server.id)}
                                 className="p-2 hover:bg-red-500/20 rounded-lg"
                               >
                                 <Trash2 className="w-4 h-4 text-red-400" />
@@ -535,18 +523,6 @@ export function Settings() {
           </div>
         </form>
       </Modal>
-
-      {/* FIXED: Use ConfirmDialog instead of window.confirm */}
-      <ConfirmDialog
-        open={confirmDelete.open}
-        title="تأكيد الحذف"
-        message={`هل أنت متأكد من حذف السيرفر "${confirmDelete.serverName}"؟\n\nسيتم حذف جميع الكاميرات المرتبطة به.\n\nهذه العملية لا يمكن التراجع عنها.`}
-        type="danger"
-        confirmText="حذف"
-        cancelText="إلغاء"
-        onConfirm={handleDeleteServerConfirm}
-        onCancel={() => setConfirmDelete({ open: false, serverId: null, serverName: '' })}
-      />
     </div>
   );
 }

@@ -10,7 +10,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { getDetailedErrorMessage } from '../lib/errorMessages';
 import { Modal } from '../components/ui/Modal';
-import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { AI_MODULES, MODULE_EVENTS, ACTION_TYPES, type AutomationRule } from '../types/database';
 
 const moduleIcons: Record<string, React.ElementType> = {
@@ -49,7 +48,6 @@ export function Automation() {
   const [showModal, setShowModal] = useState(false);
   const [editingRule, setEditingRule] = useState<AutomationRule | null>(null);
   const [selectedModule, setSelectedModule] = useState('fire');
-  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; ruleId: string | null; ruleName: string }>({ open: false, ruleId: null, ruleName: '' });
 
   const [formData, setFormData] = useState({
     name: '',
@@ -152,22 +150,13 @@ export function Automation() {
     }
   };
 
-  const handleDeleteClick = (id: string) => {
-    // FIXED: Use ConfirmDialog instead of window.confirm
+  const handleDelete = async (id: string) => {
     const rule = rules.find(r => r.id === id);
-    setConfirmDelete({ open: true, ruleId: id, ruleName: rule?.name || '' });
-  };
+    if (!confirm(`هل أنت متأكد من حذف القاعدة ${rule?.name || ''}؟`)) return;
 
-  const handleDeleteConfirm = async () => {
-    if (!confirmDelete.ruleId) return;
-    
-    const id = confirmDelete.ruleId;
-    const ruleName = confirmDelete.ruleName;
-    setConfirmDelete({ open: false, ruleId: null, ruleName: '' });
-    
     try {
       await automationRulesApi.deleteRule(id);
-      showSuccess('تم الحذف بنجاح', `تم حذف القاعدة ${ruleName} من النظام`);
+      showSuccess('تم الحذف بنجاح', `تم حذف القاعدة ${rule?.name || ''} من النظام`);
       fetchRules();
     } catch (error) {
       console.error('Error deleting automation rule:', error);
@@ -533,18 +522,6 @@ export function Automation() {
           </div>
         </form>
       </Modal>
-
-      {/* FIXED: Use ConfirmDialog instead of window.confirm */}
-      <ConfirmDialog
-        open={confirmDelete.open}
-        title="تأكيد الحذف"
-        message={`هل أنت متأكد من حذف القاعدة "${confirmDelete.ruleName}"؟\n\nسيتم حذف القاعدة بشكل نهائي من النظام.\n\nهذه العملية لا يمكن التراجع عنها.`}
-        type="danger"
-        confirmText="حذف"
-        cancelText="إلغاء"
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => setConfirmDelete({ open: false, ruleId: null, ruleName: '' })}
-      />
     </div>
   );
 }

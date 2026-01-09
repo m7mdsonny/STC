@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { HardDrive, Download, RotateCcw, PlusCircle, Loader2 } from 'lucide-react';
 import { backupsApi } from '../../lib/api/backups';
 import { useToast } from '../../contexts/ToastContext';
-import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import type { SystemBackup } from '../../types/database';
 
 export function AdminBackups() {
@@ -10,8 +9,6 @@ export function AdminBackups() {
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);
   const [restoring, setRestoring] = useState<number | null>(null);
-  const [confirmRestore, setConfirmRestore] = useState<{ open: boolean; backupId: number | null }>({ open: false, backupId: null });
-  const [confirmRestoreFinal, setConfirmRestoreFinal] = useState<{ open: boolean; backupId: number | null }>({ open: false, backupId: null });
   const { showSuccess, showError } = useToast();
 
   const load = async () => {
@@ -57,26 +54,16 @@ export function AdminBackups() {
     }
   };
 
-  const handleRestoreClick = (id: number) => {
-    // FIXED: Use ConfirmDialog instead of window.confirm
-    setConfirmRestore({ open: true, backupId: id });
-  };
-
-  const handleRestoreConfirm = () => {
-    if (confirmRestore.backupId !== null) {
-      // First confirmation passed, show final confirmation
-      setConfirmRestore({ open: false, backupId: null });
-      setConfirmRestoreFinal({ open: true, backupId: confirmRestore.backupId });
-    }
-  };
-
-  const handleRestoreFinalConfirm = async () => {
-    if (confirmRestoreFinal.backupId === null) return;
+  const restore = async (id: number) => {
+    // CRITICAL FIX: Require explicit confirmation (matches backend requirement)
+    const confirmed = confirm('⚠️ تحذير: استعادة النسخة الاحتياطية ستستبدل جميع البيانات الحالية.\n\nهذه العملية لا يمكن التراجع عنها.\n\nهل أنت متأكد تماماً؟');
+    if (!confirmed) return;
     
-    const id = confirmRestoreFinal.backupId;
-    setConfirmRestoreFinal({ open: false, backupId: null });
+    // Double confirmation for safety
+    const doubleConfirm = confirm('تأكيد نهائي: هل أنت متأكد 100% من الاستعادة؟');
+    if (!doubleConfirm) return;
+    
     setRestoring(id);
-    
     try {
       // CRITICAL FIX: Send confirmed=true parameter (required by backend)
       await backupsApi.restore(id, true);
@@ -172,7 +159,7 @@ export function AdminBackups() {
                     تحميل
                   </button>
                   <button
-                    onClick={() => handleRestoreClick(backup.id)}
+                    onClick={() => restore(backup.id)}
                     className="btn-secondary flex items-center gap-2"
                     disabled={restoring === backup.id || working}
                   >
@@ -189,29 +176,6 @@ export function AdminBackups() {
           </div>
         )}
       </div>
-
-      {/* FIXED: Use ConfirmDialog instead of window.confirm */}
-      <ConfirmDialog
-        open={confirmRestore.open}
-        title="⚠️ تحذير: استعادة النسخة الاحتياطية"
-        message="استعادة النسخة الاحتياطية ستستبدل جميع البيانات الحالية.\n\nهذه العملية لا يمكن التراجع عنها.\n\nهل أنت متأكد تماماً؟"
-        type="danger"
-        confirmText="نعم، متأكد"
-        cancelText="إلغاء"
-        onConfirm={handleRestoreConfirm}
-        onCancel={() => setConfirmRestore({ open: false, backupId: null })}
-      />
-
-      <ConfirmDialog
-        open={confirmRestoreFinal.open}
-        title="تأكيد نهائي"
-        message="هل أنت متأكد 100% من الاستعادة؟\n\nسيتم استبدال جميع البيانات الحالية بالبيانات من النسخة الاحتياطية."
-        type="danger"
-        confirmText="نعم، استعادة الآن"
-        cancelText="إلغاء"
-        onConfirm={handleRestoreFinalConfirm}
-        onCancel={() => setConfirmRestoreFinal({ open: false, backupId: null })}
-      />
     </div>
   );
 }

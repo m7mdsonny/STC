@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Key, Plus, Trash2, Building2, Server, Search, Filter, Wifi, WifiOff, Loader2 } from 'lucide-react';
 import { integrationsApi, organizationsApi, edgeServersApi } from '../../lib/api';
 import { Modal } from '../../components/ui/Modal';
-import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import type { Integration, Organization, EdgeServer } from '../../types/database';
 
 const INTEGRATION_TYPES = [
@@ -29,7 +28,6 @@ export function AdminIntegrations() {
   const [filterOrg, setFilterOrg] = useState<string>('');
   const [testingConnection, setTestingConnection] = useState<string | null>(null);
   const [testResults, setTestResults] = useState<Record<string, { success: boolean; message: string }>>({});
-  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; integrationId: string | null }>({ open: false, integrationId: null });
 
   const [form, setForm] = useState({
     organization_id: '',
@@ -117,17 +115,8 @@ export function AdminIntegrations() {
     }
   };
 
-  const handleDeleteIntegrationClick = (id: string) => {
-    // FIXED: Use ConfirmDialog instead of window.confirm
-    setConfirmDelete({ open: true, integrationId: id });
-  };
-
-  const handleDeleteIntegrationConfirm = async () => {
-    if (!confirmDelete.integrationId) return;
-    
-    const id = confirmDelete.integrationId;
-    setConfirmDelete({ open: false, integrationId: null });
-    
+  const deleteIntegration = async (id: string) => {
+    if (!confirm('هل انت متاكد من حذف هذا التكامل؟')) return;
     try {
       await integrationsApi.deleteIntegration(id);
       await fetchData();
@@ -305,7 +294,7 @@ export function AdminIntegrations() {
                         />
                         <div className="w-11 h-6 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-stc-gold"></div>
                       </label>
-                      <button onClick={() => handleDeleteIntegrationClick(integration.id)} className="p-2 hover:bg-red-500/20 rounded-lg">
+                      <button onClick={() => deleteIntegration(integration.id)} className="p-2 hover:bg-red-500/20 rounded-lg">
                         <Trash2 className="w-4 h-4 text-red-400" />
                       </button>
                     </div>
@@ -413,18 +402,6 @@ export function AdminIntegrations() {
           </div>
         </form>
       </Modal>
-
-      {/* FIXED: Use ConfirmDialog instead of window.confirm */}
-      <ConfirmDialog
-        open={confirmDelete.open}
-        title="تأكيد الحذف"
-        message="هل أنت متأكد من حذف هذا التكامل؟\n\nسيتم حذف التكامل بشكل نهائي من النظام.\n\nهذه العملية لا يمكن التراجع عنها."
-        type="danger"
-        confirmText="حذف"
-        cancelText="إلغاء"
-        onConfirm={handleDeleteIntegrationConfirm}
-        onCancel={() => setConfirmDelete({ open: false, integrationId: null })}
-      />
     </div>
   );
 }

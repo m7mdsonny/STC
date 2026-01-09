@@ -54,24 +54,18 @@ export function LiveView() {
       const camerasList = result.data || [];
       setCameras(camerasList);
       
-      // FIXED: Fetch stream URLs in parallel instead of sequentially
-      const streamPromises = camerasList.map(async (camera) => {
+      // Fetch stream URLs for each camera
+      const urls: Record<string, string> = {};
+      for (const camera of camerasList) {
         try {
           const streamUrl = await camerasApi.getStreamUrl(camera.id);
-          return { id: camera.id, url: streamUrl };
+          if (streamUrl) {
+            urls[camera.id] = streamUrl;
+          }
         } catch (error) {
           console.error(`Failed to get stream URL for camera ${camera.id}:`, error);
-          return { id: camera.id, url: null };
         }
-      });
-
-      const streamResults = await Promise.all(streamPromises);
-      const urls: Record<string, string> = {};
-      streamResults.forEach(({ id, url }) => {
-        if (url) {
-          urls[id] = url;
-        }
-      });
+      }
       setStreamUrls(urls);
     } catch (error) {
       console.error('Failed to fetch cameras:', error);
@@ -155,10 +149,8 @@ export function LiveView() {
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     console.error(`Stream error for camera ${camera.id}:`, e);
-                    // FIXED: Create a copy before mutating to avoid direct state mutation
-                    const newUrls = { ...streamUrls };
-                    delete newUrls[camera.id];
-                    setStreamUrls(newUrls);
+                    delete streamUrls[camera.id];
+                    setStreamUrls({ ...streamUrls });
                   }}
                 />
               ) : (

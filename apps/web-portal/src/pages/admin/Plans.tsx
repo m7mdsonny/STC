@@ -110,8 +110,6 @@ export function Plans() {
                     value={editForm.price_monthly}
                     onChange={(e) => setEditForm({ ...editForm, price_monthly: parseFloat(e.target.value) })}
                     className="input mt-1"
-                    min="0"
-                    step="0.01"
                   />
                 </div>
                 <div>
@@ -121,8 +119,6 @@ export function Plans() {
                     value={editForm.price_yearly}
                     onChange={(e) => setEditForm({ ...editForm, price_yearly: parseFloat(e.target.value) })}
                     className="input mt-1"
-                    min="0"
-                    step="0.01"
                   />
                 </div>
                 <div>
@@ -132,8 +128,6 @@ export function Plans() {
                     value={editForm.max_cameras}
                     onChange={(e) => setEditForm({ ...editForm, max_cameras: parseInt(e.target.value) })}
                     className="input mt-1"
-                    min="1"
-                    max="128"
                   />
                 </div>
                 <div>
@@ -143,8 +137,6 @@ export function Plans() {
                     value={editForm.max_edge_servers}
                     onChange={(e) => setEditForm({ ...editForm, max_edge_servers: parseInt(e.target.value) })}
                     className="input mt-1"
-                    min="1"
-                    max="10"
                   />
                 </div>
                 <div className="flex gap-2 pt-2">

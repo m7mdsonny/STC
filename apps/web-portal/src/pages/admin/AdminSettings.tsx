@@ -49,14 +49,14 @@ export function AdminSettings() {
           platformNameAr: settings.platform_tagline || 'منصة تحليل الفيديو بالذكاء الاصطناعي',
           defaultLanguage: settings.default_language || 'ar',
           timezone: settings.default_timezone || 'Africa/Cairo',
-          trialDays: (settings as any).trial_days || 14, // Use actual API value if available
+          trialDays: 14, // Not in SystemSettings
         });
         setSecuritySettings({
           sessionTimeout: settings.session_timeout_minutes || 60,
           maxLoginAttempts: settings.max_login_attempts || 5,
           requireMfa: settings.require_2fa || false,
           passwordMinLength: settings.password_min_length || 8,
-          passwordRequireSpecial: (settings as any).password_require_special ?? true, // Use actual API value if available
+          passwordRequireSpecial: true, // Not in SystemSettings
         });
         const emailSettingsData = (settings as any).email_settings || {};
         setEmailSettings({
@@ -84,12 +84,10 @@ export function AdminSettings() {
         platform_tagline: generalSettings.platformNameAr,
         default_language: generalSettings.defaultLanguage,
         default_timezone: generalSettings.timezone,
-        trial_days: generalSettings.trialDays, // Include trial_days in API call
         session_timeout_minutes: securitySettings.sessionTimeout,
         max_login_attempts: securitySettings.maxLoginAttempts,
         require_2fa: securitySettings.requireMfa,
         password_min_length: securitySettings.passwordMinLength,
-        password_require_special: securitySettings.passwordRequireSpecial, // Include password_require_special in API call
         email_settings: {
           smtp_host: emailSettings.smtpHost,
           smtp_port: emailSettings.smtpPort,
@@ -117,8 +115,7 @@ export function AdminSettings() {
 
   const handleClearCache = async () => {
     try {
-      // FIXED: Remove duplicate /api/v1 prefix - apiClient already includes it
-      await apiClient.post('/super-admin/clear-cache');
+      await apiClient.post('/api/v1/super-admin/clear-cache');
       showSuccess('تم التنظيف', 'تم تنظيف الذاكرة المؤقتة بنجاح');
     } catch (error) {
       showError('خطأ', 'فشل تنظيف الذاكرة المؤقتة');
@@ -127,8 +124,7 @@ export function AdminSettings() {
 
   const handleCreateBackup = async () => {
     try {
-      // FIXED: Remove duplicate /api/v1 prefix - apiClient already includes it
-      await apiClient.post('/system-backups');
+      await apiClient.post('/api/v1/system-backups');
       showSuccess('تم الإنشاء', 'تم إنشاء النسخة الاحتياطية بنجاح');
     } catch (error) {
       showError('خطأ', 'فشل إنشاء النسخة الاحتياطية');

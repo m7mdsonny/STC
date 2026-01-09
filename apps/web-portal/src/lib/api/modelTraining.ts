@@ -115,16 +115,9 @@ export interface ModelDeployment {
 export const modelTrainingApi = {
   getDatasets: async (): Promise<TrainingDataset[]> => {
     try {
-      // FIXED: Remove duplicate /api/v1 prefix
-      const response = await apiClient.get('/training/datasets');
-      // The backend returns a paginated response with data in the `data` property. Normalise to array.
-      const data = (response as any).data;
-      if (!data) return [];
-      // If the backend wraps paginated results (Laravel) under 'data' key, flatten accordingly.
-      if (Array.isArray(data.data)) {
-        return data.data as TrainingDataset[];
-      }
-      return Array.isArray(data) ? (data as TrainingDataset[]) : [];
+      // TODO: Implement training datasets endpoint in backend
+      // For now, return empty array
+      return [];
     } catch (error) {
       console.error('Error fetching datasets:', error);
       return [];
@@ -132,26 +125,23 @@ export const modelTrainingApi = {
   },
 
   getDataset: async (id: string): Promise<TrainingDataset> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.get(`/training/datasets/${id}`);
-    return response.data;
+    // TODO: Implement training dataset endpoint in backend
+    throw new Error('Training dataset endpoint not implemented yet');
   },
 
   createDataset: async (data: Partial<TrainingDataset>): Promise<TrainingDataset> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.post('/training/datasets', data);
-    return response.data;
+    // TODO: Implement training dataset creation endpoint in backend
+    throw new Error('Training dataset creation endpoint not implemented yet');
   },
 
   updateDataset: async (id: string, data: Partial<TrainingDataset>): Promise<TrainingDataset> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.put(`/training/datasets/${id}`, data);
-    return response.data;
+    // TODO: Implement training dataset update endpoint in backend
+    throw new Error('Training dataset update endpoint not implemented yet');
   },
 
   deleteDataset: async (id: string): Promise<void> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    await apiClient.delete(`/training/datasets/${id}`);
+    // TODO: Implement training dataset deletion endpoint in backend
+    throw new Error('Training dataset deletion endpoint not implemented yet');
   },
 
   getSamples: async (datasetId: string, params?: {
@@ -160,8 +150,7 @@ export const modelTrainingApi = {
     is_labeled?: boolean;
     is_verified?: boolean;
   }): Promise<{ data: TrainingSample[]; total: number }> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.get(`/training/datasets/${datasetId}/samples`, { params });
+    const response = await apiClient.get(`/api/v1/training/datasets/${datasetId}/samples`, { params });
     return response.data;
   },
 
@@ -171,27 +160,23 @@ export const modelTrainingApi = {
     if (metadata) {
       formData.append('metadata', JSON.stringify(metadata));
     }
-    // FIXED: Remove duplicate /api/v1 prefix - apiClient already includes it
-    const response = await apiClient.post(`/training/datasets/${datasetId}/samples`, formData, {
+    const response = await apiClient.post(`/api/v1/training/datasets/${datasetId}/samples`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;
   },
 
   updateSample: async (datasetId: string, sampleId: string, data: Partial<TrainingSample>): Promise<TrainingSample> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.put(`/training/datasets/${datasetId}/samples/${sampleId}`, data);
+    const response = await apiClient.put(`/api/v1/training/datasets/${datasetId}/samples/${sampleId}`, data);
     return response.data;
   },
 
   deleteSample: async (datasetId: string, sampleId: string): Promise<void> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    await apiClient.delete(`/training/datasets/${datasetId}/samples/${sampleId}`);
+    await apiClient.delete(`/api/v1/training/datasets/${datasetId}/samples/${sampleId}`);
   },
 
   verifySample: async (datasetId: string, sampleId: string, approved: boolean, reason?: string): Promise<TrainingSample> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.post(`/training/datasets/${datasetId}/samples/${sampleId}/verify`, {
+    const response = await apiClient.post(`/api/v1/training/datasets/${datasetId}/samples/${sampleId}/verify`, {
       approved,
       rejection_reason: reason,
     });
@@ -200,8 +185,7 @@ export const modelTrainingApi = {
 
   getJobs: async (params?: { status?: string; ai_module?: string }): Promise<TrainingJob[]> => {
     try {
-      // FIXED: Remove duplicate /api/v1 prefix
-      const response = await apiClient.get('/training/jobs', { params });
+      const response = await apiClient.get('/api/v1/training/jobs', { params });
       return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
       console.error('Error fetching jobs:', error);
@@ -210,33 +194,28 @@ export const modelTrainingApi = {
   },
 
   getJob: async (id: string): Promise<TrainingJob> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.get(`/training/jobs/${id}`);
+    const response = await apiClient.get(`/api/v1/training/jobs/${id}`);
     return response.data;
   },
 
   createJob: async (data: Partial<TrainingJob>): Promise<TrainingJob> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.post('/training/jobs', data);
+    const response = await apiClient.post('/api/v1/training/jobs', data);
     return response.data;
   },
 
   cancelJob: async (id: string): Promise<TrainingJob> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.post(`/training/jobs/${id}/cancel`);
+    const response = await apiClient.post(`/api/v1/training/jobs/${id}/cancel`);
     return response.data;
   },
 
   getJobLogs: async (id: string): Promise<string> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.get(`/training/jobs/${id}/logs`);
+    const response = await apiClient.get(`/api/v1/training/jobs/${id}/logs`);
     return response.data;
   },
 
   getModelVersions: async (params?: { ai_module?: string; status?: string }): Promise<AiModelVersion[]> => {
     try {
-      // FIXED: Remove duplicate /api/v1 prefix
-      const response = await apiClient.get('/training/models', { params });
+      const response = await apiClient.get('/api/v1/training/models', { params });
       return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
       console.error('Error fetching model versions:', error);
@@ -245,39 +224,33 @@ export const modelTrainingApi = {
   },
 
   getModelVersion: async (id: string): Promise<AiModelVersion> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.get(`/training/models/${id}`);
+    const response = await apiClient.get(`/api/v1/training/models/${id}`);
     return response.data;
   },
 
   updateModelVersion: async (id: string, data: Partial<AiModelVersion>): Promise<AiModelVersion> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.put(`/training/models/${id}`, data);
+    const response = await apiClient.put(`/api/v1/training/models/${id}`, data);
     return response.data;
   },
 
   approveModelVersion: async (id: string): Promise<AiModelVersion> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.post(`/training/models/${id}/approve`);
+    const response = await apiClient.post(`/api/v1/training/models/${id}/approve`);
     return response.data;
   },
 
   releaseModelVersion: async (id: string, releaseNotes?: string): Promise<AiModelVersion> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.post(`/training/models/${id}/release`, { release_notes: releaseNotes });
+    const response = await apiClient.post(`/api/v1/training/models/${id}/release`, { release_notes: releaseNotes });
     return response.data;
   },
 
   deprecateModelVersion: async (id: string): Promise<AiModelVersion> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.post(`/training/models/${id}/deprecate`);
+    const response = await apiClient.post(`/api/v1/training/models/${id}/deprecate`);
     return response.data;
   },
 
   getDeployments: async (modelVersionId: string): Promise<ModelDeployment[]> => {
     try {
-      // FIXED: Remove duplicate /api/v1 prefix
-      const response = await apiClient.get(`/training/models/${modelVersionId}/deployments`);
+      const response = await apiClient.get(`/api/v1/training/models/${modelVersionId}/deployments`);
       return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
       console.error('Error fetching deployments:', error);
@@ -286,22 +259,19 @@ export const modelTrainingApi = {
   },
 
   deployToEdgeServer: async (modelVersionId: string, edgeServerId: number): Promise<ModelDeployment> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.post(`/training/models/${modelVersionId}/deploy`, {
+    const response = await apiClient.post(`/api/v1/training/models/${modelVersionId}/deploy`, {
       edge_server_id: edgeServerId,
     });
     return response.data;
   },
 
   deployToAllEdgeServers: async (modelVersionId: string): Promise<ModelDeployment[]> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.post(`/training/models/${modelVersionId}/deploy-all`);
+    const response = await apiClient.post(`/api/v1/training/models/${modelVersionId}/deploy-all`);
     return response.data;
   },
 
   retryDeployment: async (deploymentId: string): Promise<ModelDeployment> => {
-    // FIXED: Remove duplicate /api/v1 prefix
-    const response = await apiClient.post(`/training/deployments/${deploymentId}/retry`);
+    const response = await apiClient.post(`/api/v1/training/deployments/${deploymentId}/retry`);
     return response.data;
   },
 };

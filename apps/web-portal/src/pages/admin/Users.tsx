@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Users as UsersIcon, Plus, Search, Trash2, Edit2, Building2, CheckCircle, XCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { usersApi, organizationsApi } from '../../lib/api';
 import { Modal } from '../../components/ui/Modal';
-import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { useToast } from '../../contexts/ToastContext';
 import { getDetailedErrorMessage } from '../../lib/errorMessages';
 import type { User, Organization, UserRole } from '../../types/database';
@@ -30,7 +29,6 @@ export function Users() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; userId: string | null; userName: string }>({ open: false, userId: null, userName: '' });
 
   const [formData, setFormData] = useState({
     email: '',
@@ -111,22 +109,12 @@ export function Users() {
     }
   };
 
-  const handleDeleteClick = (id: string) => {
-    // FIXED: Use ConfirmDialog instead of window.confirm
+  const deleteUser = async (id: string) => {
     const user = users.find(u => u.id === id);
-    setConfirmDelete({ open: true, userId: id, userName: user?.name || '' });
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!confirmDelete.userId) return;
-    
-    const id = confirmDelete.userId;
-    const userName = confirmDelete.userName;
-    setConfirmDelete({ open: false, userId: null, userName: '' });
-    
+    if (!confirm(`هل أنت متأكد من حذف المستخدم ${user?.name || ''}؟`)) return;
     try {
       await usersApi.deleteUser(id);
-      showSuccess('تم الحذف بنجاح', `تم حذف المستخدم ${userName} من النظام`);
+      showSuccess('تم الحذف بنجاح', `تم حذف المستخدم ${user?.name || ''} من النظام`);
       fetchData();
     } catch (error) {
       console.error('Error deleting user:', error);
@@ -374,7 +362,7 @@ export function Users() {
                         <Edit2 className="w-4 h-4 text-blue-400" />
                       </button>
                       <button
-                        onClick={() => handleDeleteClick(user.id)}
+                        onClick={() => deleteUser(user.id)}
                         className="p-2 hover:bg-red-500/20 rounded"
                         title="حذف"
                       >
@@ -511,18 +499,6 @@ export function Users() {
           </div>
         </form>
       </Modal>
-
-      {/* FIXED: Use ConfirmDialog instead of window.confirm */}
-      <ConfirmDialog
-        open={confirmDelete.open}
-        title="تأكيد الحذف"
-        message={`هل أنت متأكد من حذف المستخدم ${confirmDelete.userName}؟\n\nسيتم حذف المستخدم بشكل نهائي من النظام.`}
-        type="danger"
-        confirmText="حذف"
-        cancelText="إلغاء"
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => setConfirmDelete({ open: false, userId: null, userName: '' })}
-      />
     </div>
   );
 }

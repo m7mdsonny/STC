@@ -78,49 +78,19 @@ export function Landing() {
   const { branding } = useBranding();
   const { showSuccess, showError } = useToast();
 
-  // Don't block rendering on loading - show content immediately
   useEffect(() => {
     fetchSettings();
-    // Also set a timeout to ensure loading stops even if fetch fails silently
-    const timeoutId = setTimeout(() => {
-      if (loading) {
-        setLoading(false);
-      }
-    }, 3000);
-    return () => clearTimeout(timeoutId);
-  }, []);
-
-  useEffect(() => {
-    // Start loading settings in background - don't block rendering
-    fetchSettings();
-    
-    // Safety timeout to ensure loading stops even if fetch fails silently
-    const timeoutId = setTimeout(() => {
-      setLoading(false);
-    }, 3000);
-    
-    return () => clearTimeout(timeoutId);
   }, []);
 
   const fetchSettings = async () => {
     try {
-      // Set timeout to prevent hanging
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Request timeout')), 8000);
-      });
-
-      const data = await Promise.race([
-        settingsApi.getPublishedLanding(),
-        timeoutPromise,
-      ]);
-
+      setLoading(true);
+      const data = await settingsApi.getPublishedLanding();
       setSettings(data.content);
       setPublished(data.published);
     } catch (error) {
-      console.warn('Failed to fetch landing settings:', error);
-      // Use default settings instead of failing - show page anyway
-      setSettings(null);
-      setPublished(true); // Default to showing the page
+      console.error('Failed to fetch landing settings:', error);
+      setPublished(false);
       // Don't show error toast for landing page - just use defaults
     } finally {
       setLoading(false);
@@ -156,10 +126,7 @@ export function Landing() {
     ? `https://wa.me/${settings.whatsapp_number.replace(/[^0-9]/g, '')}`
     : 'https://wa.me/966500000000';
 
-  // Don't block rendering - show content immediately even if loading
-  // Only show loading spinner if we're explicitly waiting for critical data
-  // For landing page, we can show content with defaults while loading settings
-  if (loading && published === false) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-stc-bg-dark flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-stc-gold border-t-transparent rounded-full animate-spin" />

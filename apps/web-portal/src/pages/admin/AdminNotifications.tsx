@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Bell, Plus, Trash2, Save, Building2 } from 'lucide-react';
 import { notificationsApi, organizationsApi } from '../../lib/api';
-import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import type { AlertPriority, Organization } from '../../types/database';
 
 const PRIORITY_LEVELS = [
@@ -17,7 +16,6 @@ export function AdminNotifications() {
   const [priorities, setPriorities] = useState<AlertPriority[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; priorityId: string | null }>({ open: false, priorityId: null });
   const [newRule, setNewRule] = useState({
     notification_type: '',
     priority: 'medium',
@@ -98,17 +96,8 @@ export function AdminNotifications() {
     }
   };
 
-  const handleRemovePriorityClick = (id: string) => {
-    // FIXED: Use ConfirmDialog instead of window.confirm
-    setConfirmDelete({ open: true, priorityId: id });
-  };
-
-  const handleRemovePriorityConfirm = async () => {
-    if (!confirmDelete.priorityId) return;
-    
-    const id = confirmDelete.priorityId;
-    setConfirmDelete({ open: false, priorityId: null });
-    
+  const removePriority = async (id: string) => {
+    if (!confirm('حذف قاعدة الاولوية؟')) return;
     try {
       await notificationsApi.deleteNotificationPriority(id);
       setPriorities((prev) => prev.filter((p) => p.id !== id));
@@ -208,7 +197,7 @@ export function AdminNotifications() {
                     حرج
                   </label>
                   <button
-                    onClick={() => handleRemovePriorityClick(priority.id)}
+                    onClick={() => removePriority(priority.id)}
                     className="p-2 rounded-lg hover:bg-white/10 text-red-400"
                     title="حذف"
                   >
@@ -220,18 +209,6 @@ export function AdminNotifications() {
           </div>
         )}
       </div>
-
-      {/* FIXED: Use ConfirmDialog instead of window.confirm */}
-      <ConfirmDialog
-        open={confirmDelete.open}
-        title="تأكيد الحذف"
-        message="هل أنت متأكد من حذف قاعدة الأولوية هذه؟\n\nسيتم حذف القاعدة بشكل نهائي من النظام."
-        type="danger"
-        confirmText="حذف"
-        cancelText="إلغاء"
-        onConfirm={handleRemovePriorityConfirm}
-        onCancel={() => setConfirmDelete({ open: false, priorityId: null })}
-      />
     </div>
   );
 }

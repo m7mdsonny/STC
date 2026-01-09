@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { UserCheck, Clock, Calendar, Search, Download, ChevronLeft, ChevronRight, LogIn, LogOut, AlertTriangle, RefreshCw } from 'lucide-react';
+import { UserCheck, Clock, Calendar, Search, Download, ChevronLeft, ChevronRight, LogIn, LogOut } from 'lucide-react';
 import { attendanceApi } from '../lib/api/attendance';
 import { peopleApi } from '../lib/api/people';
 import { useAuth } from '../contexts/AuthContext';
@@ -10,7 +10,6 @@ export function Attendance() {
   const [records, setRecords] = useState<(AttendanceRecord & { person?: RegisteredFace })[]>([]);
   const [people, setPeople] = useState<RegisteredFace[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null); // FIXED: Add error state
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -22,7 +21,6 @@ export function Attendance() {
 
   const fetchData = async () => {
     setLoading(true);
-    setError(null); // Clear previous errors
     try {
       const [recordsRes, peopleRes] = await Promise.all([
         attendanceApi.getRecords({ date: selectedDate, per_page: 100 }),
@@ -41,12 +39,8 @@ export function Attendance() {
       }
     } catch (error) {
       console.error('Error fetching attendance data:', error);
-      // FIXED: Set error state and show user-friendly message
-      const errorMessage = error instanceof Error ? error.message : 'فشل تحميل بيانات الحضور';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   const filteredRecords = records.filter(record => {
@@ -104,23 +98,6 @@ export function Attendance() {
           <span>تصدير التقرير</span>
         </button>
       </div>
-
-      {/* FIXED: Display error message with retry option */}
-      {error && (
-        <div className="card p-6 bg-red-500/10 border border-red-500/20">
-          <div className="flex items-start gap-4">
-            <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <h3 className="font-semibold text-red-500 mb-1">خطأ في تحميل البيانات</h3>
-              <p className="text-white/70 mb-3">{error}</p>
-              <button onClick={fetchData} className="btn-secondary text-sm flex items-center gap-2">
-                <RefreshCw className="w-4 h-4" />
-                إعادة المحاولة
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="stat-card">

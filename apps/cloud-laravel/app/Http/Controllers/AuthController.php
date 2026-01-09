@@ -6,9 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Http\JsonResponse;
 use App\Models\User;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -96,16 +96,6 @@ class AuthController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            // If the exception is a validation error, return a 422 response with validation messages
-            if ($e instanceof ValidationException) {
-                return response()->json([
-                    'message' => 'Validation failed.',
-                    'errors' => $e->validator->errors()->messages(),
-                    'status' => 422,
-                ], 422);
-            }
-            
-            // Otherwise, log the error and return a generic 500 response
             Log::error('Login error', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
