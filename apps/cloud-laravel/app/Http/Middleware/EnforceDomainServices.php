@@ -10,13 +10,20 @@ class EnforceDomainServices
 {
     /**
      * Routes that are exempt from domain service enforcement.
-     * These are typically public routes or edge server routes that perform mutations
-     * but should not require authentication or domain service usage.
+     * These are typically public routes, special auth routes, or edge server routes that perform mutations
+     * but should not require domain service usage.
      */
     protected array $exemptRoutes = [
         // Public endpoints
         'api/v1/public/contact',
         'api/v1/public/free-trial',
+        
+        // Special auth endpoints (user self-service operations)
+        'api/v1/auth/login',      // Login updates last_login_at
+        'api/v1/auth/register',   // User registration
+        'api/v1/auth/logout',     // Token deletion only
+        'api/v1/auth/profile',    // User updating their own profile
+        'api/v1/auth/password',   // User changing their own password
         
         // Edge server endpoints (HMAC-authenticated, not user-authenticated)
         'api/v1/edges/events',
