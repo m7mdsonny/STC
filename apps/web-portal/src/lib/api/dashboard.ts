@@ -66,18 +66,24 @@ export const dashboardApi = {
   },
 
   async getAdminDashboard(): Promise<AdminDashboardData> {
-    const { data, error } = await apiClient.get<AdminDashboardData>('/admin/dashboard');
+    const { data, error } = await apiClient.get<AdminDashboardData>('/dashboard/admin');
     if (error || !data) {
       throw new Error(error || 'Failed to fetch admin dashboard');
     }
     return data;
   },
 
-  async getSystemHealth(): Promise<SystemHealth> {
-    const { data, error } = await apiClient.get<SystemHealth>('/admin/system-health');
-    if (error || !data) {
-      throw new Error(error || 'Failed to fetch system health');
+  async getSystemHealth(): Promise<SystemHealth | null> {
+    // TODO: Backend endpoint /admin/system-health not implemented yet
+    // Return null for now, will be handled gracefully in SystemMonitor component
+    try {
+      const { data, error } = await apiClient.get<SystemHealth>('/admin/system-health');
+      if (error || !data) {
+        return null;
+      }
+      return data;
+    } catch {
+      return null;
     }
-    return data;
   },
 };
