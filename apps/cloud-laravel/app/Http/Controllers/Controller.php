@@ -80,7 +80,13 @@ abstract class Controller extends BaseController
     public function callAction($method, $parameters)
     {
         $request = request();
-        if ($request instanceof Request && !in_array(strtoupper($request->method()), ['GET', 'HEAD', 'OPTIONS'])) {
+        
+        // Only enforce domain service usage for mutation requests (non-GET/HEAD/OPTIONS)
+        // and only if user is authenticated (public routes are exempt)
+        if ($request instanceof Request 
+            && !in_array(strtoupper($request->method()), ['GET', 'HEAD', 'OPTIONS'])
+            && $request->user() // Only enforce if user is authenticated
+        ) {
             /** @var DomainActionService $service */
             $service = App::make(DomainActionService::class);
             return $service->execute($request, fn () => parent::callAction($method, $parameters));
