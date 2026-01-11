@@ -26,4 +26,28 @@ class License extends BaseModel
         'activated_at' => 'datetime',
         'expires_at' => 'datetime',
     ];
+
+    /**
+     * Get the organization that owns this license
+     */
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class);
+    }
+
+    /**
+     * Get the subscription plan for this license
+     */
+    public function subscriptionPlan()
+    {
+        return $this->belongsTo(SubscriptionPlan::class);
+    }
+
+    /**
+     * Get the edge server linked to this license
+     */
+    public function edgeServer()
+    {
+        return $this->belongsTo(EdgeServer::class);
+    }
 }

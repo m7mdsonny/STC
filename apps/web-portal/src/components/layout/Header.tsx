@@ -140,6 +140,15 @@ export function Header({ onMenuClick, title }: HeaderProps) {
             )}
           </div>
 
+          {/* Organization Name Display */}
+          {organization && !isSuperAdmin && (
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-stc-gold/10 rounded-lg border border-stc-gold/30">
+              <span className="text-stc-gold text-sm font-semibold truncate max-w-[150px]">
+                {organization.name}
+              </span>
+            </div>
+          )}
+
           <div className="hidden sm:flex items-center gap-3 px-3 py-1.5 bg-white/5 rounded-lg">
             <div className="w-8 h-8 rounded-full bg-stc-gold/20 flex items-center justify-center">
               <span className="text-stc-gold font-semibold text-sm">
