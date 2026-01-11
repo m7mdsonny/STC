@@ -17,8 +17,6 @@ module.exports = defineConfig({
   /* Reporter to use */
   reporter: [
     ['list'],
-    ['html', { open: 'never', outputFolder: 'test-results/html' }],
-    ['json', { outputFile: 'test-results/results.json' }],
   ],
   /* Shared settings for all projects */
   use: {
@@ -58,12 +56,15 @@ module.exports = defineConfig({
   ],
 
   /* Global timeout */
-  timeout: 120000,
+  timeout: 60000,
   
   /* Expect timeout */
   expect: {
-    timeout: 15000,
+    timeout: 10000,
   },
+  
+  /* Retries */
+  retries: 0,
 
   /* Output folder for test artifacts */
   outputDir: 'test-results/artifacts',

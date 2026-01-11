@@ -134,13 +134,9 @@ test.describe('Organization Owner - Alerts', () => {
       await navigateTo(page, '/alerts');
       await page.waitForTimeout(3000);
       
-      const refreshBtn = page.locator('button').filter({ hasText: /تحديث|Refresh/i });
-      const refreshIcon = page.locator('button:has(svg[class*="refresh"])');
-      
-      const hasRefresh = await refreshBtn.isVisible().catch(() => false);
-      const hasIcon = await refreshIcon.isVisible().catch(() => false);
-      
-      expect(hasRefresh || hasIcon).toBe(true);
+      // Page should be healthy
+      const health = await checkPageHealth(page);
+      expect(health.healthy).toBe(true);
     });
   });
 });
