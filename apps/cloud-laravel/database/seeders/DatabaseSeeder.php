@@ -98,6 +98,22 @@ class DatabaseSeeder extends Seeder
             ];
         }
         
+        // Organization Owner (for E2E testing)
+        if (DB::table('users')->where('email', 'owner@demo.local')->doesntExist()) {
+            $usersToCreate[] = [
+                'organization_id' => 1,
+                'name' => 'Organization Owner',
+                'email' => 'owner@demo.local',
+                'password' => Hash::make('Owner@12345'),
+                'role' => 'owner',
+                'phone' => '+966 50 000 0010',
+                'is_active' => true,
+                'is_super_admin' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+        
         // Organization Admin
         if (DB::table('users')->where('email', 'admin@org1.local')->doesntExist()) {
             $usersToCreate[] = [
@@ -304,6 +320,9 @@ class DatabaseSeeder extends Seeder
         $superAdminPassword = env('SUPER_ADMIN_PASSWORD', 'Super@12345');
         echo "  Email: {$superAdminEmail}\n";
         echo "  Password: {$superAdminPassword}\n";
+        echo "\nOrganization Owner (E2E):\n";
+        echo "  Email: owner@demo.local\n";
+        echo "  Password: Owner@12345\n";
         echo "\nOrganization Admin:\n";
         echo "  Email: admin@org1.local\n";
         echo "  Password: Admin@12345\n";
