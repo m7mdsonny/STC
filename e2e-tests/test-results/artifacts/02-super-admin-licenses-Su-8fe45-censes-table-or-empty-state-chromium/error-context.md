@@ -1,0 +1,60 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - heading "تسجيل الدخول" [level=2] [ref=e8]
+        - paragraph [ref=e9]: ادخل بياناتك للوصول الى لوحة التحكم
+      - generic [ref=e10]:
+        - img [ref=e11]
+        - paragraph [ref=e13]: Too Many Attempts.
+      - generic [ref=e14]:
+        - generic [ref=e15]:
+          - generic [ref=e16]: البريد الالكتروني
+          - generic [ref=e17]:
+            - img [ref=e18]
+            - textbox "example@company.com" [ref=e21]: superadmin@demo.local
+        - generic [ref=e22]:
+          - generic [ref=e23]: كلمة المرور
+          - generic [ref=e24]:
+            - img [ref=e25]
+            - textbox "********" [active] [ref=e28]: Super@12345
+            - button [ref=e29] [cursor=pointer]:
+              - img [ref=e30]
+        - generic [ref=e33]:
+          - generic [ref=e34] [cursor=pointer]:
+            - checkbox "تذكرني" [ref=e35]
+            - generic [ref=e36]: تذكرني
+          - link "نسيت كلمة المرور؟" [ref=e37] [cursor=pointer]:
+            - /url: /forgot-password
+        - button "تسجيل الدخول" [ref=e38] [cursor=pointer]:
+          - generic [ref=e39]: تسجيل الدخول
+      - link "العودة للصفحة الرئيسية" [ref=e41] [cursor=pointer]:
+        - /url: /
+        - img [ref=e42]
+        - generic [ref=e45]: العودة للصفحة الرئيسية
+    - paragraph [ref=e46]:
+      - text: ليس لديك حساب؟
+      - link "تواصل معنا" [ref=e47] [cursor=pointer]:
+        - /url: /#contact
+  - generic [ref=e50]:
+    - img "STC Solutions" [ref=e51]
+    - heading "مرحبا بك في STC AI-VAP" [level=1] [ref=e52]:
+      - text: مرحبا بك في
+      - text: STC AI-VAP
+    - paragraph [ref=e53]:
+      - text: منصة تحليل الفيديو بالذكاء الاصطناعي
+      - text: حول كاميراتك الى عيون ذكية
+    - generic [ref=e54]:
+      - generic [ref=e55]:
+        - paragraph [ref=e56]: 9+
+        - paragraph [ref=e57]: موديولات ذكية
+      - generic [ref=e58]:
+        - paragraph [ref=e59]: "128"
+        - paragraph [ref=e60]: كاميرا كحد اقصى
+      - generic [ref=e61]:
+        - paragraph [ref=e62]: 24/7
+        - paragraph [ref=e63]: مراقبة مستمرة
+```
