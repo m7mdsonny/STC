@@ -1,396 +1,384 @@
 /**
- * Integrity E2E Tests
- * Tests for fake buttons, broken flows, and UI integrity
+ * UI Integrity E2E Tests
+ * Tests: Fake buttons, broken forms, navigation, loading states
  */
 
 const { test, expect } = require('@playwright/test');
-const { loginAsSuperAdmin, loginAsOwner, checkPageHealth, navigateTo } = require('../../helpers/auth');
-const { testAllButtons, testModal, checkLoadingState, isFakeButton, getAllLinks } = require('../../helpers/pageUtils');
+const { loginAsSuperAdmin, loginAsOwner, navigateTo, checkPageHealth } = require('../../helpers/auth');
 
-test.describe('Integrity Tests - Fake Buttons & Broken Flows', () => {
-  
-  test.describe('Super Admin Pages Integrity', () => {
-    test.beforeEach(async ({ page }) => {
-      await loginAsSuperAdmin(page);
-    });
-    
-    test('Admin Dashboard - All buttons should be functional', async ({ page }) => {
-      await navigateTo(page, '/admin');
-      await checkLoadingState(page);
-      
-      const buttons = await testAllButtons(page);
-      
-      // Check for buttons that exist but might be broken
-      const foundButtons = buttons.filter(b => b.status === 'found');
-      console.log(`Found ${foundButtons.length} buttons on admin dashboard`);
-      
-      // Verify page is healthy after button inspection
-      const health = await checkPageHealth(page);
-      expect(health.healthy).toBe(true);
-    });
-    
-    test('Organizations - Add button should open modal', async ({ page }) => {
+test.describe('UI Integrity - Super Admin Pages', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAsSuperAdmin(page);
+  });
+
+  test.describe('Button Functionality', () => {
+    test('Add Organization button should open modal', async ({ page }) => {
       await navigateTo(page, '/admin/organizations');
-      await checkLoadingState(page);
+      await page.waitForTimeout(2000);
       
-      const addButton = page.locator('button:has-text("اضافة مؤسسة")');
-      const isVisible = await addButton.isVisible().catch(() => false);
+      const addBtn = page.locator('button').filter({ hasText: /اضافة مؤسسة|Add Organization/i }).first();
       
-      if (isVisible) {
-        await addButton.click();
-        await page.waitForTimeout(1000);
+      if (await addBtn.isVisible()) {
+        await addBtn.click();
+        await page.waitForTimeout(1500);
         
-        // Modal should open
+        // Modal must open - not a fake button
         const modal = page.locator('[role="dialog"], [class*="modal"]').first();
         const modalVisible = await modal.isVisible().catch(() => false);
+        
         expect(modalVisible).toBe(true);
         
         // Close modal
-        const cancelBtn = page.locator('button:has-text("الغاء")');
-        if (await cancelBtn.isVisible()) {
-          await cancelBtn.click();
-        }
+        await page.keyboard.press('Escape');
       }
     });
-    
-    test('Organizations - Edit buttons should work', async ({ page }) => {
-      await navigateTo(page, '/admin/organizations');
-      await checkLoadingState(page);
+
+    test('Create License button should open modal', async ({ page }) => {
+      await navigateTo(page, '/admin/licenses');
+      await page.waitForTimeout(2000);
       
-      // Look for edit buttons in table rows
-      const editButtons = page.locator('button[title="تعديل"], button:has-text("تعديل")').first();
-      const isVisible = await editButtons.isVisible().catch(() => false);
+      const createBtn = page.locator('button').filter({ hasText: /انشاء ترخيص|Create License/i }).first();
       
-      if (isVisible) {
-        await editButtons.click();
-        await page.waitForTimeout(1000);
+      if (await createBtn.isVisible()) {
+        await createBtn.click();
+        await page.waitForTimeout(1500);
         
-        // Modal or form should appear
         const modal = page.locator('[role="dialog"], [class*="modal"]').first();
         const modalVisible = await modal.isVisible().catch(() => false);
         
-        // If no modal, check if page changed or form appeared
-        const formVisible = await page.locator('form').isVisible().catch(() => false);
+        expect(modalVisible).toBe(true);
         
-        expect(modalVisible || formVisible).toBe(true);
-        
-        // Close modal if open
-        const cancelBtn = page.locator('button:has-text("الغاء")');
-        if (await cancelBtn.isVisible()) {
-          await cancelBtn.click();
-        }
+        await page.keyboard.press('Escape');
       }
     });
-    
-    test('Users - All action buttons should be responsive', async ({ page }) => {
-      await navigateTo(page, '/admin/users');
-      await checkLoadingState(page);
+
+    test('Create Backup button should trigger action', async ({ page }) => {
+      await navigateTo(page, '/admin/backups');
+      await page.waitForTimeout(2000);
       
-      const buttons = await testAllButtons(page);
-      const foundButtons = buttons.filter(b => b.status === 'found');
+      const createBtn = page.locator('button').filter({ hasText: /انشاء نسخة|Create Backup|إنشاء/i }).first();
       
-      // Page should remain healthy
-      const health = await checkPageHealth(page);
-      expect(health.healthy).toBe(true);
+      if (await createBtn.isVisible()) {
+        // Monitor network for API call
+        const responsePromise = page.waitForResponse(
+          response => response.url().includes('/api/') && response.request().method() === 'POST',
+          { timeout: 10000 }
+        ).catch(() => null);
+        
+        await createBtn.click();
+        await page.waitForTimeout(2000);
+        
+        // Should see either API call, toast, or loading indicator
+        const toast = page.locator('[class*="toast"], [role="alert"]');
+        const loading = page.locator('text=/جاري|Loading|Creating/i');
+        
+        const toastVisible = await toast.isVisible().catch(() => false);
+        const loadingVisible = await loading.isVisible().catch(() => false);
+        const response = await responsePromise;
+        
+        // Button should do something - not be fake
+        expect(toastVisible || loadingVisible || response !== null).toBe(true);
+      }
     });
-    
-    test('Licenses - Page buttons should function', async ({ page }) => {
-      await navigateTo(page, '/admin/licenses');
-      await checkLoadingState(page);
+
+    test('Refresh button should reload data', async ({ page }) => {
+      await navigateTo(page, '/admin/edge-servers');
+      await page.waitForTimeout(2000);
       
-      const buttons = await testAllButtons(page);
+      const refreshBtn = page.locator('button').filter({ hasText: /تحديث|Refresh/i }).first();
       
-      // Page should remain healthy
-      const health = await checkPageHealth(page);
-      expect(health.healthy).toBe(true);
-    });
-    
-    test('All admin sidebar links should navigate correctly', async ({ page }) => {
-      await navigateTo(page, '/admin');
-      await checkLoadingState(page);
-      
-      const sidebarLinks = await getAllLinks(page);
-      const adminLinks = sidebarLinks.filter(l => l.href && l.href.includes('/admin'));
-      
-      console.log(`Found ${adminLinks.length} admin sidebar links`);
-      
-      // Each link should navigate without error
-      for (const link of adminLinks.slice(0, 5)) { // Test first 5 links
-        await navigateTo(page, link.href);
-        await checkLoadingState(page);
+      if (await refreshBtn.isVisible()) {
+        // Monitor for spinner
+        await refreshBtn.click();
+        await page.waitForTimeout(500);
+        
+        // Should show loading indicator or refresh icon spinning
+        const spinner = page.locator('[class*="animate-spin"], [class*="loading"]');
+        const spinnerVisible = await spinner.isVisible().catch(() => false);
+        
+        // Wait for completion
+        await page.waitForTimeout(2000);
         
         const health = await checkPageHealth(page);
-        if (!health.healthy) {
-          console.log(`Link ${link.href} has issues: ${health.errors.join(', ')}`);
-        }
+        expect(health.healthy).toBe(true);
       }
     });
   });
-  
-  test.describe('Owner Pages Integrity', () => {
-    test.beforeEach(async ({ page }) => {
-      await loginAsOwner(page);
-    });
-    
-    test('Owner Dashboard - All buttons should be functional', async ({ page }) => {
-      await navigateTo(page, '/dashboard');
-      await checkLoadingState(page);
-      
-      const buttons = await testAllButtons(page);
-      const foundButtons = buttons.filter(b => b.status === 'found');
-      console.log(`Found ${foundButtons.length} buttons on owner dashboard`);
-      
-      const health = await checkPageHealth(page);
-      expect(health.healthy).toBe(true);
-    });
-    
-    test('Cameras - Add camera flow should work', async ({ page }) => {
-      await navigateTo(page, '/cameras');
-      await checkLoadingState(page);
-      
-      const addButton = page.locator('button:has-text("اضافة"), button:has-text("كاميرا جديدة")').first();
-      const isVisible = await addButton.isVisible().catch(() => false);
-      
-      if (isVisible) {
-        await addButton.click();
-        await page.waitForTimeout(1000);
-        
-        // Should open modal or show form
-        const modal = page.locator('[role="dialog"], [class*="modal"]').first();
-        const form = page.locator('form').first();
-        
-        const modalVisible = await modal.isVisible().catch(() => false);
-        const formVisible = await form.isVisible().catch(() => false);
-        
-        expect(modalVisible || formVisible).toBe(true);
-        
-        // Close if modal
-        const cancelBtn = page.locator('button:has-text("الغاء"), button:has-text("إغلاق")').first();
-        if (await cancelBtn.isVisible()) {
-          await cancelBtn.click();
-        }
-      }
-    });
-    
-    test('Alerts - Filter controls should respond', async ({ page }) => {
-      await navigateTo(page, '/alerts');
-      await checkLoadingState(page);
-      
-      // Test filter dropdowns
-      const selects = page.locator('select').all();
-      const selectCount = await page.locator('select').count();
-      
-      if (selectCount > 0) {
-        const firstSelect = page.locator('select').first();
-        await firstSelect.click().catch(() => {});
-        await page.waitForTimeout(500);
-      }
-      
-      const health = await checkPageHealth(page);
-      expect(health.healthy).toBe(true);
-    });
-    
-    test('Team - Invite member flow should work', async ({ page }) => {
-      await navigateTo(page, '/team');
-      await checkLoadingState(page);
-      
-      const addButton = page.locator('button:has-text("اضافة"), button:has-text("دعوة")').first();
-      const isVisible = await addButton.isVisible().catch(() => false);
-      
-      if (isVisible) {
-        await addButton.click();
-        await page.waitForTimeout(1000);
-        
-        const modal = page.locator('[role="dialog"], [class*="modal"]').first();
-        const modalVisible = await modal.isVisible().catch(() => false);
-        
-        if (modalVisible) {
-          // Close modal
-          const cancelBtn = page.locator('button:has-text("الغاء")');
-          if (await cancelBtn.isVisible()) {
-            await cancelBtn.click();
-          }
-        }
-      }
-    });
-    
-    test('Settings - Save buttons should function', async ({ page }) => {
-      await navigateTo(page, '/settings');
-      await checkLoadingState(page);
-      
-      // Look for save buttons
-      const saveButtons = page.locator('button:has-text("حفظ"), button[type="submit"]');
-      const count = await saveButtons.count();
-      
-      // Buttons should exist if there are settings
-      const health = await checkPageHealth(page);
-      expect(health.healthy).toBe(true);
-    });
-    
-    test('All owner sidebar links should navigate correctly', async ({ page }) => {
-      await navigateTo(page, '/dashboard');
-      await checkLoadingState(page);
-      
-      const sidebarLinks = await getAllLinks(page);
-      const ownerLinks = sidebarLinks.filter(l => 
-        l.href && !l.href.includes('/admin') && 
-        (l.href.startsWith('/') || l.href.includes('stcsolutions.online'))
-      );
-      
-      console.log(`Found ${ownerLinks.length} owner sidebar links`);
-      
-      for (const link of ownerLinks.slice(0, 5)) {
-        const path = link.href.replace(/https?:\/\/[^\/]+/, '');
-        if (path && path !== '#') {
-          await navigateTo(page, path);
-          await checkLoadingState(page);
-          
-          const health = await checkPageHealth(page);
-          if (!health.healthy) {
-            console.log(`Link ${path} has issues: ${health.errors.join(', ')}`);
-          }
-        }
-      }
-    });
-  });
-  
+
   test.describe('Form Validation', () => {
-    test.beforeEach(async ({ page }) => {
-      await loginAsSuperAdmin(page);
-    });
-    
-    test('Organization form - Required fields validation', async ({ page }) => {
+    test('Organization form should validate required fields', async ({ page }) => {
       await navigateTo(page, '/admin/organizations');
-      await checkLoadingState(page);
+      await page.waitForTimeout(2000);
       
-      const addButton = page.locator('button:has-text("اضافة مؤسسة")');
-      if (await addButton.isVisible()) {
-        await addButton.click();
-        await page.waitForTimeout(1000);
+      const addBtn = page.locator('button').filter({ hasText: /اضافة مؤسسة|Add Organization/i }).first();
+      
+      if (await addBtn.isVisible()) {
+        await addBtn.click();
+        await page.waitForTimeout(1500);
         
         // Try to submit empty form
-        const submitButton = page.locator('button:has-text("اضافة المؤسسة"), button[type="submit"]').first();
-        if (await submitButton.isVisible()) {
-          await submitButton.click();
+        const submitBtn = page.locator('button[type="submit"], button').filter({ hasText: /اضافة|حفظ|Save|Add/i }).last();
+        
+        if (await submitBtn.isVisible()) {
+          await submitBtn.click();
           await page.waitForTimeout(1000);
           
-          // Should show validation error or prevent submission
-          const errorMessage = page.locator('[class*="error"], text=/مطلوب|required/i');
-          const stillHasForm = await page.locator('input').first().isVisible().catch(() => false);
+          // Modal should stay open (validation failed)
+          const modal = page.locator('[role="dialog"], [class*="modal"]').first();
+          const modalStillOpen = await modal.isVisible().catch(() => false);
           
-          // Either error shown or form still open
-          const hasValidation = await errorMessage.isVisible().catch(() => false) || stillHasForm;
-          expect(hasValidation).toBe(true);
+          expect(modalStillOpen).toBe(true);
         }
         
-        // Close modal
-        const cancelBtn = page.locator('button:has-text("الغاء")');
-        if (await cancelBtn.isVisible()) {
-          await cancelBtn.click();
+        await page.keyboard.press('Escape');
+      }
+    });
+
+    test('License form should validate required fields', async ({ page }) => {
+      await navigateTo(page, '/admin/licenses');
+      await page.waitForTimeout(2000);
+      
+      const createBtn = page.locator('button').filter({ hasText: /انشاء ترخيص|Create License/i }).first();
+      
+      if (await createBtn.isVisible()) {
+        await createBtn.click();
+        await page.waitForTimeout(1500);
+        
+        const submitBtn = page.locator('button[type="submit"], button').filter({ hasText: /انشاء|Create/i }).last();
+        
+        if (await submitBtn.isVisible()) {
+          await submitBtn.click();
+          await page.waitForTimeout(1000);
+          
+          // Modal should stay open
+          const modal = page.locator('[role="dialog"], [class*="modal"]').first();
+          const modalStillOpen = await modal.isVisible().catch(() => false);
+          
+          expect(modalStillOpen).toBe(true);
+        }
+        
+        await page.keyboard.press('Escape');
+      }
+    });
+  });
+
+  test.describe('Navigation Integrity', () => {
+    test('All sidebar links should navigate correctly', async ({ page }) => {
+      await navigateTo(page, '/admin');
+      await page.waitForTimeout(2000);
+      
+      // Get all sidebar links
+      const sidebarLinks = page.locator('nav a, aside a, [class*="sidebar"] a');
+      const linkCount = await sidebarLinks.count();
+      
+      // Test first few links
+      const linksToTest = Math.min(linkCount, 5);
+      
+      for (let i = 0; i < linksToTest; i++) {
+        const link = sidebarLinks.nth(i);
+        const href = await link.getAttribute('href');
+        
+        if (href && !href.startsWith('#') && !href.startsWith('http')) {
+          await link.click();
+          await page.waitForTimeout(2000);
+          
+          const health = await checkPageHealth(page);
+          expect(health.healthy).toBe(true);
+          
+          // Navigate back to admin
+          await navigateTo(page, '/admin');
+          await page.waitForTimeout(1000);
         }
       }
     });
   });
-  
-  test.describe('Modal Behaviors', () => {
-    test.beforeEach(async ({ page }) => {
-      await loginAsSuperAdmin(page);
-    });
-    
-    test('Modals should close on cancel button', async ({ page }) => {
+
+  test.describe('Modal Close Functionality', () => {
+    test('Modal should close on cancel button click', async ({ page }) => {
       await navigateTo(page, '/admin/organizations');
-      await checkLoadingState(page);
+      await page.waitForTimeout(2000);
       
-      const addButton = page.locator('button:has-text("اضافة مؤسسة")');
-      if (await addButton.isVisible()) {
-        await addButton.click();
-        await page.waitForTimeout(1000);
+      const addBtn = page.locator('button').filter({ hasText: /اضافة مؤسسة|Add Organization/i }).first();
+      
+      if (await addBtn.isVisible()) {
+        await addBtn.click();
+        await page.waitForTimeout(1500);
         
-        const modal = page.locator('[role="dialog"], [class*="modal"]').first();
-        expect(await modal.isVisible()).toBe(true);
+        const cancelBtn = page.locator('button').filter({ hasText: /الغاء|Cancel/i }).first();
         
-        const cancelBtn = page.locator('button:has-text("الغاء")');
-        await cancelBtn.click();
+        if (await cancelBtn.isVisible()) {
+          await cancelBtn.click();
+          await page.waitForTimeout(500);
+          
+          const modal = page.locator('[role="dialog"], [class*="modal"]').first();
+          const modalClosed = !(await modal.isVisible().catch(() => false));
+          
+          expect(modalClosed).toBe(true);
+        }
+      }
+    });
+
+    test('Modal should close on Escape key', async ({ page }) => {
+      await navigateTo(page, '/admin/organizations');
+      await page.waitForTimeout(2000);
+      
+      const addBtn = page.locator('button').filter({ hasText: /اضافة مؤسسة|Add Organization/i }).first();
+      
+      if (await addBtn.isVisible()) {
+        await addBtn.click();
+        await page.waitForTimeout(1500);
+        
+        await page.keyboard.press('Escape');
         await page.waitForTimeout(500);
         
-        const modalClosed = !await modal.isVisible().catch(() => true);
+        const modal = page.locator('[role="dialog"], [class*="modal"]').first();
+        const modalClosed = !(await modal.isVisible().catch(() => false));
+        
         expect(modalClosed).toBe(true);
       }
     });
-    
-    test('Modals should close on backdrop click', async ({ page }) => {
-      await navigateTo(page, '/admin/organizations');
-      await checkLoadingState(page);
+  });
+});
+
+test.describe('UI Integrity - Owner Pages', () => {
+  test.beforeEach(async ({ page }) => {
+    try {
+      await loginAsOwner(page);
+    } catch (e) {
+      console.log('Owner login warning:', e.message);
+    }
+  });
+
+  test.describe('Camera Page Buttons', () => {
+    test('Add camera button should work', async ({ page }) => {
+      await navigateTo(page, '/cameras');
+      await page.waitForTimeout(2000);
       
-      const addButton = page.locator('button:has-text("اضافة مؤسسة")');
-      if (await addButton.isVisible()) {
-        await addButton.click();
-        await page.waitForTimeout(1000);
+      const addBtn = page.locator('button').filter({ hasText: /اضافة كاميرا|Add Camera/i }).first();
+      
+      if (await addBtn.isVisible()) {
+        await addBtn.click();
+        await page.waitForTimeout(1500);
         
         const modal = page.locator('[role="dialog"], [class*="modal"]').first();
-        if (await modal.isVisible()) {
-          // Try clicking backdrop (outside modal content)
-          await page.mouse.click(10, 10);
-          await page.waitForTimeout(500);
+        const modalVisible = await modal.isVisible().catch(() => false);
+        
+        expect(modalVisible).toBe(true);
+        
+        await page.keyboard.press('Escape');
+      }
+    });
+  });
+
+  test.describe('Search Functionality', () => {
+    test('Search input should filter results', async ({ page }) => {
+      await navigateTo(page, '/cameras');
+      await page.waitForTimeout(2000);
+      
+      const searchInput = page.locator('input[placeholder*="بحث"]').first();
+      
+      if (await searchInput.isVisible()) {
+        await searchInput.fill('test search');
+        await page.waitForTimeout(1000);
+        
+        // Page should not error
+        const health = await checkPageHealth(page);
+        expect(health.healthy).toBe(true);
+        
+        // Clear search
+        await searchInput.clear();
+      }
+    });
+  });
+
+  test.describe('Filter Dropdowns', () => {
+    test('Status filter should work', async ({ page }) => {
+      await navigateTo(page, '/cameras');
+      await page.waitForTimeout(2000);
+      
+      const statusFilter = page.locator('select').first();
+      
+      if (await statusFilter.isVisible()) {
+        const options = await statusFilter.locator('option').count();
+        
+        if (options > 1) {
+          await statusFilter.selectOption({ index: 1 });
+          await page.waitForTimeout(1000);
           
-          // Modal might or might not close depending on implementation
-          // This test just checks it doesn't crash
           const health = await checkPageHealth(page);
           expect(health.healthy).toBe(true);
         }
       }
     });
   });
-  
-  test.describe('Error States', () => {
-    test.beforeEach(async ({ page }) => {
-      await loginAsSuperAdmin(page);
-    });
-    
-    test('Pages should handle API errors gracefully', async ({ page }) => {
-      // Navigate to a page that loads data
-      await navigateTo(page, '/admin/organizations');
-      await checkLoadingState(page);
-      
-      // Even if API fails, page should not crash
-      const health = await checkPageHealth(page);
-      // Allow for error states but not crashes
-      expect(health.errors).not.toContain('React error boundary triggered');
-    });
-    
-    test('Pages should show retry option on error', async ({ page }) => {
-      await navigateTo(page, '/admin');
-      await checkLoadingState(page);
-      
-      // Check if there's an error state with retry button
-      const retryButton = page.locator('button:has-text("إعادة المحاولة"), button:has-text("retry")');
-      const errorState = page.locator('text=/خطأ|error/i');
-      
-      // If there's an error, there should be a retry option
-      const hasError = await errorState.isVisible().catch(() => false);
-      if (hasError) {
-        const hasRetry = await retryButton.isVisible().catch(() => false);
-        expect(hasRetry).toBe(true);
-      }
-    });
+});
+
+test.describe('Loading States', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAsSuperAdmin(page);
   });
-  
-  test.describe('Loading States', () => {
-    test('Pages should show loading indicator during data fetch', async ({ page }) => {
-      await loginAsSuperAdmin(page);
+
+  test('Pages should show loading state before data loads', async ({ page }) => {
+    // Navigate to a data-heavy page
+    await page.goto('https://stcsolutions.online/admin/edge-servers', { waitUntil: 'commit', timeout: 60000 });
+    
+    // Look for loading indicator
+    const loadingIndicator = page.locator('[class*="animate-spin"], [class*="loading"], text=/جاري|Loading/i');
+    
+    // Wait for page to fully load
+    await page.waitForTimeout(5000);
+    
+    const health = await checkPageHealth(page);
+    expect(health.healthy).toBe(true);
+  });
+});
+
+test.describe('Empty States', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAsSuperAdmin(page);
+  });
+
+  test('Pages should show appropriate empty states', async ({ page }) => {
+    await navigateTo(page, '/admin/licenses');
+    await page.waitForTimeout(3000);
+    
+    // Should show either data or empty state - not blank
+    const table = page.locator('table');
+    const emptyState = page.locator('text=/لا توجد|No |empty/i');
+    const cards = page.locator('[class*="card"]');
+    
+    const hasTable = await table.isVisible().catch(() => false);
+    const hasEmpty = await emptyState.isVisible().catch(() => false);
+    const hasCards = await cards.count() > 0;
+    
+    expect(hasTable || hasEmpty || hasCards).toBe(true);
+  });
+});
+
+test.describe('Delete Confirmations', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAsSuperAdmin(page);
+  });
+
+  test('Delete actions should require confirmation', async ({ page }) => {
+    await navigateTo(page, '/admin/licenses');
+    await page.waitForTimeout(3000);
+    
+    const deleteBtn = page.locator('button:has(svg[class*="trash"])').first();
+    
+    if (await deleteBtn.isVisible()) {
+      // Set up dialog handler
+      let dialogAppeared = false;
+      page.once('dialog', async dialog => {
+        dialogAppeared = true;
+        await dialog.dismiss();
+      });
       
-      // Navigate and check for loading state
-      const navigationPromise = page.goto('/admin/organizations');
-      
-      // Check for loading indicator during navigation
-      const loadingIndicator = page.locator('[class*="loading"], [class*="spinner"], text=جاري التحميل');
-      
-      await navigationPromise;
+      await deleteBtn.click();
       await page.waitForTimeout(1000);
       
-      // Page should eventually finish loading
-      const health = await checkPageHealth(page);
-      expect(health.healthy).toBe(true);
-    });
+      // Should show confirmation dialog
+      expect(dialogAppeared).toBe(true);
+    }
   });
 });

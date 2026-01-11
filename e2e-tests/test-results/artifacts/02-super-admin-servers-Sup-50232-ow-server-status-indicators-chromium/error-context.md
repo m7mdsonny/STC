@@ -1,0 +1,245 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic:
+        - img "STC Solutions"
+      - navigation [ref=e6]:
+        - link "الرئيسية" [ref=e7] [cursor=pointer]:
+          - /url: "#hero"
+        - link "المميزات" [ref=e8] [cursor=pointer]:
+          - /url: "#features"
+        - link "الموديولات" [ref=e9] [cursor=pointer]:
+          - /url: "#modules"
+        - link "الباقات" [ref=e10] [cursor=pointer]:
+          - /url: "#pricing"
+        - link "تواصل معنا" [ref=e11] [cursor=pointer]:
+          - /url: "#contact"
+      - link "تسجيل الدخول" [ref=e12] [cursor=pointer]:
+        - /url: /login
+        - generic [ref=e13]: تسجيل الدخول
+        - img [ref=e14]
+  - generic [ref=e17]:
+    - generic [ref=e18]:
+      - img [ref=e19]
+      - generic [ref=e21]: هذه الصفحة غير منشورة حاليا - يتم عرض المحتوى الافتراضي.
+    - generic [ref=e22]:
+      - img [ref=e23]
+      - generic [ref=e25]: منصة ذكاء اصطناعي متكاملة
+    - heading "منصة تحليل الفيديو بالذكاء الاصطناعي" [level=1] [ref=e26]
+    - paragraph [ref=e27]: حول كاميرات المراقبة الى عيون ذكية تحمي منشاتك وتحلل بياناتك في الوقت الفعلي مع 10 موديولات متخصصة
+    - generic [ref=e28]:
+      - link "ابدا تجربتك المجانية - 14 يوم" [ref=e29] [cursor=pointer]:
+        - /url: /request-demo
+      - link "اكتشف المميزات" [ref=e30] [cursor=pointer]:
+        - /url: "#modules"
+    - generic [ref=e31]:
+      - generic [ref=e32]:
+        - img [ref=e33]
+        - heading "Cloud Platform" [level=3] [ref=e35]
+        - paragraph [ref=e36]: لوحة تحكم ويب شاملة لادارة كل شيء من اي مكان
+      - generic [ref=e37]:
+        - img [ref=e38]
+        - heading "Edge Server" [level=3] [ref=e41]
+        - paragraph [ref=e42]: معالجة محلية بالذكاء الاصطناعي تعمل بدون انترنت
+      - generic [ref=e43]:
+        - img [ref=e44]
+        - heading "Mobile App" [level=3] [ref=e46]
+        - paragraph [ref=e47]: تطبيق موبايل لمتابعة التنبيهات والكاميرات
+  - generic [ref=e49]:
+    - generic [ref=e50]:
+      - heading "10 موديولات ذكية" [level=2] [ref=e51]
+      - paragraph [ref=e52]: كل موديول مصمم لحل مشكلة محددة مع امكانية تفعيل اوامر تلقائية لكل حدث
+    - generic [ref=e53]:
+      - generic [ref=e54]:
+        - img [ref=e55]
+        - heading "كشف الحريق والدخان" [level=3] [ref=e57]
+        - paragraph [ref=e58]: كشف الحرائق والدخان في الوقت الفعلي مع تنبيهات فورية
+      - generic [ref=e59]:
+        - img [ref=e60]
+        - heading "التعرف على الوجوه" [level=3] [ref=e66]
+        - paragraph [ref=e67]: التعرف على الموظفين والزوار والقائمة السوداء
+      - generic [ref=e68]:
+        - img [ref=e69]
+        - heading "عد الاشخاص" [level=3] [ref=e74]
+        - paragraph [ref=e75]: احصاء عدد الاشخاص في المناطق مع تنبيهات الازدحام
+      - generic [ref=e76]:
+        - img [ref=e77]
+        - heading "التعرف على المركبات" [level=3] [ref=e81]
+        - paragraph [ref=e82]: قراءة لوحات السيارات والتحكم في البوابات
+      - generic [ref=e83]:
+        - img [ref=e84]
+        - heading "تسجيل الحضور" [level=3] [ref=e88]
+        - paragraph [ref=e89]: تسجيل حضور الموظفين تلقائيا بالوجه
+      - generic [ref=e90]:
+        - img [ref=e91]
+        - heading "كشف التسلل" [level=3] [ref=e93]
+        - paragraph [ref=e94]: كشف الدخول غير المصرح به
+      - generic [ref=e95]:
+        - img [ref=e96]
+        - heading "كشف السلوك المشبوه في المتاجر" [level=3] [ref=e99]
+        - paragraph [ref=e100]: كشف السلوك المشبوه ومنع الخسائر في المتاجر بدون استخدام التعرف على الوجوه
+      - generic [ref=e101]:
+        - img [ref=e102]
+        - heading "مراقبة سلامة العمال" [level=3] [ref=e107]
+        - paragraph [ref=e108]: مراقبة سلامة العمال وارتداء معدات الحماية الشخصية في المصانع
+      - generic [ref=e109]:
+        - img [ref=e110]
+        - heading "مراقبة خطوط الانتاج" [level=3] [ref=e112]
+        - paragraph [ref=e113]: مراقبة خطوط الانتاج وكشف الأعطال والانحرافات في المصانع
+      - generic [ref=e114]:
+        - img [ref=e115]
+        - heading "كشف التكاسل والأشياء المتروكة" [level=3] [ref=e118]
+        - paragraph [ref=e119]: كشف الأشخاص المتكاسلين والأشياء المتروكة في المناطق المحظورة
+  - generic [ref=e122]:
+    - generic [ref=e123]:
+      - heading "اوامر الذكاء الاصطناعي" [level=2] [ref=e124]
+      - paragraph [ref=e125]: حدد ماذا يحدث عند كل حدث. عند كشف حريق يتم تشغيل السرينة وفتح ابواب الطوارئ. عند التعرف على سيارة VIP تفتح البوابة تلقائيا. اوامر مخصصة لكل موديول.
+      - generic [ref=e126]:
+        - generic [ref=e127]:
+          - img [ref=e129]
+          - generic [ref=e131]: تشغيل السرينة عند كشف حريق
+        - generic [ref=e132]:
+          - img [ref=e134]
+          - generic [ref=e136]: فتح البوابة للمركبات المعتمدة
+        - generic [ref=e137]:
+          - img [ref=e139]
+          - generic [ref=e141]: ارسال اشعار للقائمة السوداء
+        - generic [ref=e142]:
+          - img [ref=e144]
+          - generic [ref=e146]: تسجيل الحضور تلقائيا
+        - generic [ref=e147]:
+          - img [ref=e149]
+          - generic [ref=e151]: تنبيه عند الازدحام
+    - generic [ref=e153]:
+      - generic [ref=e154]:
+        - generic [ref=e155]:
+          - img [ref=e156]
+          - generic [ref=e158]: كشف حريق
+        - paragraph [ref=e159]: تشغيل السرينة + فتح ابواب الطوارئ + اتصال طوارئ
+      - generic [ref=e160]:
+        - generic [ref=e161]:
+          - img [ref=e162]
+          - generic [ref=e166]: سيارة VIP
+        - paragraph [ref=e167]: فتح البوابة تلقائيا + اشعار الاستقبال
+      - generic [ref=e168]:
+        - generic [ref=e169]:
+          - img [ref=e170]
+          - generic [ref=e176]: قائمة سوداء
+        - paragraph [ref=e177]: تنبيه امني فوري + تسجيل فيديو
+  - generic [ref=e179]:
+    - generic [ref=e180]:
+      - heading "اختر باقتك" [level=2] [ref=e181]
+      - paragraph [ref=e182]: جميع الباقات تشمل فترة تجريبية 14 يوم مجانا
+    - generic [ref=e183]:
+      - generic [ref=e184]:
+        - heading "اساسي" [level=3] [ref=e185]
+        - generic [ref=e186]: 500 جنيه / شهريا
+        - list [ref=e187]:
+          - listitem [ref=e188]:
+            - img [ref=e189]
+            - generic [ref=e191]: 4 كاميرات
+          - listitem [ref=e192]:
+            - img [ref=e193]
+            - generic [ref=e195]: سيرفر واحد
+          - listitem [ref=e196]:
+            - img [ref=e197]
+            - generic [ref=e199]: كشف الحريق
+          - listitem [ref=e200]:
+            - img [ref=e201]
+            - generic [ref=e203]: عد الاشخاص
+          - listitem [ref=e204]:
+            - img [ref=e205]
+            - generic [ref=e207]: اشعارات Push و Email
+        - link "ابدا الان" [ref=e208] [cursor=pointer]:
+          - /url: /request-demo
+      - generic [ref=e209]:
+        - generic [ref=e210]: الاكثر طلبا
+        - heading "احترافي" [level=3] [ref=e211]
+        - generic [ref=e212]: 1,500 جنيه / شهريا
+        - list [ref=e213]:
+          - listitem [ref=e214]:
+            - img [ref=e215]
+            - generic [ref=e217]: 16 كاميرا
+          - listitem [ref=e218]:
+            - img [ref=e219]
+            - generic [ref=e221]: 2 سيرفر
+          - listitem [ref=e222]:
+            - img [ref=e223]
+            - generic [ref=e225]: 5 موديولات
+          - listitem [ref=e226]:
+            - img [ref=e227]
+            - generic [ref=e229]: التعرف على الوجوه
+          - listitem [ref=e230]:
+            - img [ref=e231]
+            - generic [ref=e233]: تسجيل الحضور
+          - listitem [ref=e234]:
+            - img [ref=e235]
+            - generic [ref=e237]: SMS
+        - link "ابدا الان" [ref=e238] [cursor=pointer]:
+          - /url: /request-demo
+      - generic [ref=e239]:
+        - heading "مؤسسي" [level=3] [ref=e240]
+        - generic [ref=e241]: 5,000 جنيه / شهريا
+        - list [ref=e242]:
+          - listitem [ref=e243]:
+            - img [ref=e244]
+            - generic [ref=e246]: 64 كاميرا
+          - listitem [ref=e247]:
+            - img [ref=e248]
+            - generic [ref=e250]: 5 سيرفرات
+          - listitem [ref=e251]:
+            - img [ref=e252]
+            - generic [ref=e254]: كل الموديولات
+          - listitem [ref=e255]:
+            - img [ref=e256]
+            - generic [ref=e258]: WhatsApp
+          - listitem [ref=e259]:
+            - img [ref=e260]
+            - generic [ref=e262]: اتصال طوارئ
+          - listitem [ref=e263]:
+            - img [ref=e264]
+            - generic [ref=e266]: دعم مخصص
+        - link "ابدا الان" [ref=e267] [cursor=pointer]:
+          - /url: /request-demo
+  - generic [ref=e269]:
+    - generic [ref=e270]:
+      - heading "تواصل معنا" [level=2] [ref=e271]
+      - paragraph [ref=e272]: نحن هنا لمساعدتك. تواصل معنا للاستفسارات او طلب عرض تجريبي
+    - generic [ref=e273]:
+      - generic [ref=e274]:
+        - generic [ref=e276]:
+          - img [ref=e278]
+          - generic [ref=e280]:
+            - heading "الهاتف" [level=3] [ref=e281]
+            - paragraph [ref=e282]: +966 11 000 0000
+        - generic [ref=e284]:
+          - img [ref=e286]
+          - generic [ref=e289]:
+            - heading "البريد الالكتروني" [level=3] [ref=e290]
+            - paragraph [ref=e291]: info@stc-solutions.com
+        - generic [ref=e293]:
+          - img [ref=e295]
+          - generic [ref=e298]:
+            - heading "العنوان" [level=3] [ref=e299]
+            - paragraph [ref=e300]: القاهرة، جمهورية مصر العربية
+      - generic [ref=e301]:
+        - heading "ارسل رسالة" [level=3] [ref=e302]
+        - generic [ref=e303]:
+          - textbox "الاسم" [ref=e305]
+          - textbox "البريد الالكتروني" [ref=e307]
+          - textbox "رقم الجوال" [ref=e309]
+          - textbox "رسالتك..." [ref=e311]
+          - button "ارسال" [ref=e312] [cursor=pointer]:
+            - img [ref=e313]
+            - generic [ref=e316]: ارسال
+  - contentinfo [ref=e317]:
+    - generic [ref=e319]:
+      - img "STC Solutions"
+      - paragraph [ref=e320]: 2026 STC Solutions. جميع الحقوق محفوظة
+  - link "تواصل عبر واتساب" [ref=e321] [cursor=pointer]:
+    - /url: https://wa.me/966500000000
+    - img [ref=e322]
+```

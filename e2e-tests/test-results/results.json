@@ -1,0 +1,4929 @@
+{
+  "config": {
+    "configFile": "/workspace/e2e-tests/playwright.config.js",
+    "rootDir": "/workspace/e2e-tests/tests",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "html",
+        {
+          "open": "never",
+          "outputFolder": "test-results/html"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/workspace/e2e-tests/test-results/artifacts",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/workspace/e2e-tests/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.57.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "02-super-admin/ai-modules.spec.js",
+      "file": "02-super-admin/ai-modules.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Super Admin - AI Modules",
+          "file": "02-super-admin/ai-modules.spec.js",
+          "line": 9,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "AI Modules Page",
+              "file": "02-super-admin/ai-modules.spec.js",
+              "line": 14,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load AI modules admin page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15765,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:35:37.802Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "39b8c6df010a4469aae6-8edc7c47f8911263788b",
+                  "file": "02-super-admin/ai-modules.spec.js",
+                  "line": 15,
+                  "column": 5
+                },
+                {
+                  "title": "should display module stats",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15623,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:35:53.655Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "39b8c6df010a4469aae6-5b8436579246d2f76a9f",
+                  "file": "02-super-admin/ai-modules.spec.js",
+                  "line": 27,
+                  "column": 5
+                },
+                {
+                  "title": "should have search functionality",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 14635,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:36:09.289Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "39b8c6df010a4469aae6-960dc049548c22aa0e88",
+                  "file": "02-super-admin/ai-modules.spec.js",
+                  "line": 38,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Modules List",
+              "file": "02-super-admin/ai-modules.spec.js",
+              "line": 49,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should display modules grid",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15824,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:36:23.932Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "39b8c6df010a4469aae6-e6e3e284e46292c1c9ee",
+                  "file": "02-super-admin/ai-modules.spec.js",
+                  "line": 50,
+                  "column": 5
+                },
+                {
+                  "title": "should show module names and descriptions",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15790,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:36:39.764Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "39b8c6df010a4469aae6-a0924a627fa6a404de1a",
+                  "file": "02-super-admin/ai-modules.spec.js",
+                  "line": 61,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Module Toggle",
+              "file": "02-super-admin/ai-modules.spec.js",
+              "line": 73,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should have enable/disable toggle for each module",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15627,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:36:55.562Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "39b8c6df010a4469aae6-3fcbb1306191c6ed4663",
+                  "file": "02-super-admin/ai-modules.spec.js",
+                  "line": 74,
+                  "column": 5
+                },
+                {
+                  "title": "should toggle module state when clicked",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 18636,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:37:11.197Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "39b8c6df010a4469aae6-de6916bdcbbd00b2293a",
+                  "file": "02-super-admin/ai-modules.spec.js",
+                  "line": 99,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Module Edit",
+              "file": "02-super-admin/ai-modules.spec.js",
+              "line": 132,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should have edit button for each module",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15882,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:37:29.839Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "39b8c6df010a4469aae6-a78cfb5ea073a47a19fb",
+                  "file": "02-super-admin/ai-modules.spec.js",
+                  "line": 133,
+                  "column": 5
+                },
+                {
+                  "title": "should open edit modal when clicked",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15580,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:37:45.738Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "39b8c6df010a4469aae6-e9a5c246f5e5435328b6",
+                  "file": "02-super-admin/ai-modules.spec.js",
+                  "line": 156,
+                  "column": 5
+                },
+                {
+                  "title": "should have save button in edit modal",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15548,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:38:01.328Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "39b8c6df010a4469aae6-3946bc4f62c7f35cd54b",
+                  "file": "02-super-admin/ai-modules.spec.js",
+                  "line": 182,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Module Status Display",
+              "file": "02-super-admin/ai-modules.spec.js",
+              "line": 207,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should show module active/inactive status",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15878,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:38:16.883Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "39b8c6df010a4469aae6-45102d06c10f1ddac5be",
+                  "file": "02-super-admin/ai-modules.spec.js",
+                  "line": 208,
+                  "column": 5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "02-super-admin/backups.spec.js",
+      "file": "02-super-admin/backups.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Super Admin - Backups",
+          "file": "02-super-admin/backups.spec.js",
+          "line": 9,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Backups Page",
+              "file": "02-super-admin/backups.spec.js",
+              "line": 14,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load backups page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15775,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:38:32.776Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9413045ff62da2b5adba-c9103c46a5f468167a40",
+                  "file": "02-super-admin/backups.spec.js",
+                  "line": 15,
+                  "column": 5
+                },
+                {
+                  "title": "should have create backup button",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 14814,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:38:48.559Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9413045ff62da2b5adba-e6da73dcfb0f24d0b71e",
+                  "file": "02-super-admin/backups.spec.js",
+                  "line": 27,
+                  "column": 5
+                },
+                {
+                  "title": "should display backup stats",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 16142,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:39:03.378Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9413045ff62da2b5adba-4f3fa4b2566a354ac82e",
+                  "file": "02-super-admin/backups.spec.js",
+                  "line": 40,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Backup List",
+              "file": "02-super-admin/backups.spec.js",
+              "line": 52,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should display backups table or empty state",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15771,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:39:19.527Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9413045ff62da2b5adba-42b31d8c8f2fda961340",
+                  "file": "02-super-admin/backups.spec.js",
+                  "line": 53,
+                  "column": 5
+                },
+                {
+                  "title": "should show backup status indicators",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15446,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:39:35.306Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9413045ff62da2b5adba-7c6f52943f163c12e7bd",
+                  "file": "02-super-admin/backups.spec.js",
+                  "line": 67,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Backup Actions",
+              "file": "02-super-admin/backups.spec.js",
+              "line": 83,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should have download button for completed backups",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15658,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:39:50.758Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9413045ff62da2b5adba-e40042064248845eb846",
+                  "file": "02-super-admin/backups.spec.js",
+                  "line": 84,
+                  "column": 5
+                },
+                {
+                  "title": "should have restore button for backups",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15508,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:40:06.423Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9413045ff62da2b5adba-9386e5f0ee2e1f4795dc",
+                  "file": "02-super-admin/backups.spec.js",
+                  "line": 99,
+                  "column": 5
+                },
+                {
+                  "title": "should have delete button for backups",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15524,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:40:21.938Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9413045ff62da2b5adba-298504fea806dead4e81",
+                  "file": "02-super-admin/backups.spec.js",
+                  "line": 111,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Create Backup",
+              "file": "02-super-admin/backups.spec.js",
+              "line": 124,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should trigger backup creation when button clicked",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 14512,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:40:37.470Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "9413045ff62da2b5adba-e3d0a04a619255197dc6",
+                  "file": "02-super-admin/backups.spec.js",
+                  "line": 125,
+                  "column": 5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "02-super-admin/cameras.spec.js",
+      "file": "02-super-admin/cameras.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Super Admin - Cameras CRUD",
+          "file": "02-super-admin/cameras.spec.js",
+          "line": 9,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Cameras Page Navigation",
+              "file": "02-super-admin/cameras.spec.js",
+              "line": 14,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load cameras page from admin dashboard",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15250,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:40:51.995Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "68566af969574330e10b-ca575292c00c7aa927d1",
+                  "file": "02-super-admin/cameras.spec.js",
+                  "line": 15,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Cameras List",
+              "file": "02-super-admin/cameras.spec.js",
+              "line": 29,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should display cameras list or empty state",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15294,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:41:07.254Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "68566af969574330e10b-879d838d4efe2f8aa76f",
+                  "file": "02-super-admin/cameras.spec.js",
+                  "line": 30,
+                  "column": 5
+                },
+                {
+                  "title": "should have search functionality",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15057,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:41:22.554Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "68566af969574330e10b-4a5c12fe5ef4eef852d3",
+                  "file": "02-super-admin/cameras.spec.js",
+                  "line": 44,
+                  "column": 5
+                },
+                {
+                  "title": "should have status filter",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15512,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:41:37.618Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "68566af969574330e10b-aa8928f45fab92ea0c8a",
+                  "file": "02-super-admin/cameras.spec.js",
+                  "line": 60,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Add Camera",
+              "file": "02-super-admin/cameras.spec.js",
+              "line": 77,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should have add camera button",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 14155,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:41:53.139Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "68566af969574330e10b-47ddbcbdc32c1e9ca56d",
+                  "file": "02-super-admin/cameras.spec.js",
+                  "line": 78,
+                  "column": 5
+                },
+                {
+                  "title": "should open add camera modal",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 16686,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:42:07.302Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "68566af969574330e10b-27c9c556b857262638d5",
+                  "file": "02-super-admin/cameras.spec.js",
+                  "line": 89,
+                  "column": 5
+                },
+                {
+                  "title": "should validate camera form required fields",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 18126,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:42:23.998Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "68566af969574330e10b-a52aedf085f023a373e7",
+                  "file": "02-super-admin/cameras.spec.js",
+                  "line": 133,
+                  "column": 5
+                },
+                {
+                  "title": "should have AI modules selection in camera form",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15801,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:42:42.130Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "68566af969574330e10b-d0894437e6c7e0be5df7",
+                  "file": "02-super-admin/cameras.spec.js",
+                  "line": 166,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Camera Actions",
+              "file": "02-super-admin/cameras.spec.js",
+              "line": 196,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should have edit button for cameras",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15052,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:42:57.939Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "68566af969574330e10b-a440652d800074a90514",
+                  "file": "02-super-admin/cameras.spec.js",
+                  "line": 197,
+                  "column": 5
+                },
+                {
+                  "title": "should have delete button for cameras",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15262,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:43:12.998Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "68566af969574330e10b-86ee58faf9e5ad9ea609",
+                  "file": "02-super-admin/cameras.spec.js",
+                  "line": 224,
+                  "column": 5
+                },
+                {
+                  "title": "should have toggle status button for cameras",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 14990,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:43:28.266Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "68566af969574330e10b-56d7a6ede647f0f7ece6",
+                  "file": "02-super-admin/cameras.spec.js",
+                  "line": 251,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Camera View Modes",
+              "file": "02-super-admin/cameras.spec.js",
+              "line": 280,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should have grid/list view toggle",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 14124,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:43:43.262Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "68566af969574330e10b-34e1f4ee24859e7f9217",
+                  "file": "02-super-admin/cameras.spec.js",
+                  "line": 281,
+                  "column": 5
+                },
+                {
+                  "title": "should toggle between grid and list view",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15243,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:43:57.396Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "68566af969574330e10b-fe82d586f60925bbc25e",
+                  "file": "02-super-admin/cameras.spec.js",
+                  "line": 295,
+                  "column": 5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "02-super-admin/dashboard.spec.js",
+      "file": "02-super-admin/dashboard.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Super Admin Dashboard",
+          "file": "02-super-admin/dashboard.spec.js",
+          "line": 10,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Main Dashboard Page",
+              "file": "02-super-admin/dashboard.spec.js",
+              "line": 16,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load admin dashboard correctly",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13025,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:44:12.652Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-96bc913a9aafffc956e4",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 17,
+                  "column": 5
+                },
+                {
+                  "title": "should display stat cards",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13186,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:44:25.686Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-eb7a5d03c70e6b72cee5",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 30,
+                  "column": 5
+                },
+                {
+                  "title": "should display organizations count",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13213,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:44:38.879Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-083f0191c44e6e7b9273",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 40,
+                  "column": 5
+                },
+                {
+                  "title": "should display revenue information",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13323,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:44:52.099Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-9b7f283e276d088d6c02",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 49,
+                  "column": 5
+                },
+                {
+                  "title": "should have working refresh/retry button on error",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13104,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:45:05.430Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-66f8b79196558f237cdc",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 58,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Organizations Page",
+              "file": "02-super-admin/dashboard.spec.js",
+              "line": 77,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load organizations page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13346,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:45:18.543Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-4f18b8b7eaf4f4e3d57c",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 78,
+                  "column": 5
+                },
+                {
+                  "title": "should have add organization button",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13507,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:45:31.895Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-6da3cfe66997093fd70a",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 90,
+                  "column": 5
+                },
+                {
+                  "title": "should open add organization modal",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15841,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:45:45.410Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-b3cdcbe1ab5d58947f2b",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 98,
+                  "column": 5
+                },
+                {
+                  "title": "should have search functionality",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 14207,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:46:01.258Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-1e3250598dd66c6ca856",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 138,
+                  "column": 5
+                },
+                {
+                  "title": "should display organizations table",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13464,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:46:15.471Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-11e93b4bc3e4ff5fc65a",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 173,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Users Page",
+              "file": "02-super-admin/dashboard.spec.js",
+              "line": 185,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load users page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13335,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:46:28.941Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-45fce26ca5f72b427f2c",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 186,
+                  "column": 5
+                },
+                {
+                  "title": "should have user management controls",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13339,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:46:42.283Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-033e36a7daeb7dfea8c9",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 197,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Licenses Page",
+              "file": "02-super-admin/dashboard.spec.js",
+              "line": 212,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load licenses page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13402,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:46:55.631Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-d070d2feceaa8a6c3835",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 213,
+                  "column": 5
+                },
+                {
+                  "title": "should display licenses list or empty state",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13638,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:47:09.041Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-3f7b43cbf00f27686786",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 224,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Edge Servers Page",
+              "file": "02-super-admin/dashboard.spec.js",
+              "line": 239,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load edge servers page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13096,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:47:22.686Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-55082bd7cc690fae2e90",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 240,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Plans Page",
+              "file": "02-super-admin/dashboard.spec.js",
+              "line": 252,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load plans page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13129,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:47:35.788Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-50297e8175c3f736293d",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 253,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "AI Modules Page",
+              "file": "02-super-admin/dashboard.spec.js",
+              "line": 265,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load AI modules page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13040,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:47:48.924Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-5569ff2eaa352525b139",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 266,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Settings Page",
+              "file": "02-super-admin/dashboard.spec.js",
+              "line": 279,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load admin settings page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13883,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:48:01.971Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-9e83003a1a747e287d45",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 280,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Notifications Page",
+              "file": "02-super-admin/dashboard.spec.js",
+              "line": 293,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load notifications page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13473,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:48:15.861Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-e652a6d5966f5e832e6e",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 294,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "System Monitor Page",
+              "file": "02-super-admin/dashboard.spec.js",
+              "line": 307,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load system monitor page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13471,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:48:29.342Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-f6416efaee188d88301b",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 308,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Backups Page",
+              "file": "02-super-admin/dashboard.spec.js",
+              "line": 317,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load backups page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13201,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:48:42.820Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-68da2f2fd9e1bf9fbfe6",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 318,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Free Trial Requests Page",
+              "file": "02-super-admin/dashboard.spec.js",
+              "line": 331,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load free trial requests page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13280,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:48:56.032Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-5f153b3864ed3ec78a49",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 332,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Super Admin Management Page",
+              "file": "02-super-admin/dashboard.spec.js",
+              "line": 341,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load super admin management page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13100,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:49:09.321Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-3accecf38fbf67a02c54",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 342,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Resellers Page",
+              "file": "02-super-admin/dashboard.spec.js",
+              "line": 351,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load resellers page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13070,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:49:22.427Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-0a831fb721e938dd45a7",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 352,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Landing Settings Page",
+              "file": "02-super-admin/dashboard.spec.js",
+              "line": 361,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load landing settings page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13185,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:49:35.505Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-bf70c3c5abbfacb24ac6",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 362,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Platform Wordings Page",
+              "file": "02-super-admin/dashboard.spec.js",
+              "line": 371,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load platform wordings page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 13817,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:49:48.697Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "fb01edfc456154372165-a35eca54616b54d0d552",
+                  "file": "02-super-admin/dashboard.spec.js",
+                  "line": 372,
+                  "column": 5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "02-super-admin/integrations.spec.js",
+      "file": "02-super-admin/integrations.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Super Admin - Integrations",
+          "file": "02-super-admin/integrations.spec.js",
+          "line": 9,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Integrations Page",
+              "file": "02-super-admin/integrations.spec.js",
+              "line": 14,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load integrations page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15938,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:50:02.525Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "288cadaa6a474d55c237-5993d967d91cfb88c1c8",
+                  "file": "02-super-admin/integrations.spec.js",
+                  "line": 15,
+                  "column": 5
+                },
+                {
+                  "title": "should display available integrations",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15862,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:50:18.470Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "288cadaa6a474d55c237-86a99c8493bb0bd1c423",
+                  "file": "02-super-admin/integrations.spec.js",
+                  "line": 27,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Integration Configuration",
+              "file": "02-super-admin/integrations.spec.js",
+              "line": 40,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should have enable/disable toggles for integrations",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 16024,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:50:34.338Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "288cadaa6a474d55c237-102e6bd12c32b80d6cd7",
+                  "file": "02-super-admin/integrations.spec.js",
+                  "line": 41,
+                  "column": 5
+                },
+                {
+                  "title": "should have configuration options",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15929,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:50:50.369Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "288cadaa6a474d55c237-19f55bdc4e1e9e68c1b8",
+                  "file": "02-super-admin/integrations.spec.js",
+                  "line": 52,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "API Integration",
+              "file": "02-super-admin/integrations.spec.js",
+              "line": 67,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should show API endpoint configurations",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 16046,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:51:06.306Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "288cadaa6a474d55c237-ac8856a9a4d1bbd8ec87",
+                  "file": "02-super-admin/integrations.spec.js",
+                  "line": 68,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Webhook Configuration",
+              "file": "02-super-admin/integrations.spec.js",
+              "line": 80,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should show webhook settings if available",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15800,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:51:22.360Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "288cadaa6a474d55c237-e16748ee71513d7f7cbe",
+                  "file": "02-super-admin/integrations.spec.js",
+                  "line": 81,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Save Configuration",
+              "file": "02-super-admin/integrations.spec.js",
+              "line": 93,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should have save button for configurations",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15914,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:51:38.166Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "288cadaa6a474d55c237-8dc34f38a39ec62f7d04",
+                  "file": "02-super-admin/integrations.spec.js",
+                  "line": 94,
+                  "column": 5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "02-super-admin/licenses.spec.js",
+      "file": "02-super-admin/licenses.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Super Admin - Licenses CRUD",
+          "file": "02-super-admin/licenses.spec.js",
+          "line": 9,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Licenses Page",
+              "file": "02-super-admin/licenses.spec.js",
+              "line": 14,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load licenses page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15812,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:51:54.091Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "695bf6206001d9100f82-5fd35d5675539a896400",
+                  "file": "02-super-admin/licenses.spec.js",
+                  "line": 15,
+                  "column": 5
+                },
+                {
+                  "title": "should display license stats",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15660,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:52:09.909Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "695bf6206001d9100f82-d12d1c6c4a95ab3839f2",
+                  "file": "02-super-admin/licenses.spec.js",
+                  "line": 27,
+                  "column": 5
+                },
+                {
+                  "title": "should have create license button",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 14885,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:52:25.575Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "695bf6206001d9100f82-676cd41a15858ccf2856",
+                  "file": "02-super-admin/licenses.spec.js",
+                  "line": 38,
+                  "column": 5
+                },
+                {
+                  "title": "should have search functionality",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 14754,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:52:40.468Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "695bf6206001d9100f82-c9c652711090dcb845aa",
+                  "file": "02-super-admin/licenses.spec.js",
+                  "line": 48,
+                  "column": 5
+                },
+                {
+                  "title": "should have status filter",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 14927,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:52:55.243Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "695bf6206001d9100f82-d01d5c98a86f18e4164d",
+                  "file": "02-super-admin/licenses.spec.js",
+                  "line": 58,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Create License",
+              "file": "02-super-admin/licenses.spec.js",
+              "line": 69,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should open create license modal",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 17556,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:53:10.177Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "695bf6206001d9100f82-2d45d6d4a41f07eeea91",
+                  "file": "02-super-admin/licenses.spec.js",
+                  "line": 70,
+                  "column": 5
+                },
+                {
+                  "title": "should have organization selection in create form",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 16428,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:53:27.740Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "695bf6206001d9100f82-b6b321b204ce0613e310",
+                  "file": "02-super-admin/licenses.spec.js",
+                  "line": 111,
+                  "column": 5
+                },
+                {
+                  "title": "should have plan selection in create form",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 16242,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:53:44.175Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "695bf6206001d9100f82-73662f435b485cd2eaa1",
+                  "file": "02-super-admin/licenses.spec.js",
+                  "line": 135,
+                  "column": 5
+                },
+                {
+                  "title": "should have cameras limit input",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 16457,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:54:00.425Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "695bf6206001d9100f82-639a711e8dc720411498",
+                  "file": "02-super-admin/licenses.spec.js",
+                  "line": 159,
+                  "column": 5
+                },
+                {
+                  "title": "should have trial option checkbox",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 16391,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:54:16.889Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "695bf6206001d9100f82-5ce6cc451cd7efa468bb",
+                  "file": "02-super-admin/licenses.spec.js",
+                  "line": 183,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Licenses List",
+              "file": "02-super-admin/licenses.spec.js",
+              "line": 208,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should display licenses table or empty state",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15840,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:54:33.287Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "695bf6206001d9100f82-33ec62a7fc6daa7ba3be",
+                  "file": "02-super-admin/licenses.spec.js",
+                  "line": 209,
+                  "column": 5
+                },
+                {
+                  "title": "should show license keys",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15907,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:54:49.135Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "695bf6206001d9100f82-d65799ad8c1d7fa0aef5",
+                  "file": "02-super-admin/licenses.spec.js",
+                  "line": 223,
+                  "column": 5
+                },
+                {
+                  "title": "should show license status badges",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15684,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:55:05.051Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "695bf6206001d9100f82-41867a0d79380208778f",
+                  "file": "02-super-admin/licenses.spec.js",
+                  "line": 238,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "License Actions",
+              "file": "02-super-admin/licenses.spec.js",
+              "line": 254,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should have copy license key button",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15705,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:55:20.741Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "695bf6206001d9100f82-3882ac7c9ce0a37a6552",
+                  "file": "02-super-admin/licenses.spec.js",
+                  "line": 255,
+                  "column": 5
+                },
+                {
+                  "title": "should have activate/suspend button",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15672,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:55:36.454Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "695bf6206001d9100f82-db961264881582d508e7",
+                  "file": "02-super-admin/licenses.spec.js",
+                  "line": 270,
+                  "column": 5
+                },
+                {
+                  "title": "should have delete button",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 16006,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:55:52.133Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "695bf6206001d9100f82-4675f5e337f9c8e40aaa",
+                  "file": "02-super-admin/licenses.spec.js",
+                  "line": 293,
+                  "column": 5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "02-super-admin/organizations.spec.js",
+      "file": "02-super-admin/organizations.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Super Admin - Organizations CRUD",
+          "file": "02-super-admin/organizations.spec.js",
+          "line": 9,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Organizations Page",
+              "file": "02-super-admin/organizations.spec.js",
+              "line": 14,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load organizations page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 16020,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:56:08.152Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "7df0148d1a7fe7a94925-14ef32b1f1f875f280cf",
+                  "file": "02-super-admin/organizations.spec.js",
+                  "line": 15,
+                  "column": 5
+                },
+                {
+                  "title": "should have add organization button",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 14700,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:56:24.178Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "7df0148d1a7fe7a94925-ebaacedc7b3fe5fee125",
+                  "file": "02-super-admin/organizations.spec.js",
+                  "line": 27,
+                  "column": 5
+                },
+                {
+                  "title": "should have search functionality",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15043,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:56:38.884Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "7df0148d1a7fe7a94925-3db5773397870de079a1",
+                  "file": "02-super-admin/organizations.spec.js",
+                  "line": 37,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Create Organization",
+              "file": "02-super-admin/organizations.spec.js",
+              "line": 48,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should open add organization modal",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 17709,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:56:53.934Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "7df0148d1a7fe7a94925-98a16541f758a9264740",
+                  "file": "02-super-admin/organizations.spec.js",
+                  "line": 49,
+                  "column": 5
+                },
+                {
+                  "title": "should have required fields in create form",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 16559,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:57:11.650Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "7df0148d1a7fe7a94925-38dc395683b5c8b37bf3",
+                  "file": "02-super-admin/organizations.spec.js",
+                  "line": 73,
+                  "column": 5
+                },
+                {
+                  "title": "should have subscription plan selection",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 16430,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:57:28.215Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "7df0148d1a7fe7a94925-c057c99beacf89b23dfb",
+                  "file": "02-super-admin/organizations.spec.js",
+                  "line": 101,
+                  "column": 5
+                },
+                {
+                  "title": "should validate required fields before submit",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 18779,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:57:44.653Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "7df0148d1a7fe7a94925-a0887adb4f1a4b11218b",
+                  "file": "02-super-admin/organizations.spec.js",
+                  "line": 125,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Organizations List",
+              "file": "02-super-admin/organizations.spec.js",
+              "line": 155,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should display organizations table or empty state",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15848,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:58:03.442Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "7df0148d1a7fe7a94925-9bf18d92b2987ecf3b93",
+                  "file": "02-super-admin/organizations.spec.js",
+                  "line": 156,
+                  "column": 5
+                },
+                {
+                  "title": "should show organization names",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15990,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:58:19.298Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "7df0148d1a7fe7a94925-e1e35185b34435af1188",
+                  "file": "02-super-admin/organizations.spec.js",
+                  "line": 172,
+                  "column": 5
+                },
+                {
+                  "title": "should show subscription plan badges",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15618,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:58:35.296Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "7df0148d1a7fe7a94925-7ce28471b3411222a18e",
+                  "file": "02-super-admin/organizations.spec.js",
+                  "line": 187,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Organization Actions",
+              "file": "02-super-admin/organizations.spec.js",
+              "line": 197,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should have edit button",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15771,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:58:50.922Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "7df0148d1a7fe7a94925-78d203265b621d2118da",
+                  "file": "02-super-admin/organizations.spec.js",
+                  "line": 198,
+                  "column": 5
+                },
+                {
+                  "title": "should have delete button",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15974,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:59:06.699Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "7df0148d1a7fe7a94925-6aee423b7dc1f526649a",
+                  "file": "02-super-admin/organizations.spec.js",
+                  "line": 207,
+                  "column": 5
+                },
+                {
+                  "title": "should have view details option",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15852,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:59:22.681Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "7df0148d1a7fe7a94925-113325bd3fbc1e27f9b3",
+                  "file": "02-super-admin/organizations.spec.js",
+                  "line": 216,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "License Assignment",
+              "file": "02-super-admin/organizations.spec.js",
+              "line": 226,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should show license info for organizations",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15626,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:59:38.541Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "7df0148d1a7fe7a94925-44f9ac2e38fc3faaa0a4",
+                  "file": "02-super-admin/organizations.spec.js",
+                  "line": 227,
+                  "column": 5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "02-super-admin/servers.spec.js",
+      "file": "02-super-admin/servers.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Super Admin - Edge Servers",
+          "file": "02-super-admin/servers.spec.js",
+          "line": 9,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Edge Servers Page",
+              "file": "02-super-admin/servers.spec.js",
+              "line": 14,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load edge servers page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15620,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T04:59:54.179Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "bfb796abe601faa99493-260e05a8fda75da5d993",
+                  "file": "02-super-admin/servers.spec.js",
+                  "line": 15,
+                  "column": 5
+                },
+                {
+                  "title": "should display server stats cards",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15668,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:00:09.806Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "bfb796abe601faa99493-857160912c26301baf03",
+                  "file": "02-super-admin/servers.spec.js",
+                  "line": 27,
+                  "column": 5
+                },
+                {
+                  "title": "should have search functionality",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15593,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:00:25.481Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "bfb796abe601faa99493-f124394984483a9fd355",
+                  "file": "02-super-admin/servers.spec.js",
+                  "line": 38,
+                  "column": 5
+                },
+                {
+                  "title": "should have status filter",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 14950,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:00:41.081Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "bfb796abe601faa99493-d3176b1946e7be35dafc",
+                  "file": "02-super-admin/servers.spec.js",
+                  "line": 56,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Edge Servers List",
+              "file": "02-super-admin/servers.spec.js",
+              "line": 67,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should display servers list or empty state",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15684,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:00:56.039Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "bfb796abe601faa99493-d2a59d788d7517bbbe9f",
+                  "file": "02-super-admin/servers.spec.js",
+                  "line": 68,
+                  "column": 5
+                },
+                {
+                  "title": "should show server status indicators",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15468,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:01:11.731Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "bfb796abe601faa99493-c17d66fa716eb57a8c5b",
+                  "file": "02-super-admin/servers.spec.js",
+                  "line": 82,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Server Actions",
+              "file": "02-super-admin/servers.spec.js",
+              "line": 98,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should have refresh button",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 16643,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:01:27.205Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "bfb796abe601faa99493-a116c7bca036ea7c9ecc",
+                  "file": "02-super-admin/servers.spec.js",
+                  "line": 99,
+                  "column": 5
+                },
+                {
+                  "title": "should have view details button",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15476,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:01:43.856Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "bfb796abe601faa99493-e3c31ef9d068015b3007",
+                  "file": "02-super-admin/servers.spec.js",
+                  "line": 117,
+                  "column": 5
+                },
+                {
+                  "title": "should have delete button",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15792,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:01:59.338Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "bfb796abe601faa99493-13f9eb433221f10afd97",
+                  "file": "02-super-admin/servers.spec.js",
+                  "line": 132,
+                  "column": 5
+                },
+                {
+                  "title": "should open server details modal",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 17219,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:02:15.138Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "bfb796abe601faa99493-2fe47f6d5771b7482f27",
+                  "file": "02-super-admin/servers.spec.js",
+                  "line": 147,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Server System Info",
+              "file": "02-super-admin/servers.spec.js",
+              "line": 173,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should display system info for online servers",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15534,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:02:32.364Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "bfb796abe601faa99493-1ce7737f3c30bc7ee938",
+                  "file": "02-super-admin/servers.spec.js",
+                  "line": 174,
+                  "column": 5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "02-super-admin/settings.spec.js",
+      "file": "02-super-admin/settings.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Super Admin - Settings",
+          "file": "02-super-admin/settings.spec.js",
+          "line": 9,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Admin Settings Page",
+              "file": "02-super-admin/settings.spec.js",
+              "line": 14,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load admin settings page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15605,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:02:47.909Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "90246329468f26ce12ee-ee3c6f3dad2f963d17ab",
+                  "file": "02-super-admin/settings.spec.js",
+                  "line": 15,
+                  "column": 5
+                },
+                {
+                  "title": "should display settings tabs or sections",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15805,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:03:03.522Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "90246329468f26ce12ee-96407906fb090aa0dbd2",
+                  "file": "02-super-admin/settings.spec.js",
+                  "line": 27,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "General Settings",
+              "file": "02-super-admin/settings.spec.js",
+              "line": 42,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should have general settings section",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 15580,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at /workspace/e2e-tests/tests/02-super-admin/settings.spec.js:51:26",
+                            "location": {
+                              "file": "/workspace/e2e-tests/tests/02-super-admin/settings.spec.js",
+                              "column": 26,
+                              "line": 51
+                            },
+                            "snippet": "  49 |       const hasGeneral = await generalSection.isVisible().catch(() => false);\n  50 |       \n> 51 |       expect(hasGeneral).toBe(true);\n     |                          ^\n  52 |     });\n  53 |\n  54 |     test('should have editable settings fields', async ({ page }) => {"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/workspace/e2e-tests/tests/02-super-admin/settings.spec.js",
+                                "column": 26,
+                                "line": 51
+                              },
+                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  49 |       const hasGeneral = await generalSection.isVisible().catch(() => false);\n  50 |       \n> 51 |       expect(hasGeneral).toBe(true);\n     |                          ^\n  52 |     });\n  53 |\n  54 |     test('should have editable settings fields', async ({ page }) => {\n    at /workspace/e2e-tests/tests/02-super-admin/settings.spec.js:51:26"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:03:19.333Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/workspace/e2e-tests/test-results/artifacts/02-super-admin-settings-Su-deb6e-ve-general-settings-section-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/workspace/e2e-tests/test-results/artifacts/02-super-admin-settings-Su-deb6e-ve-general-settings-section-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/workspace/e2e-tests/tests/02-super-admin/settings.spec.js",
+                            "column": 26,
+                            "line": 51
+                          }
+                        },
+                        {
+                          "workerIndex": 1,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 16099,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at /workspace/e2e-tests/tests/02-super-admin/settings.spec.js:51:26",
+                            "location": {
+                              "file": "/workspace/e2e-tests/tests/02-super-admin/settings.spec.js",
+                              "column": 26,
+                              "line": 51
+                            },
+                            "snippet": "  49 |       const hasGeneral = await generalSection.isVisible().catch(() => false);\n  50 |       \n> 51 |       expect(hasGeneral).toBe(true);\n     |                          ^\n  52 |     });\n  53 |\n  54 |     test('should have editable settings fields', async ({ page }) => {"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/workspace/e2e-tests/tests/02-super-admin/settings.spec.js",
+                                "column": 26,
+                                "line": 51
+                              },
+                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  49 |       const hasGeneral = await generalSection.isVisible().catch(() => false);\n  50 |       \n> 51 |       expect(hasGeneral).toBe(true);\n     |                          ^\n  52 |     });\n  53 |\n  54 |     test('should have editable settings fields', async ({ page }) => {\n    at /workspace/e2e-tests/tests/02-super-admin/settings.spec.js:51:26"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 1,
+                          "startTime": "2026-01-11T05:03:35.372Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/workspace/e2e-tests/test-results/artifacts/02-super-admin-settings-Su-deb6e-ve-general-settings-section-chromium-retry1/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/workspace/e2e-tests/test-results/artifacts/02-super-admin-settings-Su-deb6e-ve-general-settings-section-chromium-retry1/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/workspace/e2e-tests/test-results/artifacts/02-super-admin-settings-Su-deb6e-ve-general-settings-section-chromium-retry1/error-context.md"
+                            },
+                            {
+                              "name": "trace",
+                              "contentType": "application/zip",
+                              "path": "/workspace/e2e-tests/test-results/artifacts/02-super-admin-settings-Su-deb6e-ve-general-settings-section-chromium-retry1/trace.zip"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/workspace/e2e-tests/tests/02-super-admin/settings.spec.js",
+                            "column": 26,
+                            "line": 51
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "90246329468f26ce12ee-6957d7a67bb606d76909",
+                  "file": "02-super-admin/settings.spec.js",
+                  "line": 43,
+                  "column": 5
+                },
+                {
+                  "title": "should have editable settings fields",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15516,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:03:52.160Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "90246329468f26ce12ee-8d11845c66ae9b5d6366",
+                  "file": "02-super-admin/settings.spec.js",
+                  "line": 54,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Security Settings",
+              "file": "02-super-admin/settings.spec.js",
+              "line": 66,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should have security-related settings",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15702,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:04:07.741Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "90246329468f26ce12ee-8dca91be78264059e322",
+                  "file": "02-super-admin/settings.spec.js",
+                  "line": 67,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Notification Settings",
+              "file": "02-super-admin/settings.spec.js",
+              "line": 79,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load notifications settings",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15999,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:04:23.459Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "90246329468f26ce12ee-583a3cba9ac2f6f536ba",
+                  "file": "02-super-admin/settings.spec.js",
+                  "line": 80,
+                  "column": 5
+                },
+                {
+                  "title": "should have notification configuration options",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 16522,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:04:39.480Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "90246329468f26ce12ee-f343eb933917e6cc7d04",
+                  "file": "02-super-admin/settings.spec.js",
+                  "line": 88,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "SMS Settings",
+              "file": "02-super-admin/settings.spec.js",
+              "line": 100,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load SMS settings page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15733,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:04:56.015Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "90246329468f26ce12ee-7a45131e776713b27c5e",
+                  "file": "02-super-admin/settings.spec.js",
+                  "line": 101,
+                  "column": 5
+                },
+                {
+                  "title": "should have SMS configuration options",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15705,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:05:11.756Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "90246329468f26ce12ee-6c107749ba043ad44f28",
+                  "file": "02-super-admin/settings.spec.js",
+                  "line": 109,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Save Settings",
+              "file": "02-super-admin/settings.spec.js",
+              "line": 121,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should have save button",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15570,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:05:27.473Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "90246329468f26ce12ee-6e1a0ab5c9e8bd389c04",
+                  "file": "02-super-admin/settings.spec.js",
+                  "line": 122,
+                  "column": 5
+                },
+                {
+                  "title": "should validate settings before save",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 18072,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:05:43.052Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "90246329468f26ce12ee-64bf521b31b68d4fbaaa",
+                  "file": "02-super-admin/settings.spec.js",
+                  "line": 132,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "System Monitor",
+              "file": "02-super-admin/settings.spec.js",
+              "line": 152,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load system monitor page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15921,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:06:01.132Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "90246329468f26ce12ee-2a4b34fcd2fe0c136e10",
+                  "file": "02-super-admin/settings.spec.js",
+                  "line": 153,
+                  "column": 5
+                },
+                {
+                  "title": "should display system stats",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15944,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:06:17.061Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "90246329468f26ce12ee-1436c9ee70905c75b689",
+                  "file": "02-super-admin/settings.spec.js",
+                  "line": 161,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "System Updates",
+              "file": "02-super-admin/settings.spec.js",
+              "line": 173,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load system updates page",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15780,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:06:33.016Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "90246329468f26ce12ee-bb2c11bf6f9156cca56e",
+                  "file": "02-super-admin/settings.spec.js",
+                  "line": 174,
+                  "column": 5
+                },
+                {
+                  "title": "should display update information",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15705,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-01-11T05:06:48.804Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "90246329468f26ce12ee-dfc7096208080be2d1cc",
+                  "file": "02-super-admin/settings.spec.js",
+                  "line": 182,
+                  "column": 5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-01-11T04:35:37.261Z",
+    "duration": 1887280.955,
+    "expected": 121,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}
