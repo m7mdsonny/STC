@@ -46,6 +46,7 @@ import { Loader2 } from 'lucide-react';
 import { BrandingProvider } from './contexts/BrandingContext';
 import { ToastProvider, useToast } from './contexts/ToastContext';
 import { ToastContainer } from './components/ui/Toast';
+import { LanguageProvider } from './contexts/LanguageContext';
 
 function PrivateRoute({ 
   children, 
@@ -233,13 +234,15 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <BrandingProvider>
-        <ToastProvider>
-          <AuthProvider>
-            <AppRoutes />
-          </AuthProvider>
-        </ToastProvider>
-      </BrandingProvider>
+      <LanguageProvider>
+        <BrandingProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <AppRoutes />
+            </AuthProvider>
+          </ToastProvider>
+        </BrandingProvider>
+      </LanguageProvider>
     </BrowserRouter>
   );
 }
