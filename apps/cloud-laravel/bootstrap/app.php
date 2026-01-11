@@ -31,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'active.subscription' => \App\Http\Middleware\EnsureActiveSubscription::class,
             'verify.edge.signature' => \App\Http\Middleware\VerifyEdgeSignature::class,
             'require.https' => RequireHttps::class,
+            'role' => \App\Http\Middleware\EnsureRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

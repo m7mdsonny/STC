@@ -155,27 +155,19 @@ class OrganizationController extends Controller
 
     public function uploadLogo(Request $request, Organization $organization): JsonResponse
     {
-        $user = $request->user();
-        
-        // Check if user can manage this organization
-        if (!$user->is_super_admin && $user->organization_id !== $organization->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
         $request->validate([
             'logo' => 'required|file|mimes:png,jpg,jpeg,svg|max:5120', // 5MB max
         ]);
 
-        $file = $request->file('logo');
-        $path = $file->store('public/organizations/logos');
-        $url = Storage::url($path);
-
-        $organization->update(['logo_url' => $url]);
-
-        return response()->json([
-            'url' => $url,
-            'logo_url' => $url,
-            'organization' => $organization->fresh(),
-        ]);
+        try {
+            $result = $this->organizationService->uploadLogo(
+                $organization,
+                $request->file('logo'),
+                $request->user()
+            );
+            return response()->json($result);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
     }
 }

@@ -3,11 +3,14 @@
 namespace App\Services;
 
 use App\Exceptions\DomainActionException;
+use App\Helpers\RoleHelper;
 use App\Models\Organization;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class OrganizationService
 {
@@ -102,5 +105,31 @@ class OrganizationService
         });
 
         return $organization;
+    }
+
+    /**
+     * Upload organization logo
+     */
+    public function uploadLogo(Organization $organization, UploadedFile $file, User $actor): array
+    {
+        // Check if user can manage this organization
+        if (!RoleHelper::isSuperAdmin($actor->role, $actor->is_super_admin ?? false)) {
+            if ($actor->organization_id !== $organization->id) {
+                throw new DomainActionException('Unauthorized', 403);
+            }
+        }
+
+        $path = $file->store('public/organizations/logos');
+        $url = Storage::url($path);
+
+        DB::transaction(function () use ($organization, $url) {
+            $organization->update(['logo_url' => $url]);
+        });
+
+        return [
+            'url' => $url,
+            'logo_url' => $url,
+            'organization' => $organization->fresh(),
+        ];
     }
 }

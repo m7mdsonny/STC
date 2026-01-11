@@ -5,11 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\AiModule;
 use App\Models\AiModuleConfig;
 use App\Models\Organization;
+use App\Services\AiModuleService;
+use App\Exceptions\DomainActionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AiModuleController extends Controller
 {
+    public function __construct(private AiModuleService $aiModuleService)
+    {
+    }
     public function index(Request $request): JsonResponse
     {
         $query = AiModule::query();
@@ -49,9 +54,12 @@ class AiModuleController extends Controller
             'display_order' => 'nullable|integer',
         ]);
 
-        $aiModule->update($data);
-
-        return response()->json($aiModule);
+        try {
+            $aiModule = $this->aiModuleService->updateModule($aiModule, $data, $request->user());
+            return response()->json($aiModule);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
     }
 
     // Organization-specific module configurations
@@ -133,16 +141,6 @@ class AiModuleController extends Controller
     public function updateConfig(Request $request, int $moduleId): JsonResponse
     {
         $user = $request->user();
-        $organizationId = $user->organization_id;
-
-        if (!$organizationId) {
-            return response()->json(['message' => 'No organization assigned'], 403);
-        }
-
-        $module = AiModule::find($moduleId);
-        if (!$module) {
-            return response()->json(['message' => 'Module not found'], 404);
-        }
 
         $data = $request->validate([
             'is_enabled' => 'nullable|boolean',
@@ -154,58 +152,24 @@ class AiModuleController extends Controller
             'schedule' => 'nullable|array',
         ]);
 
-        // If enabling, mark as licensed
-        if (isset($data['is_enabled']) && $data['is_enabled']) {
-            $data['is_licensed'] = true;
+        try {
+            $config = $this->aiModuleService->updateConfig($moduleId, $data, $user);
+            return response()->json($config);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
-
-        $config = AiModuleConfig::updateOrCreate(
-            [
-                'organization_id' => $organizationId,
-                'module_id' => $moduleId,
-            ],
-            $data
-        );
-
-        $config->load('module');
-
-        return response()->json($config);
     }
 
     public function enableModule(Request $request, int $moduleId): JsonResponse
     {
         $user = $request->user();
-        $organizationId = $user->organization_id;
 
-        if (!$organizationId) {
-            return response()->json(['message' => 'No organization assigned'], 403);
+        try {
+            $config = $this->aiModuleService->enableModule($moduleId, $user);
+            return response()->json($config);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
-
-        $module = AiModule::find($moduleId);
-        if (!$module) {
-            return response()->json(['message' => 'Module not found'], 404);
-        }
-
-        // Verify organization exists
-        $organization = Organization::find($organizationId);
-        if (!$organization) {
-            return response()->json(['message' => 'Organization not found'], 404);
-        }
-
-        $config = AiModuleConfig::updateOrCreate(
-            [
-                'organization_id' => $organizationId,
-                'module_id' => $moduleId,
-            ],
-            [
-                'is_enabled' => true,
-                'is_licensed' => true,
-            ]
-        );
-
-        $config->load('module');
-
-        return response()->json($config);
     }
 
     protected function getPlanLevel(string $planName): int
@@ -223,23 +187,13 @@ class AiModuleController extends Controller
     public function disableModule(Request $request, int $moduleId): JsonResponse
     {
         $user = $request->user();
-        $organizationId = $user->organization_id;
 
-        if (!$organizationId) {
-            return response()->json(['message' => 'No organization assigned'], 403);
-        }
-
-        $config = AiModuleConfig::where('organization_id', $organizationId)
-            ->where('module_id', $moduleId)
-            ->first();
-
-        if ($config) {
-            $config->update(['is_enabled' => false]);
-            $config->load('module');
+        try {
+            $config = $this->aiModuleService->disableModule($moduleId, $user);
             return response()->json($config);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
-
-        return response()->json(['message' => 'Config not found'], 404);
     }
 }
 

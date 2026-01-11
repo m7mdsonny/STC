@@ -246,11 +246,15 @@ Route::prefix('v1')->group(function () {
         Route::get('/organizations/{organization}/sms-quota', [SmsQuotaController::class, 'show']);
         Route::put('/organizations/{organization}/sms-quota', [SmsQuotaController::class, 'update']);
 
-        Route::get('/backups', [SystemBackupController::class, 'index']);
-        Route::post('/backups', [SystemBackupController::class, 'store']);
-        Route::post('/backups/{backup}/restore', [SystemBackupController::class, 'restore']);
-        Route::get('/backups/{backup}/download', [SystemBackupController::class, 'download']);
-        Route::delete('/backups/{backup}', [SystemBackupController::class, 'destroy']);
+        // Super Admin Only Routes - System Management
+        Route::middleware('role:super_admin')->group(function () {
+            // Backups
+            Route::get('/backups', [SystemBackupController::class, 'index']);
+            Route::post('/backups', [SystemBackupController::class, 'store']);
+            Route::post('/backups/{backup}/restore', [SystemBackupController::class, 'restore']);
+            Route::get('/backups/{backup}/download', [SystemBackupController::class, 'download']);
+            Route::delete('/backups/{backup}', [SystemBackupController::class, 'destroy']);
+        });
 
         Route::get('/analytics/summary', [AnalyticsController::class, 'summary']);
         Route::get('/analytics/time-series', [AnalyticsController::class, 'timeSeries']);
@@ -284,10 +288,12 @@ Route::prefix('v1')->group(function () {
         Route::post('/analytics/export-pdf', [AnalyticsController::class, 'exportPdf']);
 
         // Free Trial Requests (Super Admin only)
-        Route::get('/free-trial-requests', [FreeTrialRequestController::class, 'index']);
-        Route::get('/free-trial-requests/{trialRequest}', [FreeTrialRequestController::class, 'show']);
-        Route::put('/free-trial-requests/{trialRequest}', [FreeTrialRequestController::class, 'update']);
-        Route::post('/free-trial-requests/{trialRequest}/create-organization', [FreeTrialRequestController::class, 'createOrganization']);
+        Route::middleware('role:super_admin')->group(function () {
+            Route::get('/free-trial-requests', [FreeTrialRequestController::class, 'index']);
+            Route::get('/free-trial-requests/{trialRequest}', [FreeTrialRequestController::class, 'show']);
+            Route::put('/free-trial-requests/{trialRequest}', [FreeTrialRequestController::class, 'update']);
+            Route::post('/free-trial-requests/{trialRequest}/create-organization', [FreeTrialRequestController::class, 'createOrganization']);
+        });
 
         // Reporting endpoints
         Route::get('/reports/daily', [ReportController::class, 'daily']);
@@ -335,12 +341,14 @@ Route::prefix('v1')->group(function () {
         Route::delete('/updates/{update}', [UpdateAnnouncementController::class, 'destroy']);
         Route::post('/updates/{update}/toggle', [UpdateAnnouncementController::class, 'togglePublish']);
 
-        // System Updates (Real Update System)
-        Route::get('/system-updates', [SystemUpdateController::class, 'index']);
-        Route::post('/system-updates/upload', [SystemUpdateController::class, 'upload']);
-        Route::post('/system-updates/{updateId}/install', [SystemUpdateController::class, 'install']);
-        Route::post('/system-updates/rollback/{backupId}', [SystemUpdateController::class, 'rollback']);
-        Route::get('/system-updates/current-version', [SystemUpdateController::class, 'currentVersion']);
+        // System Updates (Real Update System) - Super Admin only
+        Route::middleware('role:super_admin')->group(function () {
+            Route::get('/system-updates', [SystemUpdateController::class, 'index']);
+            Route::post('/system-updates/upload', [SystemUpdateController::class, 'upload']);
+            Route::post('/system-updates/{updateId}/install', [SystemUpdateController::class, 'install']);
+            Route::post('/system-updates/rollback/{backupId}', [SystemUpdateController::class, 'rollback']);
+            Route::get('/system-updates/current-version', [SystemUpdateController::class, 'currentVersion']);
+        });
 
         Route::get('/ai-commands', [AiCommandController::class, 'index']);
         Route::post('/ai-commands', [AiCommandController::class, 'store']);
@@ -349,14 +357,17 @@ Route::prefix('v1')->group(function () {
         Route::post('/ai-commands/{aiCommand}/retry', [AiCommandController::class, 'retry']);
         Route::get('/ai-commands/{aiCommand}/logs', [AiCommandController::class, 'logs']);
 
-        Route::get('/integrations', [IntegrationController::class, 'index']);
-        Route::post('/integrations', [IntegrationController::class, 'store']);
-        Route::get('/integrations/{integration}', [IntegrationController::class, 'show']);
-        Route::put('/integrations/{integration}', [IntegrationController::class, 'update']);
-        Route::delete('/integrations/{integration}', [IntegrationController::class, 'destroy']);
-        Route::post('/integrations/{integration}/toggle-active', [IntegrationController::class, 'toggleActive']);
-        Route::post('/integrations/{integration}/test', [IntegrationController::class, 'testConnection']);
-        Route::get('/integrations/types', [IntegrationController::class, 'getAvailableTypes']);
+        // Integrations - Super Admin only
+        Route::middleware('role:super_admin')->group(function () {
+            Route::get('/integrations', [IntegrationController::class, 'index']);
+            Route::post('/integrations', [IntegrationController::class, 'store']);
+            Route::get('/integrations/{integration}', [IntegrationController::class, 'show']);
+            Route::put('/integrations/{integration}', [IntegrationController::class, 'update']);
+            Route::delete('/integrations/{integration}', [IntegrationController::class, 'destroy']);
+            Route::post('/integrations/{integration}/toggle-active', [IntegrationController::class, 'toggleActive']);
+            Route::post('/integrations/{integration}/test', [IntegrationController::class, 'testConnection']);
+            Route::get('/integrations/types', [IntegrationController::class, 'getAvailableTypes']);
+        });
 
         // Automation Rules
         Route::get('/automation-rules', [AutomationRuleController::class, 'index']);
