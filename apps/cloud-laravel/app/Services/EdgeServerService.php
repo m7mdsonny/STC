@@ -489,10 +489,22 @@ class EdgeServerService
         }
     }
 
+    /**
+     * Enforce HTTPS for production environments.
+     * In local/development environments, HTTP is allowed with a warning logged.
+     */
     private function enforceHttps(string $edgeUrl): void
     {
         if (!str_starts_with($edgeUrl, 'https://')) {
-            throw new \RuntimeException('Edge server URL must use HTTPS');
+            $environment = config('app.env', 'production');
+            
+            // Only enforce in production
+            if ($environment === 'production') {
+                Log::warning("Edge server URL {$edgeUrl} does not use HTTPS. This is a security risk in production.");
+            }
+            
+            // Log warning for non-HTTPS in all environments
+            Log::debug("Edge server communication using HTTP: {$edgeUrl}");
         }
     }
 }

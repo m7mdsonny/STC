@@ -1,0 +1,220 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - img "STC Solutions" [ref=e7]
+        - paragraph [ref=e8]: منصة تحليل الفيديو بالذكاء الاصطناعي
+      - navigation [ref=e9]:
+        - link "لوحة التحكم" [ref=e10] [cursor=pointer]:
+          - /url: /admin
+          - img [ref=e11]
+          - generic [ref=e16]: لوحة التحكم
+        - link "مراقبة النظام" [ref=e17] [cursor=pointer]:
+          - /url: /admin/monitor
+          - img [ref=e18]
+          - generic [ref=e20]: مراقبة النظام
+        - link "المؤسسات" [ref=e21] [cursor=pointer]:
+          - /url: /admin/organizations
+          - img [ref=e22]
+          - generic [ref=e26]: المؤسسات
+        - link "المستخدمين" [ref=e27] [cursor=pointer]:
+          - /url: /admin/users
+          - img [ref=e28]
+          - generic [ref=e40]: المستخدمين
+        - link "سيرفرات Edge" [ref=e41] [cursor=pointer]:
+          - /url: /admin/edge-servers
+          - img [ref=e42]
+          - generic [ref=e45]: سيرفرات Edge
+        - link "التراخيص" [ref=e46] [cursor=pointer]:
+          - /url: /admin/licenses
+          - img [ref=e47]
+          - generic [ref=e51]: التراخيص
+        - link "الموزعين" [ref=e52] [cursor=pointer]:
+          - /url: /admin/resellers
+          - img [ref=e53]
+          - generic [ref=e58]: الموزعين
+        - link "الباقات" [ref=e59] [cursor=pointer]:
+          - /url: /admin/plans
+          - img [ref=e60]
+          - generic [ref=e62]: الباقات
+        - link "موديولات الذكاء الاصطناعي" [ref=e63] [cursor=pointer]:
+          - /url: /admin/ai-modules
+          - img [ref=e64]
+          - generic [ref=e66]: موديولات الذكاء الاصطناعي
+        - link "تدريب النماذج" [ref=e67] [cursor=pointer]:
+          - /url: /admin/model-training
+          - img [ref=e68]
+          - generic [ref=e71]: تدريب النماذج
+        - link "التكاملات" [ref=e72] [cursor=pointer]:
+          - /url: /admin/integrations
+          - img [ref=e73]
+          - generic [ref=e76]: التكاملات
+        - link "الرسائل" [ref=e77] [cursor=pointer]:
+          - /url: /admin/sms
+          - img [ref=e78]
+          - generic [ref=e80]: الرسائل
+        - link "صفحة الهبوط" [ref=e81] [cursor=pointer]:
+          - /url: /admin/landing
+          - img [ref=e82]
+          - generic [ref=e85]: صفحة الهبوط
+        - link "الاشعارات" [ref=e86] [cursor=pointer]:
+          - /url: /admin/notifications
+          - img [ref=e87]
+          - generic [ref=e90]: الاشعارات
+        - link "الاعدادات" [ref=e91] [cursor=pointer]:
+          - /url: /admin/settings
+          - img [ref=e92]
+          - generic [ref=e95]: الاعدادات
+        - link "تحكمات السوبر ادمن" [ref=e96] [cursor=pointer]:
+          - /url: /admin/super-settings
+          - img [ref=e97]
+          - generic [ref=e98]: تحكمات السوبر ادمن
+        - link "نصوص المنصة" [ref=e99] [cursor=pointer]:
+          - /url: /admin/wordings
+          - img [ref=e100]
+          - generic [ref=e102]: نصوص المنصة
+        - link "إعلانات التحديثات" [ref=e103] [cursor=pointer]:
+          - /url: /admin/updates
+          - img [ref=e104]
+          - generic [ref=e107]: إعلانات التحديثات
+        - link "نظام التحديثات" [ref=e108] [cursor=pointer]:
+          - /url: /admin/system-updates
+          - img [ref=e109]
+          - generic [ref=e112]: نظام التحديثات
+        - link "النسخ الاحتياطية" [ref=e113] [cursor=pointer]:
+          - /url: /admin/backups
+          - img [ref=e114]
+          - generic [ref=e118]: النسخ الاحتياطية
+        - link "طلبات التجربة المجانية" [ref=e119] [cursor=pointer]:
+          - /url: /admin/free-trial-requests
+          - img [ref=e120]
+          - generic [ref=e123]: طلبات التجربة المجانية
+      - generic [ref=e124]:
+        - generic [ref=e125]:
+          - generic [ref=e127]: S
+          - generic [ref=e128]:
+            - paragraph [ref=e129]: Super Administrator
+            - paragraph [ref=e130]: superadmin@demo.local
+        - button "تسجيل الخروج" [ref=e131] [cursor=pointer]:
+          - img [ref=e132]
+          - generic [ref=e135]: تسجيل الخروج
+  - generic [ref=e136]:
+    - banner [ref=e137]:
+      - generic [ref=e138]:
+        - heading "لوحة تحكم المشرف" [level=1] [ref=e140]
+        - generic [ref=e142]:
+          - img [ref=e143]
+          - textbox "بحث..." [ref=e146]
+        - generic [ref=e147]:
+          - button [ref=e149] [cursor=pointer]:
+            - img [ref=e150]
+          - generic [ref=e153]:
+            - generic [ref=e155]: S
+            - generic [ref=e156]:
+              - paragraph [ref=e157]: Super Administrator
+              - paragraph [ref=e158]: مشرف عام
+    - main [ref=e159]:
+      - generic [ref=e160]:
+        - generic [ref=e161]:
+          - generic [ref=e162]:
+            - heading "التراخيص" [level=1] [ref=e163]
+            - paragraph [ref=e164]: ادارة تراخيص المنصة
+          - button "انشاء ترخيص" [active] [ref=e165] [cursor=pointer]:
+            - img [ref=e166]
+            - generic [ref=e167]: انشاء ترخيص
+        - generic [ref=e168]:
+          - generic [ref=e170]:
+            - img [ref=e172]
+            - generic [ref=e176]:
+              - paragraph [ref=e177]: "1"
+              - paragraph [ref=e178]: الاجمالي
+          - generic [ref=e180]:
+            - img [ref=e182]
+            - generic [ref=e185]:
+              - paragraph [ref=e186]: "1"
+              - paragraph [ref=e187]: نشط
+          - generic [ref=e189]:
+            - img [ref=e191]
+            - generic [ref=e193]:
+              - paragraph [ref=e194]: "0"
+              - paragraph [ref=e195]: تجريبي
+          - generic [ref=e197]:
+            - img [ref=e199]
+            - generic [ref=e203]:
+              - paragraph [ref=e204]: "0"
+              - paragraph [ref=e205]: منتهي
+        - generic [ref=e207]:
+          - generic [ref=e208]:
+            - img [ref=e209]
+            - textbox "بحث بالمفتاح او المؤسسة..." [ref=e212]
+          - combobox [ref=e213]:
+            - option "كل الحالات" [selected]
+            - option "نشط"
+            - option "تجريبي"
+            - option "منتهي"
+            - option "موقوف"
+        - table [ref=e215]:
+          - rowgroup [ref=e216]:
+            - row "مفتاح الترخيص المؤسسة الباقة الكاميرات الحالة تاريخ الانتهاء اجراءات" [ref=e217]:
+              - columnheader "مفتاح الترخيص" [ref=e218]
+              - columnheader "المؤسسة" [ref=e219]
+              - columnheader "الباقة" [ref=e220]
+              - columnheader "الكاميرات" [ref=e221]
+              - columnheader "الحالة" [ref=e222]
+              - columnheader "تاريخ الانتهاء" [ref=e223]
+              - columnheader "اجراءات" [ref=e224]
+          - rowgroup [ref=e225]:
+            - row "DEMO-CORP-2024-FULL-ACCESS Demo Corporation basic 50 نشط ٦‏/١‏/٢٠٢٧" [ref=e226]:
+              - cell "DEMO-CORP-2024-FULL-ACCESS" [ref=e227]:
+                - generic [ref=e228]:
+                  - code [ref=e229]: DEMO-CORP-2024-FULL-ACCESS
+                  - button [ref=e230] [cursor=pointer]:
+                    - img [ref=e231]
+              - cell "Demo Corporation" [ref=e234]:
+                - generic [ref=e235]:
+                  - img [ref=e236]
+                  - generic [ref=e240]: Demo Corporation
+              - cell "basic" [ref=e241]
+              - cell "50" [ref=e242]
+              - cell "نشط" [ref=e243]:
+                - generic [ref=e244]: نشط
+              - cell "٦‏/١‏/٢٠٢٧" [ref=e245]
+              - cell [ref=e246]:
+                - generic [ref=e247]:
+                  - button "ايقاف" [ref=e248] [cursor=pointer]:
+                    - img [ref=e249]
+                  - button [ref=e253] [cursor=pointer]:
+                    - img [ref=e254]
+        - generic [ref=e259]:
+          - generic [ref=e260]:
+            - heading "انشاء ترخيص جديد" [level=2] [ref=e261]
+            - button [ref=e262] [cursor=pointer]:
+              - img [ref=e263]
+          - generic [ref=e267]:
+            - generic [ref=e268]:
+              - generic [ref=e269]: المؤسسة
+              - combobox [ref=e270]:
+                - option "اختر المؤسسة" [selected]
+                - option "Demo Corporation"
+            - generic [ref=e271]:
+              - generic [ref=e272]:
+                - generic [ref=e273]: الباقة
+                - combobox [ref=e274]:
+                  - option "اساسية" [selected]
+                  - option "احترافية"
+                  - option "مؤسسات"
+              - generic [ref=e275]:
+                - generic [ref=e276]: عدد الكاميرات
+                - spinbutton [ref=e277]: "8"
+            - generic [ref=e279] [cursor=pointer]:
+              - checkbox "ترخيص تجريبي (14 يوم)" [ref=e280]
+              - generic [ref=e281]: ترخيص تجريبي (14 يوم)
+            - generic [ref=e282]:
+              - button "الغاء" [ref=e283] [cursor=pointer]
+              - button "انشاء الترخيص" [ref=e284] [cursor=pointer]
+    - contentinfo [ref=e285]:
+      - paragraph [ref=e286]: STC AI-VAP v1.0 | STC Solutions 2026
+```

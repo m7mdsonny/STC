@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { alertsApi } from '../../lib/api/alerts';
 import { getRoleLabel } from '../../lib/rbac';
 import type { Alert } from '../../types/database';
+import { LanguageSwitcher } from '../ui/LanguageSwitcher';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -14,6 +16,7 @@ export function Header({ onMenuClick, title }: HeaderProps) {
   const { profile, organization, isSuperAdmin } = useAuth();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     if (!isSuperAdmin && organization) {
@@ -68,7 +71,7 @@ export function Header({ onMenuClick, title }: HeaderProps) {
           </button>
 
           <h1 className="text-lg font-semibold text-white">
-            {title || (isSuperAdmin ? 'لوحة تحكم المشرف' : 'لوحة التحكم')}
+            {title || (isSuperAdmin ? t('nav.dashboard') : t('nav.dashboard'))}
           </h1>
         </div>
 
@@ -139,6 +142,18 @@ export function Header({ onMenuClick, title }: HeaderProps) {
               </div>
             )}
           </div>
+
+          {/* Language Switcher */}
+          <LanguageSwitcher variant="buttons" />
+
+          {/* Organization Name Display */}
+          {organization && !isSuperAdmin && (
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-stc-gold/10 rounded-lg border border-stc-gold/30">
+              <span className="text-stc-gold text-sm font-semibold truncate max-w-[150px]">
+                {organization.name}
+              </span>
+            </div>
+          )}
 
           <div className="hidden sm:flex items-center gap-3 px-3 py-1.5 bg-white/5 rounded-lg">
             <div className="w-8 h-8 rounded-full bg-stc-gold/20 flex items-center justify-center">

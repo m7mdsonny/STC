@@ -197,6 +197,39 @@ class SystemBackupController extends Controller
         return Storage::download($backup->file_path, basename($backup->file_path));
     }
 
+    public function destroy(SystemBackup $backup): JsonResponse
+    {
+        $this->ensureSuperAdmin(request());
+
+        try {
+            // Delete the backup file from storage
+            if (Storage::exists($backup->file_path)) {
+                Storage::delete($backup->file_path);
+            }
+
+            // Delete the database record
+            $backup->delete();
+
+            \Log::info('Backup deleted', [
+                'backup_id' => $backup->id,
+                'file_path' => $backup->file_path,
+                'user_id' => request()->user()?->id,
+            ]);
+
+            return response()->json(['message' => 'Backup deleted successfully']);
+        } catch (\Exception $e) {
+            \Log::error('Failed to delete backup', [
+                'backup_id' => $backup->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to delete backup',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     protected function createDatabaseDump(): string
     {
         // Check if proc_open is available

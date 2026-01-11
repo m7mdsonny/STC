@@ -98,4 +98,12 @@ export const backupsApi = {
     if (!response.ok) throw new Error('Download failed');
     return response.blob();
   },
+
+  delete: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete<{ message: string }>(`/backups/${id}`);
+    if (response.error || !response.data) {
+      throw new Error(response.error || 'Failed to delete backup');
+    }
+    return response.data;
+  },
 };
