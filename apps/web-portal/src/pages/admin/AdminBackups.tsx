@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { HardDrive, Download, RotateCcw, PlusCircle, Loader2 } from 'lucide-react';
+import { HardDrive, Download, RotateCcw, PlusCircle, Loader2, Trash2 } from 'lucide-react';
 import { backupsApi } from '../../lib/api/backups';
 import { useToast } from '../../contexts/ToastContext';
 import type { SystemBackup } from '../../types/database';
@@ -103,6 +103,20 @@ export function AdminBackups() {
     }
   };
 
+  const deleteBackup = async (id: number) => {
+    if (!confirm('هل أنت متأكد من حذف هذه النسخة الاحتياطية؟ لا يمكن التراجع عن هذه العملية.')) return;
+    
+    try {
+      await backupsApi.delete(id);
+      showSuccess('تم الحذف', 'تم حذف النسخة الاحتياطية بنجاح');
+      await load();
+    } catch (error: any) {
+      console.error('Error deleting backup:', error);
+      const errorMessage = error?.message || 'فشل حذف النسخة الاحتياطية';
+      showError('خطأ في الحذف', errorMessage);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -169,6 +183,14 @@ export function AdminBackups() {
                       <RotateCcw className="w-4 h-4" />
                     )}
                     استعادة
+                  </button>
+                  <button
+                    onClick={() => deleteBackup(backup.id)}
+                    className="btn-secondary flex items-center gap-2 hover:bg-red-500/20"
+                    title="حذف النسخة الاحتياطية"
+                    disabled={working}
+                  >
+                    <Trash2 className="w-4 h-4 text-red-400" />
                   </button>
                 </div>
               </div>

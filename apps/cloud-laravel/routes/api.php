@@ -250,6 +250,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/backups', [SystemBackupController::class, 'store']);
         Route::post('/backups/{backup}/restore', [SystemBackupController::class, 'restore']);
         Route::get('/backups/{backup}/download', [SystemBackupController::class, 'download']);
+        Route::delete('/backups/{backup}', [SystemBackupController::class, 'destroy']);
 
         Route::get('/analytics/summary', [AnalyticsController::class, 'summary']);
         Route::get('/analytics/time-series', [AnalyticsController::class, 'timeSeries']);
