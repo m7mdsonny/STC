@@ -182,12 +182,16 @@ export function Landing() {
   const fetchSettings = async () => {
     try {
       setLoading(true);
+      console.log('[Landing] Fetching published landing settings...');
       const data = await settingsApi.getPublishedLanding();
+      console.log('[Landing] Received data:', data);
       setSettings(data.content);
       setPublished(data.published);
     } catch (error) {
-      console.error('Failed to fetch landing settings:', error);
+      console.error('[Landing] Failed to fetch landing settings:', error);
       setPublished(false);
+      // Still show default content even if API fails
+      setSettings(null);
     } finally {
       setLoading(false);
     }
@@ -309,28 +313,28 @@ export function Landing() {
           
           <div className={`inline-flex items-center gap-2 px-5 py-2.5 bg-stc-gold/10 rounded-full text-stc-gold mb-8 border border-stc-gold/30 ${heroReveal.isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <Zap className="w-4 h-4" />
-            <span className="text-sm font-medium">منصة ذكاء اصطناعي متكاملة للمراقبة والتحليل</span>
+            <span className="text-sm font-medium">{t('landing.hero.integratedPlatform')}</span>
           </div>
           
           <h1 className={`text-4xl md:text-6xl lg:text-7xl font-bold mb-8 leading-tight ${heroReveal.isVisible ? 'animate-fade-in-up delay-100' : 'opacity-0'}`}>
             <span className="hero-title">
-              {settings?.hero_title || 'منصة تحليل الفيديو'}
+              {settings?.hero_title || t('landing.hero.title')}
             </span>
             <br />
-            <span className="text-gradient">بالذكاء الاصطناعي</span>
+            <span className="text-gradient">{t('landing.hero.ai')}</span>
           </h1>
-          
+
           <p className={`text-xl md:text-2xl text-white/70 max-w-3xl mx-auto mb-12 leading-relaxed ${heroReveal.isVisible ? 'animate-fade-in-up delay-200' : 'opacity-0'}`}>
-            {settings?.hero_subtitle || 'حول كاميرات المراقبة إلى عيون ذكية تحمي منشآتك وتحلل بياناتك في الوقت الفعلي مع 10 موديولات متخصصة'}
+            {settings?.hero_subtitle || t('landing.hero.subtitle')}
           </p>
           
           <div className={`flex flex-col sm:flex-row gap-4 justify-center mb-16 ${heroReveal.isVisible ? 'animate-fade-in-up delay-300' : 'opacity-0'}`}>
             <Link to="/request-demo" className="btn-primary text-lg px-10 py-4 flex items-center justify-center gap-2 glow-gold">
               <Play className="w-5 h-5" />
-              <span>{settings?.hero_button_text || 'ابدأ تجربتك المجانية'}</span>
+              <span>{settings?.hero_button_text || t('landing.hero.cta')}</span>
             </Link>
             <a href="#modules" className="btn-secondary text-lg px-10 py-4 flex items-center justify-center gap-2">
-              <span>اكتشف المميزات</span>
+              <span>{t('landing.hero.exploreFeatures')}</span>
               <ArrowLeft className="w-5 h-5" />
             </a>
           </div>
@@ -353,22 +357,22 @@ export function Landing() {
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-stc-gold/20 to-stc-gold/5 flex items-center justify-center mx-auto mb-5">
                 <Cloud className="w-8 h-8 text-stc-gold icon-hover" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Cloud Platform</h3>
-              <p className="text-white/60">لوحة تحكم ويب شاملة لإدارة كل شيء من أي مكان</p>
+              <h3 className="text-xl font-semibold mb-3">{t('landing.platform.cloud')}</h3>
+              <p className="text-white/60">{t('landing.platform.cloudDesc')}</p>
             </div>
             <div className="card p-8 text-center card-hover group animate-float-delayed">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-stc-gold/20 to-stc-gold/5 flex items-center justify-center mx-auto mb-5">
                 <Server className="w-8 h-8 text-stc-gold icon-hover" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Edge Server</h3>
-              <p className="text-white/60">معالجة محلية بالذكاء الاصطناعي تعمل بدون إنترنت</p>
+              <h3 className="text-xl font-semibold mb-3">{t('landing.platform.edge')}</h3>
+              <p className="text-white/60">{t('landing.platform.edgeDesc')}</p>
             </div>
             <div className="card p-8 text-center card-hover group animate-float">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-stc-gold/20 to-stc-gold/5 flex items-center justify-center mx-auto mb-5">
                 <Smartphone className="w-8 h-8 text-stc-gold icon-hover" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Mobile App</h3>
-              <p className="text-white/60">تطبيق موبايل لمتابعة التنبيهات والكاميرات</p>
+              <h3 className="text-xl font-semibold mb-3">{t('landing.platform.mobile')}</h3>
+              <p className="text-white/60">{t('landing.platform.mobileDesc')}</p>
             </div>
           </div>
         </div>

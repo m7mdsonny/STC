@@ -70,14 +70,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(storedUser);
       }
 
-      const { user: currentUser, unauthorized } = await authApi.getCurrentUserDetailed({ skipRedirect: true });
+      const { user: currentUser, unauthorized, error } = await authApi.getCurrentUserDetailed({ skipRedirect: true });
 
       if (unauthorized) {
-        authApi.clearSession();
-        clearStoredUser();
-        setUser(null);
-        setProfile(null);
-        setOrganization(null);
+        // Only clear session on explicit authentication failures, not on network errors
+        if (error === 'Unauthorized' || error?.includes('401')) {
+          authApi.clearSession();
+          clearStoredUser();
+          setUser(null);
+          setProfile(null);
+          setOrganization(null);
+        }
         return;
       }
 

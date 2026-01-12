@@ -339,6 +339,7 @@ const translations: Record<Language, Record<string, string>> = {
     // ==========================================
     'landing.hero.title': 'منصة تحليل الفيديو بالذكاء الاصطناعي',
     'landing.hero.subtitle': 'حول كاميرات المراقبة إلى عيون ذكية تحمي منشآتك وتحلل بياناتك في الوقت الفعلي مع 10 موديولات متخصصة',
+    'landing.hero.ai': 'بالذكاء الاصطناعي',
     'landing.hero.cta': 'ابدأ تجربتك المجانية',
     'landing.hero.discover': 'اكتشف المميزات',
     'landing.hero.platform': 'Cloud Platform',
@@ -728,6 +729,7 @@ const translations: Record<Language, Record<string, string>> = {
     // ==========================================
     'landing.hero.title': 'AI-Powered Video Analytics Platform',
     'landing.hero.subtitle': 'Transform your surveillance cameras into intelligent eyes that protect your facilities and analyze data in real-time with 10 specialized modules',
+    'landing.hero.ai': 'with AI',
     'landing.hero.cta': 'Start Free Trial',
     'landing.hero.discover': 'Discover Features',
     'landing.hero.platform': 'Cloud Platform',

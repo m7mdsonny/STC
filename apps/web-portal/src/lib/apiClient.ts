@@ -105,13 +105,16 @@ class ApiClient {
       return endpoint;
     }
 
+    // If baseUrl already contains /api/v1, don't add it again
+    if (this.baseUrl.includes('/api/v1')) {
+      const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+      return `${this.baseUrl}${normalizedEndpoint}`;
+    }
+
+    // Otherwise, add /api/v1 prefix
     const normalizedEndpoint = endpoint.startsWith('/api/')
       ? endpoint
       : `/api/v1${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
-
-    if (this.baseUrl.endsWith('/api/v1') && normalizedEndpoint.startsWith('/api/v1')) {
-      return `${this.baseUrl}${normalizedEndpoint.replace('/api/v1', '')}`;
-    }
 
     return `${this.baseUrl}${normalizedEndpoint}`;
   }
@@ -172,8 +175,13 @@ class ApiClient {
         : undefined;
 
       if (!response.ok || (logicalStatus && logicalStatus >= 400)) {
-        if (response.status === 401 && activeToken) {
-          this.setToken(null);
+        // Only clear token on explicit 401 from auth endpoints, not from other API failures
+        if (response.status === 401 && activeToken && !skipAuthRedirect) {
+          // Check if this is an auth endpoint before clearing token
+          const isAuthEndpoint = fullUrl.includes('/auth/') || fullUrl.includes('/me');
+          if (isAuthEndpoint) {
+            this.setToken(null);
+          }
         }
 
         const message = firstValidationMessage
