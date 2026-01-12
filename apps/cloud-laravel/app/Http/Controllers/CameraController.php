@@ -83,6 +83,16 @@ class CameraController extends Controller
     public function store(CameraStoreRequest $request): JsonResponse
     {
         $data = $request->validated();
+        $user = $request->user();
+
+        // PRODUCTION SAFETY: Enforce organization camera limits
+        if ($user->organization) {
+            try {
+                $this->planEnforcementService->assertCanCreateCamera($user->organization);
+            } catch (\Exception $e) {
+                return response()->json(['message' => $e->getMessage()], 422);
+            }
+        }
 
         try {
             $camera = $this->cameraService->createCamera($data, $request->user());

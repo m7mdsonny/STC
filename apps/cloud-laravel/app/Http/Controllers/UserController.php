@@ -74,9 +74,20 @@ class UserController extends Controller
     public function store(UserStoreRequest $request): JsonResponse
     {
         $data = $request->validated();
+        $actor = $request->user();
+
+        // PRODUCTION SAFETY: Enforce organization user limits
+        $organization = Organization::find($data['organization_id']);
+        if ($organization) {
+            try {
+                $this->planEnforcementService->assertCanCreateUser($organization);
+            } catch (\Exception $e) {
+                return response()->json(['message' => $e->getMessage()], 422);
+            }
+        }
 
         try {
-            $user = $this->userAssignmentService->createUser($data, $request->user());
+            $user = $this->userAssignmentService->createUser($data, $actor);
         } catch (DomainActionException $e) {
             return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }

@@ -37,7 +37,9 @@ import { settingsApi } from '../lib/api/settings';
 import type { LandingSettings } from '../types/database';
 import { useBranding } from '../contexts/BrandingContext';
 import { useToast } from '../contexts/ToastContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { getDetailedErrorMessage } from '../lib/errorMessages';
+import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 
 // AI Modules - 10 modules with clear, expressive icons
 const modules = [
@@ -171,6 +173,7 @@ export function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { branding } = useBranding();
   const { showSuccess, showError } = useToast();
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetchSettings();
@@ -252,21 +255,22 @@ export function Landing() {
           
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#hero" className="text-white/70 hover:text-stc-gold transition-colors font-medium">الرئيسية</a>
-            <a href="#modules" className="text-white/70 hover:text-stc-gold transition-colors font-medium">الموديولات</a>
-            <a href="#features" className="text-white/70 hover:text-stc-gold transition-colors font-medium">المميزات</a>
-            <a href="#pricing" className="text-white/70 hover:text-stc-gold transition-colors font-medium">الباقات</a>
-            <a href="#contact" className="text-white/70 hover:text-stc-gold transition-colors font-medium">تواصل معنا</a>
+            <a href="#hero" className="text-white/70 hover:text-stc-gold transition-colors font-medium">{t('landing.nav.home')}</a>
+            <a href="#modules" className="text-white/70 hover:text-stc-gold transition-colors font-medium">{t('landing.nav.modules')}</a>
+            <a href="#features" className="text-white/70 hover:text-stc-gold transition-colors font-medium">{t('landing.nav.features')}</a>
+            <a href="#pricing" className="text-white/70 hover:text-stc-gold transition-colors font-medium">{t('landing.nav.pricing')}</a>
+            <a href="#contact" className="text-white/70 hover:text-stc-gold transition-colors font-medium">{t('landing.nav.contact')}</a>
           </nav>
           
           <div className="flex items-center gap-4">
+            <LanguageSwitcher variant="buttons" />
             <Link to="/login" className="btn-primary flex items-center gap-2 glow-gold">
-              <span>تسجيل الدخول</span>
+              <span>{t('landing.nav.login')}</span>
               <ChevronLeft className="w-4 h-4" />
             </Link>
-            
+
             {/* Mobile Menu Button */}
-            <button 
+            <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden p-2 hover:bg-white/10 rounded-lg transition-colors"
             >
@@ -279,11 +283,11 @@ export function Landing() {
         {mobileMenuOpen && (
           <div className="md:hidden slide-in bg-stc-navy border-t border-white/10">
             <nav className="container mx-auto px-4 py-6 flex flex-col gap-4">
-              <a href="#hero" onClick={() => setMobileMenuOpen(false)} className="text-white/70 hover:text-stc-gold py-2">الرئيسية</a>
-              <a href="#modules" onClick={() => setMobileMenuOpen(false)} className="text-white/70 hover:text-stc-gold py-2">الموديولات</a>
-              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="text-white/70 hover:text-stc-gold py-2">المميزات</a>
-              <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="text-white/70 hover:text-stc-gold py-2">الباقات</a>
-              <a href="#contact" onClick={() => setMobileMenuOpen(false)} className="text-white/70 hover:text-stc-gold py-2">تواصل معنا</a>
+              <a href="#hero" onClick={() => setMobileMenuOpen(false)} className="text-white/70 hover:text-stc-gold py-2">{t('landing.nav.home')}</a>
+              <a href="#modules" onClick={() => setMobileMenuOpen(false)} className="text-white/70 hover:text-stc-gold py-2">{t('landing.nav.modules')}</a>
+              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="text-white/70 hover:text-stc-gold py-2">{t('landing.nav.features')}</a>
+              <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="text-white/70 hover:text-stc-gold py-2">{t('landing.nav.pricing')}</a>
+              <a href="#contact" onClick={() => setMobileMenuOpen(false)} className="text-white/70 hover:text-stc-gold py-2">{t('landing.nav.contact')}</a>
             </nav>
           </div>
         )}

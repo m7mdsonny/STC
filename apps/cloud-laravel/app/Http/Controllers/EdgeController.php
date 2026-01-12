@@ -76,6 +76,15 @@ class EdgeController extends Controller
         $data = $request->validated();
         $user = $request->user();
 
+        // PRODUCTION SAFETY: Enforce organization edge server limits
+        if ($user->organization) {
+            try {
+                $this->planEnforcementService->assertCanCreateEdge($user->organization);
+            } catch (\Exception $e) {
+                return response()->json(['message' => $e->getMessage()], 422);
+            }
+        }
+
         try {
             $result = $this->edgeServerService->createEdgeServer($data, $user);
         } catch (DomainActionException $e) {
