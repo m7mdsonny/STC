@@ -20,6 +20,7 @@
     <button onclick="testPublicLanding()">Test Public Landing</button>
     <button onclick="testEdgeServersList()">Test Edge Servers (will fail without auth)</button>
     <button onclick="testHealthCheck()">Test Health Check</button>
+    <button onclick="testLandingPageDirect()">Test Landing Page Direct</button>
 
     <script>
         const results = document.getElementById('results');
@@ -87,6 +88,26 @@
                 log('❌ No health endpoint found', 'error');
             } catch (error) {
                 log(`❌ Health check error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testLandingPageDirect() {
+            try {
+                log('Testing landing page direct access...');
+                // Try to fetch the landing page HTML
+                const response = await fetch('http://localhost:5173/');
+                if (response.ok) {
+                    const html = await response.text();
+                    if (html.includes('منصة تحليل الفيديو') || html.includes('AI-Powered Video Analytics')) {
+                        log('✅ Landing page loads with content', 'success');
+                    } else {
+                        log('❌ Landing page loads but appears empty', 'error');
+                    }
+                } else {
+                    log(`❌ Landing page failed to load: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Landing page direct test error: ${error.message}`, 'error');
             }
         }
 
