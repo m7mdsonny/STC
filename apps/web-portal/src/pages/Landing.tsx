@@ -164,7 +164,17 @@ function useReveal() {
 }
 
 export function Landing() {
-  const [settings, setSettings] = useState<LandingSettings | null>(null);
+  const [settings, setSettings] = useState<LandingSettings | null>({
+    hero_title: 'منصة تحليل الفيديو بالذكاء الاصطناعي',
+    hero_subtitle: 'حول كاميرات المراقبة إلى عيون ذكية تحمي منشآتك وتحلل بياناتك في الوقت الفعلي مع 10 موديولات متخصصة',
+    hero_button_text: 'ابدأ تجربتك المجانية',
+    contact_email: 'info@stcsolutions.com',
+    contact_phone: '+966 11 000 0000',
+    contact_address: 'الرياض، المملكة العربية السعودية',
+    whatsapp_number: '+966500000000',
+    show_whatsapp_button: true,
+    footer_text: 'STC Solutions. جميع الحقوق محفوظة',
+  });
   const [published, setPublished] = useState(true);
   const [loading, setLoading] = useState(true);
   const [contactForm, setContactForm] = useState({ name: '', email: '', phone: '', message: '' });
@@ -189,9 +199,13 @@ export function Landing() {
       setPublished(data.published);
     } catch (error) {
       console.error('[Landing] Failed to fetch landing settings:', error);
-      setPublished(false);
-      // Still show default content even if API fails
-      setSettings(null);
+      // Keep existing settings on API failure - don't clear them
+      // Only show "not published" if we have content but it's not published
+      if (settings && !published) {
+        setPublished(false);
+      } else {
+        setPublished(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -307,7 +321,7 @@ export function Landing() {
           {!published && (
             <div className="mb-6 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-200 px-4 py-3 inline-flex items-center gap-2 animate-fade-in-up">
               <ShieldAlert className="w-4 h-4" />
-              <span>هذه الصفحة غير منشورة حاليا</span>
+              <span>{t('landing.hero.notPublished')}</span>
             </div>
           )}
           
@@ -327,6 +341,13 @@ export function Landing() {
           <p className={`text-xl md:text-2xl text-white/70 max-w-3xl mx-auto mb-12 leading-relaxed ${heroReveal.isVisible ? 'animate-fade-in-up delay-200' : 'opacity-0'}`}>
             {settings?.hero_subtitle || t('landing.hero.subtitle')}
           </p>
+
+          {/* Debug info for development */}
+          {import.meta.env.DEV && (
+            <div className="text-xs text-gray-500 mt-4">
+              Settings loaded: {settings ? 'Yes' : 'No'} | Published: {published ? 'Yes' : 'No'}
+            </div>
+          )}
           
           <div className={`flex flex-col sm:flex-row gap-4 justify-center mb-16 ${heroReveal.isVisible ? 'animate-fade-in-up delay-300' : 'opacity-0'}`}>
             <Link to="/request-demo" className="btn-primary text-lg px-10 py-4 flex items-center justify-center gap-2 glow-gold">
