@@ -199,13 +199,11 @@ export function Landing() {
       setPublished(data.published);
     } catch (error) {
       console.error('[Landing] Failed to fetch landing settings:', error);
-      // Keep existing settings on API failure - don't clear them
-      // Only show "not published" if we have content but it's not published
-      if (settings && !published) {
-        setPublished(false);
-      } else {
-        setPublished(true);
-      }
+      // Keep existing default settings on API failure - ensure page renders
+      // The default settings are already set in useState, so just ensure published=true
+      // to show content even if API is unavailable
+      setPublished(true);
+      console.log('[Landing] Using default settings due to API error');
     } finally {
       setLoading(false);
     }

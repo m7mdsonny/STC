@@ -183,7 +183,10 @@ class ApiClient {
             this.setToken(null);
           }
         }
-
+        
+        // Do NOT clear token on 403 (subscription/permission errors) - user is still authenticated
+        // These are authorization errors, not authentication errors
+        
         const message = firstValidationMessage
           || parsed?.message
           || 'An error occurred';
