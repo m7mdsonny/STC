@@ -9,6 +9,7 @@ use App\Models\Organization;
 use App\Exceptions\DomainActionException;
 use App\Services\CameraService;
 use App\Services\EdgeServerService;
+use App\Services\PlanEnforcementService;
 use App\Http\Requests\CameraStoreRequest;
 use App\Http\Requests\CameraUpdateRequest;
 use Illuminate\Http\JsonResponse;
@@ -19,7 +20,7 @@ class CameraController extends Controller
 {
     public function __construct(
         private CameraService $cameraService,
-        private EdgeServerService $edgeServerService,
+        private PlanEnforcementService $planEnforcementService
     ) {
     }
     public function index(Request $request): JsonResponse

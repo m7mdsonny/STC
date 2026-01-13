@@ -16,8 +16,10 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function __construct(private UserAssignmentService $userAssignmentService)
-    {
+    public function __construct(
+        private UserAssignmentService $userAssignmentService,
+        private PlanEnforcementService $planEnforcementService
+    ) {
     }
 
     public function index(Request $request): JsonResponse
