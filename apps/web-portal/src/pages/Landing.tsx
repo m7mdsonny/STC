@@ -139,15 +139,25 @@ function AnimatedCounter({ end, suffix, duration = 2000 }: { end: number; suffix
 }
 
 // Reveal on Scroll Hook
+// CRITICAL FIX: Initialize isVisible to true to prevent blank page if IntersectionObserver fails
 function useReveal() {
   const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  // Start with true to ensure content is ALWAYS visible, then add animations when scrolled into view
+  const [isVisible, setIsVisible] = useState(true);
+  const [hasAnimated, setHasAnimated] = useState(false);
 
   useEffect(() => {
+    // If IntersectionObserver is not supported, keep content visible
+    if (typeof IntersectionObserver === 'undefined') {
+      setIsVisible(true);
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        if (entry.isIntersecting && !hasAnimated) {
           setIsVisible(true);
+          setHasAnimated(true);
         }
       },
       { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
@@ -158,7 +168,7 @@ function useReveal() {
     }
 
     return () => observer.disconnect();
-  }, []);
+  }, [hasAnimated]);
 
   return { ref, isVisible };
 }
@@ -323,12 +333,12 @@ export function Landing() {
             </div>
           )}
           
-          <div className={`inline-flex items-center gap-2 px-5 py-2.5 bg-stc-gold/10 rounded-full text-stc-gold mb-8 border border-stc-gold/30 ${heroReveal.isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+          <div className={`inline-flex items-center gap-2 px-5 py-2.5 bg-stc-gold/10 rounded-full text-stc-gold mb-8 border border-stc-gold/30 ${heroReveal.isVisible ? 'animate-fade-in-up' : ''}`}>
             <Zap className="w-4 h-4" />
             <span className="text-sm font-medium">{t('landing.hero.integratedPlatform')}</span>
           </div>
           
-          <h1 className={`text-4xl md:text-6xl lg:text-7xl font-bold mb-8 leading-tight ${heroReveal.isVisible ? 'animate-fade-in-up delay-100' : 'opacity-0'}`}>
+          <h1 className={`text-4xl md:text-6xl lg:text-7xl font-bold mb-8 leading-tight ${heroReveal.isVisible ? 'animate-fade-in-up delay-100' : ''}`}>
             <span className="hero-title">
               {settings?.hero_title || t('landing.hero.title')}
             </span>
@@ -336,7 +346,7 @@ export function Landing() {
             <span className="text-gradient">{t('landing.hero.ai')}</span>
           </h1>
 
-          <p className={`text-xl md:text-2xl text-white/70 max-w-3xl mx-auto mb-12 leading-relaxed ${heroReveal.isVisible ? 'animate-fade-in-up delay-200' : 'opacity-0'}`}>
+          <p className={`text-xl md:text-2xl text-white/70 max-w-3xl mx-auto mb-12 leading-relaxed ${heroReveal.isVisible ? 'animate-fade-in-up delay-200' : ''}`}>
             {settings?.hero_subtitle || t('landing.hero.subtitle')}
           </p>
 
@@ -347,7 +357,7 @@ export function Landing() {
             </div>
           )}
           
-          <div className={`flex flex-col sm:flex-row gap-4 justify-center mb-16 ${heroReveal.isVisible ? 'animate-fade-in-up delay-300' : 'opacity-0'}`}>
+          <div className={`flex flex-col sm:flex-row gap-4 justify-center mb-16 ${heroReveal.isVisible ? 'animate-fade-in-up delay-300' : ''}`}>
             <Link to="/request-demo" className="btn-primary text-lg px-10 py-4 flex items-center justify-center gap-2 glow-gold">
               <Play className="w-5 h-5" />
               <span>{settings?.hero_button_text || t('landing.hero.cta')}</span>
@@ -359,7 +369,7 @@ export function Landing() {
           </div>
 
           {/* Stats Counter */}
-          <div className={`grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto ${heroReveal.isVisible ? 'animate-fade-in-up delay-400' : 'opacity-0'}`}>
+          <div className={`grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto ${heroReveal.isVisible ? 'animate-fade-in-up delay-400' : ''}`}>
             {stats.map((stat, index) => (
               <div key={index} className="card p-6 text-center card-hover group">
                 <div className="text-3xl md:text-4xl font-bold text-stc-gold mb-2">
@@ -371,7 +381,7 @@ export function Landing() {
           </div>
 
           {/* Platform Icons */}
-          <div className={`mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto ${heroReveal.isVisible ? 'animate-fade-in-up delay-500' : 'opacity-0'}`}>
+          <div className={`mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto ${heroReveal.isVisible ? 'animate-fade-in-up delay-500' : ''}`}>
             <div className="card p-8 text-center card-hover group animate-float">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-stc-gold/20 to-stc-gold/5 flex items-center justify-center mx-auto mb-5">
                 <Cloud className="w-8 h-8 text-stc-gold icon-hover" />
@@ -404,7 +414,7 @@ export function Landing() {
         className="py-24 px-4 bg-stc-navy/50 relative"
       >
         <div className="container mx-auto relative z-10">
-          <div className={`text-center mb-16 ${modulesReveal.isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+          <div className={`text-center mb-16 ${modulesReveal.isVisible ? 'animate-fade-in-up' : ''}`}>
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-stc-gold/10 rounded-full text-stc-gold mb-4">
               <Zap className="w-4 h-4" />
               <span className="text-sm">10 موديولات متخصصة</span>
@@ -427,7 +437,7 @@ export function Landing() {
               return (
                 <div 
                   key={index} 
-                  className={`card p-6 card-hover group ${modulesReveal.isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}
+                  className={`card p-6 card-hover group ${modulesReveal.isVisible ? 'animate-fade-in-up' : ''}`}
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${module.color} flex items-center justify-center mb-4 transition-transform group-hover:scale-110`}>
@@ -450,7 +460,7 @@ export function Landing() {
       >
         <div className="container mx-auto">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className={featuresReveal.isVisible ? 'animate-fade-in-left' : 'opacity-0'}>
+            <div className={featuresReveal.isVisible ? 'animate-fade-in-left' : ''}>
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-stc-gold/10 rounded-full text-stc-gold mb-6">
                 <Shield className="w-4 h-4" />
                 <span className="text-sm">أتمتة ذكية</span>
@@ -480,7 +490,7 @@ export function Landing() {
               </div>
             </div>
             
-            <div className={`space-y-5 ${featuresReveal.isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
+            <div className={`space-y-5 ${featuresReveal.isVisible ? 'animate-fade-in-right' : ''}`}>
               <div className="p-6 bg-gradient-to-r from-red-500/20 to-red-500/5 rounded-2xl border border-red-500/30 card-hover">
                 <div className="flex items-center gap-4 mb-3">
                   <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center">
@@ -522,7 +532,7 @@ export function Landing() {
         className="py-24 px-4 bg-stc-navy/50"
       >
         <div className="container mx-auto">
-          <div className={`text-center mb-16 ${pricingReveal.isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+          <div className={`text-center mb-16 ${pricingReveal.isVisible ? 'animate-fade-in-up' : ''}`}>
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-stc-gold/10 rounded-full text-stc-gold mb-4">
               <Zap className="w-4 h-4" />
               <span className="text-sm">باقات مرنة</span>
@@ -535,7 +545,7 @@ export function Landing() {
             {plans.map((plan, index) => (
               <div
                 key={index}
-                className={`card p-8 relative ${plan.popular ? 'border-stc-gold border-glow ring-2 ring-stc-gold/30' : ''} card-hover ${pricingReveal.isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}
+                className={`card p-8 relative ${plan.popular ? 'border-stc-gold border-glow ring-2 ring-stc-gold/30' : ''} card-hover ${pricingReveal.isVisible ? 'animate-fade-in-up' : ''}`}
                 style={{ animationDelay: `${index * 0.15}s` }}
               >
                 {plan.popular && (
@@ -579,7 +589,7 @@ export function Landing() {
         className="py-24 px-4"
       >
         <div className="container mx-auto">
-          <div className={`text-center mb-16 ${contactReveal.isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+          <div className={`text-center mb-16 ${contactReveal.isVisible ? 'animate-fade-in-up' : ''}`}>
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-stc-gold/10 rounded-full text-stc-gold mb-4">
               <MessageCircle className="w-4 h-4" />
               <span className="text-sm">تواصل معنا</span>
@@ -591,7 +601,7 @@ export function Landing() {
           </div>
           
           <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
-            <div className={`space-y-6 ${contactReveal.isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
+            <div className={`space-y-6 ${contactReveal.isVisible ? 'animate-fade-in-left' : ''}`}>
               {[
                 { icon: Phone, title: 'الهاتف', value: settings?.contact_phone || '+966 11 000 0000', dir: 'ltr' },
                 { icon: Mail, title: 'البريد الإلكتروني', value: settings?.contact_email || 'info@stc-solutions.com', dir: 'ltr' },
@@ -629,7 +639,7 @@ export function Landing() {
               </div>
             </div>
             
-            <div className={`card p-8 ${contactReveal.isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
+            <div className={`card p-8 ${contactReveal.isVisible ? 'animate-fade-in-right' : ''}`}>
               <h3 className="text-2xl font-semibold text-white mb-6">أرسل رسالة</h3>
               {sent ? (
                 <div className="text-center py-12">
