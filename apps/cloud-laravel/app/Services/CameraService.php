@@ -7,6 +7,7 @@ use App\Models\Camera;
 use App\Models\EdgeServer;
 use App\Models\Organization;
 use App\Models\User;
+use App\Support\DomainExecutionContext;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,11 @@ class CameraService
 
     public function createCamera(array $data, User $actor): Camera
     {
+        // Mark domain service as used for DomainExecutionContext enforcement
+        if ($request = request()) {
+            DomainExecutionContext::markServiceUsed($request);
+        }
+        
         $organizationId = $data['organization_id'] ?? $actor->organization_id;
         if (!$organizationId) {
             throw new DomainActionException('organization_id is required', 422);
@@ -74,6 +80,11 @@ class CameraService
 
     public function updateCamera(Camera $camera, array $data, User $actor): Camera
     {
+        // Mark domain service as used for DomainExecutionContext enforcement
+        if ($request = request()) {
+            DomainExecutionContext::markServiceUsed($request);
+        }
+        
         $this->capabilities->ensureCameraCreation($actor, $camera->organization_id);
 
         $config = $camera->config ?? [];
@@ -103,6 +114,11 @@ class CameraService
 
     public function deleteCamera(Camera $camera, User $actor): void
     {
+        // Mark domain service as used for DomainExecutionContext enforcement
+        if ($request = request()) {
+            DomainExecutionContext::markServiceUsed($request);
+        }
+        
         $this->capabilities->ensureCameraCreation($actor, $camera->organization_id);
 
         DB::transaction(function () use ($camera) {
