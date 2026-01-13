@@ -8,6 +8,7 @@ use App\Models\Camera;
 use App\Models\EdgeServer;
 use App\Models\License;
 use App\Models\User;
+use App\Support\DomainExecutionContext;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +24,11 @@ class EdgeServerService
 
     public function createEdgeServer(array $data, User $actor): array
     {
+        // Mark domain service as used for DomainExecutionContext enforcement
+        if ($request = request()) {
+            DomainExecutionContext::markServiceUsed($request);
+        }
+        
         $organizationId = RoleHelper::isSuperAdmin($actor->role, $actor->is_super_admin ?? false)
             ? ($data['organization_id'] ?? $actor->organization_id)
             : $actor->organization_id;
@@ -93,6 +99,11 @@ class EdgeServerService
 
     public function updateEdgeServer(EdgeServer $edgeServer, array $data, User $actor): EdgeServer
     {
+        // Mark domain service as used for DomainExecutionContext enforcement
+        if ($request = request()) {
+            DomainExecutionContext::markServiceUsed($request);
+        }
+        
         $this->capabilities->ensureEdgeServerCreation($actor, $edgeServer->organization_id);
 
         return DB::transaction(function () use ($edgeServer, $data) {
@@ -133,6 +144,11 @@ class EdgeServerService
 
     public function deleteEdgeServer(EdgeServer $edgeServer, User $actor): void
     {
+        // Mark domain service as used for DomainExecutionContext enforcement
+        if ($request = request()) {
+            DomainExecutionContext::markServiceUsed($request);
+        }
+        
         $this->capabilities->ensureEdgeServerCreation($actor, $edgeServer->organization_id);
 
         DB::transaction(function () use ($edgeServer) {
