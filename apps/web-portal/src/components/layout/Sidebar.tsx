@@ -67,7 +67,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { to: '/admin/notifications', icon: Bell, label: 'الاشعارات' },
     { to: '/admin/settings', icon: Settings, label: 'الاعدادات' },
     { to: '/admin/super-settings', icon: Sliders, label: 'تحكمات السوبر ادمن' },
-    { to: '/admin/wordings', icon: Type, label: 'نصوص المنصة' },
     { to: '/admin/updates', icon: UploadCloud, label: 'إعلانات التحديثات' },
     { to: '/admin/system-updates', icon: UploadCloud, label: 'نظام التحديثات' },
     { to: '/admin/backups', icon: Database, label: 'النسخ الاحتياطية' },
@@ -83,7 +82,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { to: '/people', icon: Users, label: 'الاشخاص', roles: ['owner', 'admin', 'editor', 'viewer'] },
     { to: '/vehicles', icon: Car, label: 'المركبات', roles: ['owner', 'admin', 'editor', 'viewer'] },
     { to: '/attendance', icon: UserCheck, label: 'الحضور', roles: ['owner', 'admin', 'editor', 'viewer'] },
-    { to: '/market', icon: ShoppingBag, label: 'Market', roles: ['owner', 'admin', 'editor', 'viewer'] },
     { to: '/automation', icon: Zap, label: 'اوامر الذكاء الاصطناعي', roles: ['owner', 'admin', 'editor', 'viewer'] },
     { to: '/team', icon: UserCog, label: 'فريق العمل', roles: ['owner', 'admin'] }, // Only owners and admins
     { to: '/guide', icon: BookOpen, label: 'دليل المالك', roles: ['owner', 'admin'] },

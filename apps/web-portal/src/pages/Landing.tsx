@@ -279,7 +279,6 @@ export function Landing() {
           </nav>
           
           <div className="flex items-center gap-4">
-            <LanguageSwitcher variant="buttons" />
             <Link to="/login" className="btn-primary flex items-center gap-2 glow-gold">
               <span>{t('landing.nav.login')}</span>
               <ChevronLeft className="w-4 h-4" />

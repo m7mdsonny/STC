@@ -15,7 +15,6 @@ import { People } from './pages/People';
 import { Vehicles } from './pages/Vehicles';
 import { Attendance } from './pages/Attendance';
 import { LiveView } from './pages/LiveView';
-import { Market } from './pages/Market';
 import { Settings } from './pages/Settings';
 import { Team } from './pages/Team';
 import { OwnerGuide } from './pages/OwnerGuide';
@@ -37,7 +36,6 @@ import { AIModulesAdmin } from './pages/admin/AIModulesAdmin';
 import { ModelTraining } from './pages/admin/ModelTraining';
 import { SuperAdminManagement } from './pages/admin/SuperAdminManagement';
 import { SuperAdminSettings } from './pages/admin/SuperAdminSettings';
-import { PlatformWordings } from './pages/admin/PlatformWordings';
 import { EdgeServers } from './pages/admin/EdgeServers';
 import { Resellers } from './pages/admin/Resellers';
 import { SystemMonitor } from './pages/admin/SystemMonitor';
@@ -175,7 +173,6 @@ function AppRoutesWithToast() {
         <Route path="/admin/settings" element={<AdminSettings />} />
         <Route path="/admin/super-admins" element={<SuperAdminManagement />} />
         <Route path="/admin/super-settings" element={<SuperAdminSettings />} />
-        <Route path="/admin/wordings" element={<PlatformWordings />} />
         <Route path="/admin/landing" element={<LandingSettingsPage />} />
         <Route path="/admin/updates" element={<AdminUpdates />} />
         <Route path="/admin/system-updates" element={<SystemUpdates />} />
@@ -199,7 +196,6 @@ function AppRoutesWithToast() {
         <Route path="/people" element={<People />} />
         <Route path="/vehicles" element={<Vehicles />} />
         <Route path="/attendance" element={<Attendance />} />
-        <Route path="/market" element={<Market />} />
         <Route path="/automation" element={<Automation />} />
         <Route 
           path="/team" 
