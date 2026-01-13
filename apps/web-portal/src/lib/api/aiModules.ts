@@ -58,7 +58,7 @@ export interface SubscriptionPlan {
 export const aiModulesApi = {
   getModules: async (): Promise<AiModule[]> => {
     try {
-      const response = await apiClient.get('/api/v1/ai-modules');
+      const response = await apiClient.get('/ai-modules');
       return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
       console.error('Error fetching AI modules:', error);
@@ -67,23 +67,23 @@ export const aiModulesApi = {
   },
 
   getModule: async (id: number): Promise<AiModule> => {
-    const response = await apiClient.get(`/api/v1/ai-modules/${id}`);
+    const response = await apiClient.get(`/ai-modules/${id}`);
     return response.data;
   },
 
   updateModule: async (id: number, data: Partial<AiModule>): Promise<AiModule> => {
-    const response = await apiClient.put(`/api/v1/ai-modules/${id}`, data);
+    const response = await apiClient.put(`/ai-modules/${id}`, data);
     return response.data;
   },
 
   getOrganizationConfigs: async (): Promise<AiModuleConfig[]> => {
-    const response = await apiClient.get('/api/v1/ai-modules/configs');
+    const response = await apiClient.get('/ai-modules/configs');
     return response.data;
   },
 
   getOrganizationConfig: async (moduleId: number): Promise<AiModuleConfig | null> => {
     try {
-      const response = await apiClient.get(`/api/v1/ai-modules/configs/${moduleId}`);
+      const response = await apiClient.get(`/ai-modules/configs/${moduleId}`);
       return response.data;
     } catch {
       return null;
@@ -91,43 +91,43 @@ export const aiModulesApi = {
   },
 
   updateOrganizationConfig: async (moduleId: number, data: Partial<AiModuleConfig>): Promise<AiModuleConfig> => {
-    const response = await apiClient.put(`/api/v1/ai-modules/configs/${moduleId}`, data);
+    const response = await apiClient.put(`/ai-modules/configs/${moduleId}`, data);
     return response.data;
   },
 
   enableModule: async (moduleId: number): Promise<AiModuleConfig> => {
-    const response = await apiClient.post(`/api/v1/ai-modules/configs/${moduleId}/enable`);
+    const response = await apiClient.post(`/ai-modules/configs/${moduleId}/enable`);
     return response.data;
   },
 
   disableModule: async (moduleId: number): Promise<AiModuleConfig> => {
-    const response = await apiClient.post(`/api/v1/ai-modules/configs/${moduleId}/disable`);
+    const response = await apiClient.post(`/ai-modules/configs/${moduleId}/disable`);
     return response.data;
   },
 };
 
 export const subscriptionPlansApi = {
   getPlans: async (): Promise<SubscriptionPlan[]> => {
-    const response = await apiClient.get('/api/v1/subscription-plans');
+    const response = await apiClient.get('/subscription-plans');
     return response.data;
   },
 
   getPlan: async (id: number): Promise<SubscriptionPlan> => {
-    const response = await apiClient.get(`/api/v1/subscription-plans/${id}`);
+    const response = await apiClient.get(`/subscription-plans/${id}`);
     return response.data;
   },
 
   createPlan: async (data: Omit<SubscriptionPlan, 'id'>): Promise<SubscriptionPlan> => {
-    const response = await apiClient.post('/api/v1/subscription-plans', data);
+    const response = await apiClient.post('/subscription-plans', data);
     return response.data;
   },
 
   updatePlan: async (id: number, data: Partial<SubscriptionPlan>): Promise<SubscriptionPlan> => {
-    const response = await apiClient.put(`/api/v1/subscription-plans/${id}`, data);
+    const response = await apiClient.put(`/subscription-plans/${id}`, data);
     return response.data;
   },
 
   deletePlan: async (id: number): Promise<void> => {
-    await apiClient.delete(`/api/v1/subscription-plans/${id}`);
+    await apiClient.delete(`/subscription-plans/${id}`);
   },
 };
