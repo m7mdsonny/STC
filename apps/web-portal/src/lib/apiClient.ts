@@ -186,10 +186,22 @@ class ApiClient {
         
         // Do NOT clear token on 403 (subscription/permission errors) - user is still authenticated
         // These are authorization errors, not authentication errors
-        
-        const message = firstValidationMessage
-          || parsed?.message
-          || 'An error occurred';
+
+        let message = firstValidationMessage || parsed?.message || 'An error occurred';
+
+        // CRITICAL FIX: Provide better error messages for common issues
+        if (response.status === 404) {
+          if (fullUrl.includes('/organizations/')) {
+            message = 'المؤسسة غير موجودة. قد تكون محذوفة أو ليس لديك صلاحية الوصول إليها.';
+          } else if (message.includes('organization')) {
+            message = 'المؤسسة المطلوبة غير موجودة. يرجى التحقق من بيانات حسابك أو الاتصال بالدعم الفني.';
+          }
+        }
+
+        // Check if validation error is about organization not existing
+        if (firstValidationMessage && firstValidationMessage.includes('organization')) {
+          message = 'المؤسسة غير صحيحة أو غير موجودة. يرجى التحقق من بيانات حسابك.';
+        }
 
         return {
           error: message,

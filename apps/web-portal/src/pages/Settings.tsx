@@ -24,7 +24,7 @@ const TABS: { id: TabId; label: string; icon: typeof SettingsIcon }[] = [
 ];
 
 export function Settings() {
-  const { organization, profile, canManage } = useAuth();
+  const { organization, profile, canManage, loading: authLoading } = useAuth();
   const { showSuccess, showError } = useToast();
   const [activeTab, setActiveTab] = useState<TabId>('organization');
   const [servers, setServers] = useState<EdgeServer[]>([]);
@@ -87,14 +87,30 @@ export function Settings() {
 
   const addServer = async (e: React.FormEvent) => {
     e.preventDefault();
-    const orgId = organization?.id || profile?.organization_id;
+    
+    // CRITICAL FIX: Check if organization object exists (not just ID)
+    // If organization is null, it means the organization data couldn't be loaded
+    if (!organization) {
+      console.error('[Settings] Organization data not available', {
+        hasProfile: !!profile,
+        profileOrgId: profile?.organization_id,
+        organizationLoaded: !!organization,
+      });
+      showError(
+        'خطأ في بيانات المؤسسة',
+        'لا يمكن تحميل بيانات مؤسستك. قد تكون المؤسسة محذوفة أو تحتاج إلى إعادة تسجيل الدخول. يرجى الاتصال بالدعم الفني إذا استمرت المشكلة.'
+      );
+      return;
+    }
+
+    const orgId = organization.id;
 
     if (!orgId) {
-      console.error('[Settings] cannot submit edge server form: missing organization context', {
+      console.error('[Settings] cannot submit edge server form: missing organization ID', {
         organization,
         profile,
       });
-      showError('بيانات المؤسسة مفقودة', 'لا يمكن إضافة السيرفر لأن بيانات المؤسسة غير متاحة. يرجى إعادة تسجيل الدخول ثم المحاولة مرة أخرى.');
+      showError('بيانات المؤسسة مفقودة', 'لا يمكن إضافة السيرفر لأن معرف المؤسسة غير متاح. يرجى إعادة تسجيل الدخول ثم المحاولة مرة أخرى.');
       return;
     }
 
@@ -237,6 +253,44 @@ export function Settings() {
       setSyncingServer(null);
     }
   };
+
+  // CRITICAL FIX: Show error if organization data couldn't be loaded
+  // This prevents users from trying to add entities when organization doesn't exist
+  if (!authLoading && !organization && profile?.organization_id) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">الاعدادات</h1>
+          <p className="text-white/60">اعدادات النظام والمؤسسة والاشعارات</p>
+        </div>
+        <div className="card p-8">
+          <div className="text-center py-8">
+            <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-red-400" />
+            <h3 className="text-xl font-bold mb-2">خطأ في بيانات المؤسسة</h3>
+            <p className="text-white/60 mb-4 max-w-md mx-auto">
+              لا يمكن تحميل بيانات مؤسستك. قد تكون المؤسسة محذوفة أو ليس لديك صلاحية الوصول.
+              يرجى الاتصال بمسؤول النظام أو الدعم الفني.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button 
+                onClick={() => window.location.reload()} 
+                className="btn-secondary flex items-center gap-2"
+              >
+                <RefreshCw className="w-4 h-4" />
+                إعادة المحاولة
+              </button>
+              <button 
+                onClick={() => window.location.href = '/dashboard'} 
+                className="btn-primary"
+              >
+                العودة للرئيسية
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
