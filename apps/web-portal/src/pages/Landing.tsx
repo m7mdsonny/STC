@@ -164,7 +164,7 @@ function useReveal() {
 }
 
 export function Landing() {
-  const [settings, setSettings] = useState<LandingSettings | null>({
+  const [settings, setSettings] = useState<LandingSettings & { stats?: any[]; pricing_plans?: any[] }>({
     hero_title: 'منصة تحليل الفيديو بالذكاء الاصطناعي',
     hero_subtitle: 'حول كاميرات المراقبة إلى عيون ذكية تحمي منشآتك وتحلل بياناتك في الوقت الفعلي مع 10 موديولات متخصصة',
     hero_button_text: 'ابدأ تجربتك المجانية',
@@ -174,6 +174,9 @@ export function Landing() {
     whatsapp_number: '+966500000000',
     show_whatsapp_button: true,
     footer_text: 'STC Solutions. جميع الحقوق محفوظة',
+    stats: stats, // Initialize with default stats
+    pricing_plans: plans, // Initialize with default plans
+    features: modules.map(m => ({ title: m.title, description: m.description })),
   });
   const [published, setPublished] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -216,13 +219,36 @@ export function Landing() {
         features: modules.map(m => ({ title: m.title, description: m.description })),
       };
       
-      // Merge API content with defaults - API values take precedence but defaults fill gaps
+      // CRITICAL FIX: Don't override stats/plans with empty arrays from API
+      // Only merge non-empty arrays, otherwise keep defaults
       const mergedSettings = {
         ...defaultSettings,
         ...(data.content || {}),
       };
       
-      console.log('[Landing] Merged settings:', mergedSettings);
+      // If API returns empty stats array, use defaults instead
+      if (!data.content?.stats || data.content.stats.length === 0) {
+        console.log('[Landing] API stats empty, using defaults');
+        mergedSettings.stats = defaultSettings.stats;
+      } else {
+        console.log('[Landing] Using stats from API:', data.content.stats);
+      }
+      
+      // If API returns empty pricing_plans array, use defaults instead  
+      if (!data.content?.pricing_plans || data.content.pricing_plans.length === 0) {
+        console.log('[Landing] API pricing_plans empty, using defaults');
+        mergedSettings.pricing_plans = plans; // Use component state plans
+      } else {
+        console.log('[Landing] Using pricing_plans from API:', data.content.pricing_plans);
+      }
+      
+      // If API returns empty features array, use defaults instead
+      if (!data.content?.features || data.content.features.length === 0) {
+        console.log('[Landing] API features empty, using defaults');
+        mergedSettings.features = modules.map(m => ({ title: m.title, description: m.description }));
+      }
+      
+      console.log('[Landing] Final merged settings:', mergedSettings);
       setSettings(mergedSettings);
       setPublished(data.published !== false);
     } catch (error) {
@@ -403,7 +429,7 @@ export function Landing() {
 
           {/* Stats Counter */}
           <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto ${heroReveal.isVisible ? 'animate-fade-in-up delay-400' : 'opacity-0'}`}>
-            {stats.map((stat, index) => (
+            {(settings.stats && settings.stats.length > 0 ? settings.stats : stats).map((stat, index) => (
               <div key={index} className="card p-5 text-center card-hover group">
                 <div className="text-3xl md:text-4xl font-bold text-stc-gold mb-1">
                   <AnimatedCounter end={stat.value} suffix={stat.suffix} />
@@ -575,7 +601,7 @@ export function Landing() {
           </div>
           
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {plans.map((plan, index) => (
+            {(settings.pricing_plans && settings.pricing_plans.length > 0 ? settings.pricing_plans : plans).map((plan, index) => (
               <div
                 key={index}
                 className={`card p-8 relative ${plan.popular ? 'border-stc-gold border-glow ring-2 ring-stc-gold/30' : ''} card-hover ${pricingReveal.isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}
