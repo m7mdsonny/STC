@@ -179,7 +179,7 @@ export function Landing() {
     features: modules.map(m => ({ title: m.title, description: m.description })),
   });
   const [published, setPublished] = useState(true);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // CRITICAL: Don't block page display
   const [contactForm, setContactForm] = useState({ name: '', email: '', phone: '', message: '' });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -315,16 +315,8 @@ export function Landing() {
   const pricingReveal = useReveal();
   const contactReveal = useReveal();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen animated-gradient-bg flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-stc-gold border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-white/60 animate-pulse">جاري التحميل...</p>
-        </div>
-      </div>
-    );
-  }
+  // REMOVED loading screen - show page immediately with defaults
+  // API fetch happens in background and updates if successful
 
   return (
     <div className="min-h-screen animated-gradient-bg overflow-x-hidden">
