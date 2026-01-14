@@ -195,9 +195,9 @@ export function Landing() {
       console.log('[Landing] Fetching published landing settings...');
       const data = await settingsApi.getPublishedLanding();
       console.log('[Landing] Received data:', data);
+      console.log('[Landing] Content fields:', data.content);
       
-      // CRITICAL FIX: Always show page even if settings are empty
-      // Use defaults for any missing fields
+      // CRITICAL FIX: Merge API data with defaults to ensure all fields exist
       const defaultSettings: LandingSettings = {
         hero_title: 'حول كاميراتك الى عيون ذكية',
         hero_subtitle: 'منصة تحليل الفيديو بالذكاء الاصطناعي - 10 موديولات متخصصة للمراقبة الذكية والأتمتة الكاملة',
@@ -216,12 +216,19 @@ export function Landing() {
         features: modules.map(m => ({ title: m.title, description: m.description })),
       };
       
-      setSettings(data.content || defaultSettings);
-      setPublished(data.published !== false); // Default to published
+      // Merge API content with defaults - API values take precedence but defaults fill gaps
+      const mergedSettings = {
+        ...defaultSettings,
+        ...(data.content || {}),
+      };
+      
+      console.log('[Landing] Merged settings:', mergedSettings);
+      setSettings(mergedSettings);
+      setPublished(data.published !== false);
     } catch (error) {
       console.error('[Landing] Failed to fetch landing settings:', error);
       // Use comprehensive default settings to ensure page always displays
-      setSettings({
+      const fallbackSettings = {
         hero_title: 'حول كاميراتك الى عيون ذكية',
         hero_subtitle: 'منصة تحليل الفيديو بالذكاء الاصطناعي - 10 موديولات متخصصة للمراقبة الذكية والأتمتة الكاملة',
         hero_button_text: 'ابدأ الآن',
@@ -237,8 +244,9 @@ export function Landing() {
         social_linkedin: '',
         social_instagram: '',
         features: modules.map(m => ({ title: m.title, description: m.description })),
-      });
-      setPublished(true); // Always show landing page
+      };
+      setSettings(fallbackSettings);
+      setPublished(true);
       console.log('[Landing] Using default settings due to API error');
     } finally {
       setLoading(false);
