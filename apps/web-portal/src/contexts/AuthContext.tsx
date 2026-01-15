@@ -117,8 +117,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const org = await organizationsApi.getOrganization(authUser.organization_id);
         setOrganization(org);
-      } catch {
-        setOrganization(null);
+      } catch (error) {
+        console.warn('[AuthContext] Failed to load organization, using basic info from user', error);
+        // CRITICAL FIX: Create minimal organization object from user data
+        // This allows users to continue working even if they can't fetch full org details
+        setOrganization({
+          id: authUser.organization_id,
+          name: authUser.organization?.name || 'المؤسسة',
+          email: authUser.email,
+          is_active: true,
+        } as any);
       }
     } else {
       setOrganization(null);
