@@ -15,6 +15,7 @@ use App\Services\OrganizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class OrganizationController extends Controller
@@ -70,49 +71,69 @@ class OrganizationController extends Controller
 
     public function store(OrganizationStoreRequest $request): JsonResponse
     {
-        $data = $request->validated();
+        try {
+            $data = $request->validated();
 
-        $plan = SubscriptionPlan::where('name', $data['subscription_plan'])->first();
-        if (!$plan) {
-            $plan = SubscriptionPlan::first();
-        }
+            // Only super admin can create organizations
+            if (!RoleHelper::isSuperAdmin($request->user()->role, $request->user()->is_super_admin ?? false)) {
+                return response()->json(['message' => 'Only super admin can create organizations'], 403);
+            }
 
-        // BUSINESS LOGIC: Camera and server limits ALWAYS come from plan
-        if ($plan) {
-            $data['max_cameras'] = $plan->max_cameras;
-            $data['max_edge_servers'] = $plan->max_edge_servers;
-        }
+            $plan = SubscriptionPlan::where('name', $data['subscription_plan'])->first();
+            if (!$plan) {
+                return response()->json(['message' => 'Invalid subscription plan'], 422);
+            }
 
-        $organization = Organization::create($data);
+            // BUSINESS LOGIC: Camera and server limits ALWAYS come from plan
+            $data['max_cameras'] = $plan->max_cameras ?? 8;
+            $data['max_edge_servers'] = $plan->max_edge_servers ?? 1;
 
-        // Create SMS quota
-        if ($plan && property_exists($plan, 'sms_quota')) {
-            $organization->smsQuota()->create([
-                'monthly_limit' => $plan->sms_quota ?? 0,
-                'used_this_month' => 0,
+            DB::beginTransaction();
+
+            $organization = Organization::create($data);
+
+            // Create SMS quota
+            if ($plan && property_exists($plan, 'sms_quota')) {
+                $organization->smsQuota()->create([
+                    'monthly_limit' => $plan->sms_quota ?? 0,
+                    'used_this_month' => 0,
+                ]);
+            }
+
+            // BUSINESS LOGIC: Auto-create license for the organization
+            // Licenses are auto-generated based on the organization's subscription plan
+            $license = License::create([
+                'organization_id' => $organization->id,
+                'plan' => $data['subscription_plan'],
+                'license_key' => Str::uuid()->toString(),
+                'status' => 'active',
+                'max_cameras' => $data['max_cameras'],
+                'max_edge_servers' => $data['max_edge_servers'],
+                'modules' => ['fire', 'face', 'counter', 'vehicle'], // Default modules
+                'expires_at' => now()->addYear(), // 1 year expiry
+                'activated_at' => now(),
             ]);
+
+            DB::commit();
+
+            \Log::info('Auto-created license for organization', [
+                'organization_id' => $organization->id,
+                'license_id' => $license->id,
+                'license_key' => $license->license_key,
+            ]);
+
+            return response()->json($organization->load('licenses'), 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Failed to create organization', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to create organization: ' . $e->getMessage()
+            ], 500);
         }
-
-        // BUSINESS LOGIC: Auto-create license for the organization
-        // Licenses are auto-generated based on the organization's subscription plan
-        $license = License::create([
-            'organization_id' => $organization->id,
-            'plan' => $data['subscription_plan'],
-            'license_key' => Str::uuid()->toString(),
-            'status' => 'active',
-            'max_cameras' => $data['max_cameras'],
-            'modules' => ['fire', 'face', 'counter', 'vehicle'], // Default modules
-            'expires_at' => now()->addYear(), // 1 year expiry
-            'activated_at' => now(),
-        ]);
-
-        \Log::info('Auto-created license for organization', [
-            'organization_id' => $organization->id,
-            'license_id' => $license->id,
-            'license_key' => $license->license_key,
-        ]);
-
-        return response()->json($organization, 201);
     }
 
     public function update(OrganizationUpdateRequest $request, Organization $organization): JsonResponse
@@ -131,19 +152,57 @@ class OrganizationController extends Controller
     public function destroy(Organization $organization): JsonResponse
     {
         // Use Policy for authorization
-        $this->authorize('delete', $organization);
+        try {
+            $this->authorize('delete', $organization);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            \Log::warning('Unauthorized delete attempt', [
+                'organization_id' => $organization->id,
+                'user_id' => request()->user()?->id,
+            ]);
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
         try {
+            // Handle soft deletes and relationships
+            DB::beginTransaction();
+            
+            // Soft delete related records first if needed
+            $organization->users()->update(['deleted_at' => now()]);
+            $organization->licenses()->update(['deleted_at' => now()]);
+            $organization->edgeServers()->update(['deleted_at' => now()]);
+            
+            // Delete organization (soft delete if supported)
             $organization->delete();
+            
+            DB::commit();
             return response()->json(['message' => 'Organization deleted'], 200);
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
+            \Log::error('Database error deleting organization', [
+                'organization_id' => $organization->id,
+                'error' => $e->getMessage(),
+                'code' => $e->getCode(),
+            ]);
+            
+            // Check for foreign key constraint
+            if ($e->getCode() == 23000) {
+                return response()->json([
+                    'message' => 'Cannot delete organization: it has related records that must be removed first'
+                ], 422);
+            }
+            
+            return response()->json([
+                'message' => 'Failed to delete organization: ' . $e->getMessage()
+            ], 500);
         } catch (\Exception $e) {
+            DB::rollBack();
             \Log::error('Failed to delete organization', [
                 'organization_id' => $organization->id,
                 'error' => $e->getMessage(),
             ]);
 
             return response()->json([
-                'message' => 'فشل حذف المؤسسة: ' . $e->getMessage()
+                'message' => 'Failed to delete organization: ' . $e->getMessage()
             ], 500);
         }
     }

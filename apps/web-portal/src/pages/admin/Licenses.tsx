@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Key, Plus, Search, Trash2, Copy, CheckCircle, XCircle, Calendar, Building2 } from 'lucide-react';
+import { Key, Search, Copy, CheckCircle, XCircle, Calendar, Building2 } from 'lucide-react';
 import { licensesApi, organizationsApi } from '../../lib/api';
-import { Modal } from '../../components/ui/Modal';
 import { useAuth } from '../../contexts/AuthContext';
 import type { License, Organization } from '../../types/database';
 
@@ -10,18 +9,9 @@ export function Licenses() {
   const [licenses, setLicenses] = useState<(License & { organization?: Organization })[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
-
-  const [formData, setFormData] = useState({
-    organization_id: '',
-    plan: 'basic' as License['plan'],
-    max_cameras: 8,
-    modules: ['fire', 'face', 'counter'] as string[],
-    is_trial: false,
-  });
 
   useEffect(() => {
     fetchData();
@@ -49,85 +39,10 @@ export function Licenses() {
     }
   };
 
-  const generateLicenseKey = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    const segments = [];
-    for (let i = 0; i < 4; i++) {
-      let segment = '';
-      for (let j = 0; j < 4; j++) {
-        segment += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      segments.push(segment);
-    }
-    return segments.join('-');
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const expiresAt = new Date();
-    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-    const licenseKey = generateLicenseKey();
-
-    try {
-      await licensesApi.createLicense({
-        organization_id: formData.organization_id,
-        plan: formData.plan,
-        max_cameras: formData.max_cameras,
-        modules: formData.modules,
-        expires_at: expiresAt.toISOString(),
-        license_key: licenseKey,
-        is_trial: formData.is_trial,
-      });
-
-      setShowModal(false);
-      resetForm();
-      fetchData();
-      showSuccess('تم إنشاء الترخيص', `تم إنشاء الترخيص ${licenseKey} بنجاح وربطه بالمؤسسة المحددة.`);
-    } catch (error) {
-      console.error('Error creating license:', error);
-      const { title, message } = getDetailedErrorMessage(error, 'إنشاء الترخيص', 'فشل إنشاء الترخيص');
-      showError(title, message);
-    }
-  };
-
-  const deleteLicense = async (id: string) => {
-    if (!confirm('هل انت متاكد من حذف هذا الترخيص؟')) return;
-    try {
-      await licensesApi.deleteLicense(id);
-      fetchData();
-    } catch (error) {
-      console.error('Error deleting license:', error);
-    }
-  };
-
-  const updateStatus = async (id: string, status: License['status']) => {
-    try {
-      if (status === 'active') {
-        await licensesApi.activate(id);
-      } else if (status === 'suspended') {
-        await licensesApi.suspend(id);
-      }
-      fetchData();
-    } catch (error) {
-      console.error('Error updating status:', error);
-    }
-  };
-
   const copyKey = (key: string) => {
     navigator.clipboard.writeText(key);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 2000);
-  };
-
-  const resetForm = () => {
-    setFormData({
-      organization_id: '',
-      plan: 'basic',
-      max_cameras: 8,
-      modules: ['fire', 'face', 'counter'],
-      is_trial: false,
-    });
   };
 
   const filteredLicenses = licenses.filter(license => {
@@ -168,15 +83,9 @@ export function Licenses() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">التراخيص</h1>
-          <p className="text-white/60">عرض تراخيص المنصة (للقراءة فقط)</p>
+          <p className="text-white/60">عرض تراخيص المنصة (للقراءة فقط - يتم إنشاء التراخيص تلقائياً مع المؤسسات)</p>
         </div>
-        {/* BUSINESS LOGIC: Licenses are auto-created with organizations - no manual creation */}
-        {isSuperAdmin && (
-          <button onClick={() => { resetForm(); setShowModal(true); }} className="btn-primary flex items-center gap-2">
-            <Plus className="w-5 h-5" />
-            <span>انشاء ترخيص اضافي</span>
-          </button>
-        )}
+        {/* BUSINESS LOGIC: Licenses are auto-created with organizations - no manual creation allowed */}
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -308,32 +217,7 @@ export function Licenses() {
                     {license.expires_at ? new Date(license.expires_at).toLocaleDateString('ar-EG') : '-'}
                   </td>
                   <td className="p-4">
-                    {isSuperAdmin ? (
-                      <div className="flex items-center gap-2">
-                        {license.status === 'suspended' ? (
-                          <button
-                            onClick={() => updateStatus(license.id, 'active')}
-                            className="p-2 hover:bg-emerald-500/20 rounded"
-                            title="تفعيل"
-                          >
-                            <CheckCircle className="w-4 h-4 text-emerald-400" />
-                          </button>
-                        ) : license.status === 'active' && (
-                          <button
-                            onClick={() => updateStatus(license.id, 'suspended')}
-                            className="p-2 hover:bg-orange-500/20 rounded"
-                            title="ايقاف"
-                          >
-                            <XCircle className="w-4 h-4 text-orange-400" />
-                          </button>
-                        )}
-                        <button onClick={() => deleteLicense(license.id)} className="p-2 hover:bg-red-500/20 rounded" title="حذف">
-                          <Trash2 className="w-4 h-4 text-red-400" />
-                        </button>
-                      </div>
-                    ) : (
-                      <span className="text-white/40 text-sm">للقراءة فقط</span>
-                    )}
+                    <span className="text-white/40 text-sm">للقراءة فقط</span>
                   </td>
                 </tr>
               ))}
@@ -342,75 +226,6 @@ export function Licenses() {
         </div>
       )}
 
-      <Modal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        title="انشاء ترخيص جديد"
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="label">المؤسسة</label>
-            <select
-              value={formData.organization_id}
-              onChange={(e) => setFormData({ ...formData, organization_id: e.target.value })}
-              className="input"
-              required
-            >
-              <option value="">اختر المؤسسة</option>
-              {organizations.map((org) => (
-                <option key={org.id} value={org.id}>{org.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="label">الباقة</label>
-              <select
-                value={formData.plan}
-                onChange={(e) => setFormData({ ...formData, plan: e.target.value as License['plan'] })}
-                className="input"
-              >
-                <option value="basic">اساسية</option>
-                <option value="professional">احترافية</option>
-                <option value="enterprise">مؤسسات</option>
-              </select>
-            </div>
-            <div>
-              <label className="label">عدد الكاميرات</label>
-              <input
-                type="number"
-                value={formData.max_cameras}
-                onChange={(e) => setFormData({ ...formData, max_cameras: parseInt(e.target.value) })}
-                className="input"
-                min={1}
-                max={128}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.is_trial}
-                onChange={(e) => setFormData({ ...formData, is_trial: e.target.checked })}
-                className="w-4 h-4 rounded border-white/20 bg-white/5"
-              />
-              <span>ترخيص تجريبي (14 يوم)</span>
-            </label>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
-            <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">
-              الغاء
-            </button>
-            <button type="submit" className="btn-primary">
-              انشاء الترخيص
-            </button>
-          </div>
-        </form>
-      </Modal>
     </div>
   );
 }
