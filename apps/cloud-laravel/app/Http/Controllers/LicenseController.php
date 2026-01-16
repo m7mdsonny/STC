@@ -37,7 +37,8 @@ class LicenseController extends Controller
         }
 
         // Super admin can filter by organization
-        if ($request->filled('organization_id') && RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
+        // Also allow organization_id filter for non-super-admin users (for their own org)
+        if ($request->filled('organization_id')) {
             $orgId = $request->get('organization_id');
             // Handle both string and integer organization_id
             $query->where('organization_id', (int) $orgId);
