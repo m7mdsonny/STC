@@ -84,6 +84,20 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $e)
     {
+        // Handle OPTIONS preflight requests directly
+        if ($request->isMethod('OPTIONS') && ($request->is('api/*') || $request->expectsJson())) {
+            $origin = $request->header('Origin');
+            $allowedOrigins = ['https://stcsolutions.online', 'http://localhost:5173', 'http://localhost:3000'];
+            $allowedOrigin = in_array($origin, $allowedOrigins) ? $origin : 'https://stcsolutions.online';
+            
+            return response('', 200)
+                ->header('Access-Control-Allow-Origin', $allowedOrigin)
+                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token, X-EDGE-KEY, X-EDGE-TIMESTAMP, X-EDGE-SIGNATURE')
+                ->header('Access-Control-Allow-Credentials', 'true')
+                ->header('Access-Control-Max-Age', '86400');
+        }
+
         $response = parent::render($request, $e);
 
         // FORCE CORS headers on ALL API responses - even on exceptions
