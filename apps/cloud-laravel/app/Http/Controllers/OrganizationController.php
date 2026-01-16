@@ -77,9 +77,10 @@ class OrganizationController extends Controller
             $plan = SubscriptionPlan::first();
         }
 
+        // BUSINESS LOGIC: Camera and server limits ALWAYS come from plan
         if ($plan) {
-            $data['max_cameras'] = $data['max_cameras'] ?? $plan->max_cameras;
-            $data['max_edge_servers'] = $data['max_edge_servers'] ?? $plan->max_edge_servers;
+            $data['max_cameras'] = $plan->max_cameras;
+            $data['max_edge_servers'] = $plan->max_edge_servers;
         }
 
         $organization = Organization::create($data);
@@ -92,14 +93,14 @@ class OrganizationController extends Controller
             ]);
         }
 
-        // BUSINESS LOGIC FIX: Auto-create license for the organization
-        // Licenses are now auto-generated based on the organization's subscription plan
+        // BUSINESS LOGIC: Auto-create license for the organization
+        // Licenses are auto-generated based on the organization's subscription plan
         $license = License::create([
             'organization_id' => $organization->id,
             'plan' => $data['subscription_plan'],
             'license_key' => Str::uuid()->toString(),
             'status' => 'active',
-            'max_cameras' => $data['max_cameras'] ?? 4,
+            'max_cameras' => $data['max_cameras'],
             'modules' => ['fire', 'face', 'counter', 'vehicle'], // Default modules
             'expires_at' => now()->addYear(), // 1 year expiry
             'activated_at' => now(),
