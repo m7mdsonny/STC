@@ -7,6 +7,17 @@ import '../features/alerts/alerts_screen.dart';
 import '../features/cameras/cameras_screen.dart';
 import '../features/settings/notification_sound_settings_screen.dart';
 
+// Custom page transition with fade + slide
+Page<T> _buildPageWithTransition<T extends Object>(
+  Widget child,
+  GoRouterState state,
+) {
+  return Page<T>(
+    key: state.pageKey,
+    child: child,
+  );
+}
+
 final appRouter = GoRouter(
   initialLocation: '/splash',
   debugLogDiagnostics: true,
@@ -24,17 +35,26 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/home',
       name: 'home',
-      builder: (context, state) => const HomeScreen(),
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        const HomeScreen(),
+        state,
+      ),
     ),
     GoRoute(
       path: '/cameras',
       name: 'cameras',
-      builder: (context, state) => const CamerasScreen(),
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        const CamerasScreen(),
+        state,
+      ),
     ),
     GoRoute(
       path: '/alerts',
       name: 'alerts',
-      builder: (context, state) => const AlertsScreen(),
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        const AlertsScreen(),
+        state,
+      ),
     ),
     GoRoute(
       path: '/analytics',

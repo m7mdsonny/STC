@@ -2,6 +2,7 @@
 Alerts Screen - Full implementation with Cloud data
 """
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -99,7 +100,21 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> with SingleTickerPr
               itemCount: alerts.length,
               itemBuilder: (context, index) {
                 final alert = alerts[index];
-                return _buildAlertCard(alert);
+                return TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0.0, end: 1.0),
+                  duration: Duration(milliseconds: 300 + (index * 50)),
+                  curve: Curves.easeOut,
+                  builder: (context, value, child) {
+                    return Opacity(
+                      opacity: value,
+                      child: Transform.translate(
+                        offset: Offset(0, 20 * (1 - value)),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: _buildAlertCard(alert),
+                );
               },
             ),
           );
@@ -121,8 +136,17 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> with SingleTickerPr
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: InkWell(
-        onTap: () => _showAlertDetails(alert),
+        onTap: () {
+          // Haptic feedback on tap
+          HapticFeedback.lightImpact();
+          _showAlertDetails(alert);
+        },
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -213,13 +237,19 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> with SingleTickerPr
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton.icon(
-                      onPressed: () => _acknowledgeAlert(alert),
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        _acknowledgeAlert(alert);
+                      },
                       icon: const Icon(Icons.check, size: 18),
                       label: const Text('إقرار'),
                     ),
                     const SizedBox(width: 8),
                     TextButton.icon(
-                      onPressed: () => _resolveAlert(alert),
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        _resolveAlert(alert);
+                      },
                       icon: const Icon(Icons.done_all, size: 18),
                       label: const Text('حل'),
                     ),
