@@ -10,6 +10,11 @@ class RequireHttps
 {
     public function handle(Request $request, Closure $next)
     {
+        // Allow OPTIONS requests (CORS preflight) to pass through
+        if ($request->isMethod('OPTIONS')) {
+            return $next($request);
+        }
+
         if (!$request->isSecure()) {
             throw new HttpException(403, 'HTTPS is required');
         }
