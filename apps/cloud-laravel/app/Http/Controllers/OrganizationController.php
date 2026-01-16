@@ -91,14 +91,22 @@ class OrganizationController extends Controller
                     'user_org_id' => $user->organization_id,
                 ]);
                 
-                // If user's organization_id matches requested ID but org doesn't exist,
-                // the organization was deleted - clear user's organization_id
+                // CRITICAL FIX: If user's organization_id matches requested ID but org doesn't exist,
+                // the organization was deleted - clear user's organization_id immediately
                 if ($user->organization_id && (int) $user->organization_id === (int) $id) {
                     \Log::info('Clearing organization_id from user - organization was deleted', [
                         'user_id' => $user->id,
                         'organization_id' => $id,
                     ]);
-                    $user->update(['organization_id' => null]);
+                    try {
+                        $user->organization_id = null;
+                        $user->save();
+                    } catch (\Exception $e) {
+                        \Log::error('Failed to clear organization_id from user', [
+                            'user_id' => $user->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
                 }
                 
                 return response()->json(['message' => 'Organization not found'], 404)->withHeaders($corsHeaders);
