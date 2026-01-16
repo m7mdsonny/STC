@@ -73,10 +73,12 @@ class CloudClient:
             import json
             body = json.dumps(json_data, ensure_ascii=False).encode('utf-8')
         
-        # Generate HMAC signature
-        headers = self.signer.generate_signature(method, path, body)
+        # Generate HMAC signature and nonce
+        # Note: Heartbeat endpoint doesn't require authentication, but we'll include headers if available
+        headers, nonce = self.signer.generate_signature(method, path, body)
         headers["Content-Type"] = "application/json"
         headers["Accept"] = "application/json"
+        # X-EDGE-NONCE is already included in headers from signer
         
         try:
             response = await self.client.request(
@@ -93,9 +95,30 @@ class CloudClient:
                 except Exception:
                     return True, {"status": "success"}
             elif response.status_code == 401:
-                error_msg = "Authentication failed - check edge_key and edge_secret"
-                self.error_store.add_error("auth", error_msg)
-                return False, {"error": error_msg}
+                # Extract specific error from Cloud API response
+                error_data = {}
+                try:
+                    error_data = response.json()
+                except Exception:
+                    pass
+                
+                error_code = error_data.get("error", "authentication_failed")
+                error_message = error_data.get("message", "Authentication failed")
+                
+                # Map error codes to user-friendly messages
+                error_messages = {
+                    "authentication_required": "Missing required authentication headers",
+                    "nonce_required": "Missing X-EDGE-NONCE header (replay protection)",
+                    "invalid_credentials": "Invalid edge server key",
+                    "configuration_error": "Edge server not properly configured",
+                    "timestamp_invalid": "Request timestamp is too old or too far in the future",
+                    "nonce_reused": "Request nonce already used (replay attack detected)",
+                    "invalid_signature": "Invalid HMAC signature",
+                }
+                
+                error_msg = error_messages.get(error_code, error_message)
+                self.error_store.add_error("auth", f"{error_msg} (code: {error_code})")
+                return False, {"error": error_msg, "error_code": error_code}
             else:
                 error_msg = f"Cloud API error: {response.status_code}"
                 try:
