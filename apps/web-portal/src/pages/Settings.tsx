@@ -24,7 +24,7 @@ const TABS: { id: TabId; label: string; icon: typeof SettingsIcon }[] = [
 ];
 
 export function Settings() {
-  const { organization, profile, canManage, loading: authLoading } = useAuth();
+  const { organization, profile, canManage, loading: authLoading, isSuperAdmin } = useAuth();
   const { showSuccess, showError } = useToast();
   const [activeTab, setActiveTab] = useState<TabId>('organization');
   const [servers, setServers] = useState<EdgeServer[]>([]);

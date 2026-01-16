@@ -9,7 +9,7 @@ import { getDetailedErrorMessage } from '../../lib/errorMessages';
 import type { SubscriptionPlan } from '../../types/database';
 
 export function OrganizationSettings() {
-  const { organization, canManage, user } = useAuth();
+  const { organization, canManage, user, isSuperAdmin } = useAuth();
   const { showError, showSuccess } = useToast();
   const [saving, setSaving] = useState(false);
   const [plan, setPlan] = useState<SubscriptionPlan | null>(null);
@@ -152,7 +152,7 @@ export function OrganizationSettings() {
     }
   };
 
-  // CRITICAL FIX: Show error if user has organization_id but organization failed to load
+  // CRITICAL FIX: Show error only if user has organization_id but organization failed to load
   if (!organization && user?.organization_id) {
     return (
       <div className="space-y-6">
@@ -169,11 +169,23 @@ export function OrganizationSettings() {
     );
   }
 
-  if (!organization) {
+  // Show message if user has no organization (normal for super admins or unassigned users)
+  if (!organization && !user?.organization_id) {
     return (
       <div className="space-y-6">
         <div className="card p-6">
-          <p className="text-white/70">لا توجد مؤسسة مرتبطة بحسابك.</p>
+          <div className="text-center py-6">
+            <Building2 className="w-12 h-12 mx-auto mb-3 text-white/40" />
+            <h3 className="text-lg font-bold mb-2">لا توجد مؤسسة مرتبطة</h3>
+            <p className="text-white/70 mb-4">
+              حسابك غير مرتبط بأي مؤسسة حالياً. يرجى الاتصال بمسؤول النظام لربط حسابك بمؤسسة.
+            </p>
+            {isSuperAdmin && (
+              <p className="text-white/50 text-sm">
+                كمسؤول عام، يمكنك إدارة جميع المؤسسات من لوحة التحكم.
+              </p>
+            )}
+          </div>
         </div>
       </div>
     );
