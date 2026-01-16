@@ -13,6 +13,7 @@ use App\Helpers\RoleHelper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class OrganizationController extends Controller
 {
@@ -77,12 +78,33 @@ class OrganizationController extends Controller
         }
 
         $organization = Organization::create($data);
+
+        // Create SMS quota
         if ($plan && property_exists($plan, 'sms_quota')) {
             $organization->smsQuota()->create([
                 'monthly_limit' => $plan->sms_quota ?? 0,
                 'used_this_month' => 0,
             ]);
         }
+
+        // BUSINESS LOGIC FIX: Auto-create license for the organization
+        // Licenses are now auto-generated based on the organization's subscription plan
+        $license = License::create([
+            'organization_id' => $organization->id,
+            'plan' => $data['subscription_plan'],
+            'license_key' => Str::uuid()->toString(),
+            'status' => 'active',
+            'max_cameras' => $data['max_cameras'] ?? 4,
+            'modules' => ['fire', 'face', 'counter', 'vehicle'], // Default modules
+            'expires_at' => now()->addYear(), // 1 year expiry
+            'activated_at' => now(),
+        ]);
+
+        \Log::info('Auto-created license for organization', [
+            'organization_id' => $organization->id,
+            'license_id' => $license->id,
+            'license_key' => $license->license_key,
+        ]);
 
         return response()->json($organization, 201);
     }
@@ -101,9 +123,20 @@ class OrganizationController extends Controller
     {
         // Use Policy for authorization
         $this->authorize('delete', $organization);
-        
-        $organization->delete();
-        return response()->json(['message' => 'Organization deleted']);
+
+        try {
+            $organization->delete();
+            return response()->json(['message' => 'Organization deleted'], 200);
+        } catch (\Exception $e) {
+            \Log::error('Failed to delete organization', [
+                'organization_id' => $organization->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'فشل حذف المؤسسة: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function toggleActive(Organization $organization): JsonResponse

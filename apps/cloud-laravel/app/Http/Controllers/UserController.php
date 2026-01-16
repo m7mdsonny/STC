@@ -121,8 +121,19 @@ class UserController extends Controller
         // Use Policy for authorization (prevents self-deletion)
         $this->authorize('delete', $user);
 
-        $user->delete();
-        return response()->json(['message' => 'User deleted']);
+        try {
+            $user->delete();
+            return response()->json(['message' => 'User deleted'], 200);
+        } catch (\Exception $e) {
+            \Log::error('Failed to delete user', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'فشل حذف المستخدم: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function toggleActive(User $user): JsonResponse

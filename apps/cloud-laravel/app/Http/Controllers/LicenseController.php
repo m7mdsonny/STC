@@ -84,9 +84,20 @@ class LicenseController extends Controller
     {
         // Use Policy for authorization
         $this->authorize('delete', $license);
-        
-        $license->delete();
-        return response()->json(['message' => 'License deleted']);
+
+        try {
+            $license->delete();
+            return response()->json(['message' => 'License deleted'], 200);
+        } catch (\Exception $e) {
+            \Log::error('Failed to delete license', [
+                'license_id' => $license->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'فشل حذف الترخيص: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function activate(License $license): JsonResponse

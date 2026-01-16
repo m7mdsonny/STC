@@ -41,13 +41,10 @@ class LicensePolicy
      */
     public function create(User $user): bool
     {
-        // Super admin can create licenses for any organization
-        if (RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
-            return true;
-        }
-        
-        // Org managers can create licenses for their organization
-        return RoleHelper::canManageOrganization($user->role) && $user->organization_id !== null;
+        // BUSINESS LOGIC: Licenses are auto-created when organizations are created
+        // Manual license creation through API is disabled for all users
+        // Only super admin can create licenses for special cases (e.g., additional licenses)
+        return RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false);
     }
 
     /**
@@ -55,17 +52,9 @@ class LicensePolicy
      */
     public function update(User $user, License $license): bool
     {
-        // Super admin can update all
-        if (RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
-            return true;
-        }
-        
-        // Org managers can update licenses in their organization
-        if ($user->organization_id === $license->organization_id) {
-            return RoleHelper::canManageOrganization($user->role);
-        }
-        
-        return false;
+        // BUSINESS LOGIC: Licenses are read-only
+        // Only super admin can update licenses (activate, suspend, renew)
+        return RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false);
     }
 
     /**
