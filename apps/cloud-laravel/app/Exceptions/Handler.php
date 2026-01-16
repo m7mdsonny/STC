@@ -44,7 +44,7 @@ class Handler extends ExceptionHandler
             if ($request->expectsJson() || $request->is('api/*')) {
                 $origin = $request->header('Origin');
                 $allowedOrigins = ['https://stcsolutions.online', 'http://localhost:5173', 'http://localhost:3000'];
-                $allowedOrigin = in_array($origin, $allowedOrigins) ? $origin : ($allowedOrigins[0] ?? '*');
+                $allowedOrigin = in_array($origin, $allowedOrigins) ? $origin : 'https://stcsolutions.online';
                 
                 return response()->json($payload, $e->getStatus())
                     ->header('Access-Control-Allow-Origin', $allowedOrigin)
@@ -65,7 +65,7 @@ class Handler extends ExceptionHandler
         if ($request->expectsJson() || $request->is('api/*')) {
             $origin = $request->header('Origin');
             $allowedOrigins = ['https://stcsolutions.online', 'http://localhost:5173', 'http://localhost:3000'];
-            $allowedOrigin = in_array($origin, $allowedOrigins) ? $origin : ($allowedOrigins[0] ?? '*');
+            $allowedOrigin = in_array($origin, $allowedOrigins) ? $origin : 'https://stcsolutions.online';
             
             return response()->json([
                 'message' => 'Unauthenticated.',
