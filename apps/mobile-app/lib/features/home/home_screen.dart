@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
 import '../../data/providers/app_providers.dart';
+import '../../shared/widgets/app_loading.dart';
+import '../../shared/widgets/app_empty_state.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -145,9 +147,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ],
               ),
-              loading: () => const SizedBox(
-                height: 200,
-                child: Center(child: CircularProgressIndicator()),
+              loading: () => const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: CardShimmer()),
+                        SizedBox(width: 12),
+                        Expanded(child: CardShimmer()),
+                      ],
+                    ),
+                    SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(child: CardShimmer()),
+                        SizedBox(width: 12),
+                        Expanded(child: CardShimmer()),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               error: (_, __) => const SizedBox.shrink(),
             ),
@@ -168,8 +188,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(height: 12),
             recentAlertsAsync.when(
               data: (alerts) => _buildAlertsList(alerts),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const Text('فشل تحميل التنبيهات'),
+              loading: () => const ListShimmer(itemCount: 3),
+              error: (_, __) => AppEmptyState(
+                title: 'فشل تحميل التنبيهات',
+                icon: Icons.error_outline,
+                onRetry: () {
+                  ref.invalidate(recentAlertsProvider);
+                },
+              ),
             ),
             const SizedBox(height: 24),
             Row(
@@ -188,8 +214,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(height: 12),
             recentCamerasAsync.when(
               data: (cameras) => _buildCamerasList(cameras),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const Text('فشل تحميل الكاميرات'),
+              loading: () => const ListShimmer(itemCount: 3),
+              error: (_, __) => AppEmptyState(
+                title: 'فشل تحميل الكاميرات',
+                icon: Icons.error_outline,
+                onRetry: () {
+                  ref.invalidate(recentCamerasProvider);
+                },
+              ),
             ),
           ],
         ),

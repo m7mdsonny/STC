@@ -5,7 +5,8 @@ Implements HMAC-SHA256 signing for Cloud API requests
 import hmac
 import hashlib
 import time
-from typing import Dict, Optional
+import uuid
+from typing import Dict, Optional, Tuple
 from loguru import logger
 
 
@@ -16,15 +17,24 @@ class HMACSigner:
         self.edge_key = edge_key
         self.edge_secret = edge_secret
     
+    def generate_nonce(self) -> str:
+        """
+        Generate unique nonce for replay protection
+        
+        Returns:
+            UUID string for nonce
+        """
+        return str(uuid.uuid4())
+    
     def generate_signature(
         self,
         method: str,
         path: str,
         body: bytes = b"",
         timestamp: Optional[int] = None
-    ) -> Dict[str, str]:
+    ) -> Tuple[Dict[str, str], str]:
         """
-        Generate HMAC signature for a request
+        Generate HMAC signature and nonce for a request
         
         Args:
             method: HTTP method (GET, POST, etc.)
@@ -33,15 +43,20 @@ class HMACSigner:
             timestamp: Unix timestamp (defaults to current time)
         
         Returns:
-            Dict with headers: X-EDGE-KEY, X-EDGE-TIMESTAMP, X-EDGE-SIGNATURE
+            Tuple of (headers_dict, nonce_string)
+            Headers include: X-EDGE-KEY, X-EDGE-TIMESTAMP, X-EDGE-SIGNATURE, X-EDGE-NONCE
         """
         if timestamp is None:
             timestamp = int(time.time())
+        
+        # Generate unique nonce for replay protection
+        nonce = self.generate_nonce()
         
         # Calculate body hash
         body_hash = hashlib.sha256(body).hexdigest()
         
         # Construct message: method|path|timestamp|body_hash
+        # NOTE: Nonce is NOT included in signature calculation (only in header)
         message = f"{method}|{path}|{timestamp}|{body_hash}"
         
         # Generate HMAC signature
@@ -51,11 +66,14 @@ class HMACSigner:
             hashlib.sha256
         ).hexdigest()
         
-        return {
+        headers = {
             "X-EDGE-KEY": self.edge_key,
             "X-EDGE-TIMESTAMP": str(timestamp),
             "X-EDGE-SIGNATURE": signature,
+            "X-EDGE-NONCE": nonce,  # CRITICAL: Required by Cloud API for replay protection
         }
+        
+        return headers, nonce
     
     def verify_timestamp(self, timestamp: int, window_seconds: int = 300) -> bool:
         """
