@@ -254,8 +254,36 @@ export function Settings() {
     }
   };
 
-  // CRITICAL FIX: Show error if organization data couldn't be loaded
-  // This prevents users from trying to add entities when organization doesn't exist
+  // CRITICAL FIX: Show message if user has no organization (normal case)
+  if (!authLoading && !organization && !profile?.organization_id) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">الاعدادات</h1>
+          <p className="text-white/60">اعدادات النظام والمؤسسة والاشعارات</p>
+        </div>
+        <div className="card p-8">
+          <div className="text-center py-8">
+            <Building2 className="w-16 h-16 mx-auto mb-4 text-white/40" />
+            <h3 className="text-xl font-bold mb-2">لا توجد مؤسسة مرتبطة</h3>
+            <p className="text-white/60 mb-4 max-w-md mx-auto">
+              حسابك غير مرتبط بأي مؤسسة حالياً. يرجى الاتصال بمسؤول النظام لربط حسابك بمؤسسة.
+            </p>
+            {isSuperAdmin && (
+              <p className="text-white/40 text-sm mb-4">
+                كمسؤول عام، يمكنك إدارة جميع المؤسسات من لوحة التحكم.
+              </p>
+            )}
+            <Link to="/" className="btn-primary">
+              العودة للرئيسية
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error only if user has organization_id but organization failed to load
   if (!authLoading && !organization && profile?.organization_id) {
     return (
       <div className="space-y-6">
@@ -279,12 +307,9 @@ export function Settings() {
                 <RefreshCw className="w-4 h-4" />
                 إعادة المحاولة
               </button>
-              <button 
-                onClick={() => window.location.href = '/dashboard'} 
-                className="btn-primary"
-              >
+              <Link to="/" className="btn-primary">
                 العودة للرئيسية
-              </button>
+              </Link>
             </div>
           </div>
         </div>
