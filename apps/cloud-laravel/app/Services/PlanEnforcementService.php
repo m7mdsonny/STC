@@ -204,19 +204,27 @@ class PlanEnforcementService
      */
     private function getMaxQuotaFromLicenses(Organization $org, string $quotaType): ?int
     {
+        // CRITICAL FIX: Only check max_cameras in licenses table
+        // max_edge_servers is not in licenses table, only in organizations and subscription_plans
+        if ($quotaType === 'max_edge_servers') {
+            return null; // Don't check licenses for edge servers quota
+        }
+
         $activeLicenses = License::where('organization_id', $org->id)
             ->where('status', 'active')
-            ->whereNotNull($quotaType)
             ->get();
 
         if ($activeLicenses->isEmpty()) {
             return null;
         }
 
-        // Return the highest quota from all active licenses
-        $maxQuota = $activeLicenses->max($quotaType);
-        
-        return $maxQuota > 0 ? $maxQuota : null;
+        // Only check max_cameras from licenses (if column exists)
+        if ($quotaType === 'max_cameras') {
+            $maxQuota = $activeLicenses->max('max_cameras');
+            return $maxQuota > 0 ? $maxQuota : null;
+        }
+
+        return null;
     }
 
     /**
