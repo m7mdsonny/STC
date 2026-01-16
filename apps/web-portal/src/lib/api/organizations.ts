@@ -41,10 +41,17 @@ export const organizationsApi = {
     return data;
   },
 
-  async getOrganization(id: string): Promise<Organization> {
-    const { data, error } = await apiClient.get<Organization>(`/organizations/${id}`);
+  async getOrganization(id: string | number): Promise<Organization> {
+    const orgId = String(id);
+    const { data, error, httpStatus } = await apiClient.get<Organization>(`/organizations/${orgId}`);
     if (error || !data) {
-      throw new Error(error || 'Failed to fetch organization');
+      const errorMessage = httpStatus === 404 
+        ? 'المؤسسة غير موجودة. قد تكون محذوفة أو معلقة.'
+        : error || 'Failed to fetch organization';
+      const err = new Error(errorMessage) as any;
+      err.status = httpStatus;
+      err.httpStatus = httpStatus;
+      throw err;
     }
     return data;
   },

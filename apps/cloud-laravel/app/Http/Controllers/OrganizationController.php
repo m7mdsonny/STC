@@ -63,10 +63,31 @@ class OrganizationController extends Controller
 
     public function show(Organization $organization): JsonResponse
     {
-        // Use Policy for authorization
-        $this->authorize('view', $organization);
+        try {
+            // Use Policy for authorization
+            $this->authorize('view', $organization);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            \Log::warning('Unauthorized view attempt', [
+                'organization_id' => $organization->id,
+                'user_id' => request()->user()?->id,
+            ]);
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Check if organization exists and is not soft deleted
+        if (!$organization->exists) {
+            return response()->json(['message' => 'Organization not found'], 404);
+        }
+
+        $origin = request()->header('Origin');
+        $allowedOrigins = ['https://stcsolutions.online', 'http://localhost:5173', 'http://localhost:3000'];
+        $allowedOrigin = in_array($origin, $allowedOrigins) ? $origin : 'https://stcsolutions.online';
         
-        return response()->json($organization);
+        return response()->json($organization)
+            ->header('Access-Control-Allow-Origin', $allowedOrigin)
+            ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token')
+            ->header('Access-Control-Allow-Credentials', 'true');
     }
 
     public function store(OrganizationStoreRequest $request): JsonResponse
