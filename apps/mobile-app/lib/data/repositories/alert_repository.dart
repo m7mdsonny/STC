@@ -20,7 +20,7 @@ class AlertRepository {
       final params = <String, dynamic>{};
       if (page != null) params['page'] = page;
       if (limit != null) params['per_page'] = limit;
-      if (type != null) params['module'] = type;
+      if (type != null) params['module'] = type; // Cloud API uses 'module', not 'type'
       if (level != null) params['severity'] = level;
       if (status != null) params['status'] = status;
       if (startDate != null) params['from'] = startDate.toIso8601String();
