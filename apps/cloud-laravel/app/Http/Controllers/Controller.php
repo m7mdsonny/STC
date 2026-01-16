@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Helpers\RoleHelper;
 use App\Services\DomainActionService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\App;
 
 abstract class Controller extends BaseController
 {
+    use AuthorizesRequests;
     /**
      * Ensure user is super admin
      */
