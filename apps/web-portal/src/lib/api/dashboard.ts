@@ -18,10 +18,61 @@ interface RecentAlert {
   status: string;
 }
 
+interface OrganizationModuleStatus {
+  module_id: number;
+  module_name: string;
+  display_name: string;
+  status: 'active' | 'disabled' | 'broken';
+  enabled_count: number;
+  total_count: number;
+}
+
+interface OrganizationLastActivity {
+  last_event?: string | null;
+  last_server_sync?: string | null;
+  last_camera_update?: string | null;
+}
+
+interface OrganizationErrorSummary {
+  critical_errors: number;
+  high_errors: number;
+  unresolved_alerts: number;
+  total_errors: number;
+}
+
 interface DashboardData extends DashboardStats {
   organization_name?: string | null;
   recent_alerts: RecentAlert[];
   weekly_stats: { day: string; alerts: number; visitors: number }[];
+  module_status?: OrganizationModuleStatus[];
+  last_activity?: OrganizationLastActivity;
+  error_summary?: OrganizationErrorSummary;
+}
+
+interface ModuleStatus {
+  active: number;
+  disabled: number;
+  broken: number;
+  total: number;
+}
+
+interface LastActivity {
+  last_user_login?: string | null;
+  last_edge_server_sync?: string | null;
+  last_event?: string | null;
+}
+
+interface ErrorSummary {
+  critical_errors: number;
+  high_errors: number;
+  unresolved_alerts: number;
+  total_errors: number;
+}
+
+interface SystemHealth {
+  database: { status: string; latency_ms: number };
+  edge_servers: { status: string; online_ratio: number };
+  overall: string;
 }
 
 interface AdminDashboardData {
@@ -34,10 +85,14 @@ interface AdminDashboardData {
   total_users: number;
   alerts_today: number;
   revenue_this_month?: number;
-  revenue_previous_month?: number; // TODO: Backend should provide this
-  revenue_year_total?: number; // TODO: Backend should provide this
+  revenue_previous_month?: number;
+  revenue_year_total?: number;
   organizations_by_plan?: { plan: string; count: number }[];
   recent_activities?: { id: string; type: string; description: string; created_at: string }[];
+  module_status?: ModuleStatus;
+  last_activity?: LastActivity;
+  error_summary?: ErrorSummary;
+  system_health?: SystemHealth;
 }
 
 interface SystemHealth {

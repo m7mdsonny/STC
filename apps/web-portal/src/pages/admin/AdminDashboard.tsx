@@ -80,6 +80,16 @@ export function AdminDashboard() {
       } else {
         setYearTotalRevenue(null);
       }
+
+      // Log new dashboard data for debugging
+      if (data.module_status || data.last_activity || data.error_summary || data.system_health) {
+        console.log('Dashboard extended data:', {
+          module_status: data.module_status,
+          last_activity: data.last_activity,
+          error_summary: data.error_summary,
+          system_health: data.system_health,
+        });
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'حدث خطأ في تحميل البيانات';
       console.error('Error fetching stats:', error);
