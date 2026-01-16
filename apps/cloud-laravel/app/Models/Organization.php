@@ -130,4 +130,18 @@ class Organization extends BaseModel
     {
         return $this->hasMany(Camera::class);
     }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function ($organization) {
+            // Cascade delete related records
+            $organization->licenses()->delete();
+            $organization->edgeServers()->delete();
+            $organization->cameras()->delete();
+            $organization->branding()->delete();
+            $organization->smsQuota()->delete();
+        });
+    }
 }

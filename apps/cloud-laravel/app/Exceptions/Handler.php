@@ -42,7 +42,11 @@ class Handler extends ExceptionHandler
 
             // Always surface domain errors with their intended status code
             if ($request->expectsJson() || $request->is('api/*')) {
-                return response()->json($payload, $e->getStatus());
+                return response()->json($payload, $e->getStatus())
+                    ->header('Access-Control-Allow-Origin', $request->header('Origin') ?? '*')
+                    ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+                    ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token')
+                    ->header('Access-Control-Allow-Credentials', 'true');
             }
 
             return response($payload['message'], $e->getStatus());
@@ -57,9 +61,31 @@ class Handler extends ExceptionHandler
         if ($request->expectsJson() || $request->is('api/*')) {
             return response()->json([
                 'message' => 'Unauthenticated.',
-            ], 401);
+            ], 401)
+                ->header('Access-Control-Allow-Origin', $request->header('Origin') ?? '*')
+                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token')
+                ->header('Access-Control-Allow-Credentials', 'true');
         }
 
         return redirect()->guest('/login');
+    }
+
+    /**
+     * Render an exception into an HTTP response.
+     */
+    public function render($request, Throwable $e)
+    {
+        $response = parent::render($request, $e);
+
+        // Add CORS headers to ALL responses for API requests
+        if ($request->is('api/*') || $request->expectsJson()) {
+            $response->headers->set('Access-Control-Allow-Origin', $request->header('Origin') ?? '*');
+            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+            $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token');
+            $response->headers->set('Access-Control-Allow-Credentials', 'true');
+        }
+
+        return $response;
     }
 }
