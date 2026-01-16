@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Settings as SettingsIcon, Building2, Bell, Shield, Server, Plus, Trash2, RefreshCw, Wifi, WifiOff, Activity, AlertTriangle, MapPin, Key } from 'lucide-react';
 import { edgeServersApi } from '../lib/api/edgeServers';
 import { licensesApi } from '../lib/api/licenses';
