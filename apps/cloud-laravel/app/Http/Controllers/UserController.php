@@ -116,11 +116,41 @@ class UserController extends Controller
     public function destroy(User $user): JsonResponse
     {
         // Use Policy for authorization (prevents self-deletion)
-        $this->authorize('delete', $user);
+        try {
+            $this->authorize('delete', $user);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            \Log::warning('Unauthorized delete attempt', [
+                'user_id' => $user->id,
+                'actor_id' => request()->user()?->id,
+            ]);
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
         try {
+            // Check if user exists
+            if (!$user->exists) {
+                return response()->json(['message' => 'User not found'], 404);
+            }
+
+            // Soft delete user
             $user->delete();
             return response()->json(['message' => 'User deleted'], 200);
+        } catch (\Illuminate\Database\QueryException $e) {
+            \Log::error('Database error deleting user', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'code' => $e->getCode(),
+            ]);
+            
+            if ($e->getCode() == 23000) {
+                return response()->json([
+                    'message' => 'Cannot delete user: it has related records that must be removed first'
+                ], 422);
+            }
+            
+            return response()->json([
+                'message' => 'Failed to delete user: ' . $e->getMessage()
+            ], 500);
         } catch (\Exception $e) {
             \Log::error('Failed to delete user', [
                 'user_id' => $user->id,
@@ -128,7 +158,7 @@ class UserController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'فشل حذف المستخدم: ' . $e->getMessage()
+                'message' => 'Failed to delete user: ' . $e->getMessage()
             ], 500);
         }
     }

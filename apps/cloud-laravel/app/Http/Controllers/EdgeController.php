@@ -113,15 +113,52 @@ class EdgeController extends Controller
     public function destroy(EdgeServer $edgeServer): JsonResponse
     {
         // Use Policy for authorization
-        $this->authorize('delete', $edgeServer);
-
         try {
-            $this->edgeServerService->deleteEdgeServer($edgeServer, request()->user());
-        } catch (DomainActionException $e) {
-            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+            $this->authorize('delete', $edgeServer);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            \Log::warning('Unauthorized delete attempt', [
+                'edge_server_id' => $edgeServer->id,
+                'actor_id' => request()->user()?->id,
+            ]);
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        return response()->json(['message' => 'Edge server deleted']);
+        try {
+            // Check if edge server exists
+            if (!$edgeServer->exists) {
+                return response()->json(['message' => 'Edge server not found'], 404);
+            }
+
+            $this->edgeServerService->deleteEdgeServer($edgeServer, request()->user());
+            return response()->json(['message' => 'Edge server deleted'], 200);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        } catch (\Illuminate\Database\QueryException $e) {
+            \Log::error('Database error deleting edge server', [
+                'edge_server_id' => $edgeServer->id,
+                'error' => $e->getMessage(),
+                'code' => $e->getCode(),
+            ]);
+            
+            if ($e->getCode() == 23000) {
+                return response()->json([
+                    'message' => 'Cannot delete edge server: it has related records that must be removed first'
+                ], 422);
+            }
+            
+            return response()->json([
+                'message' => 'Failed to delete edge server: ' . $e->getMessage()
+            ], 500);
+        } catch (\Exception $e) {
+            \Log::error('Failed to delete edge server', [
+                'edge_server_id' => $edgeServer->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to delete edge server: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function logs(Request $request, EdgeServer $edgeServer): JsonResponse

@@ -29,9 +29,8 @@ class OrganizationStoreRequest extends FormRequest
             'address' => 'nullable|string|max:500',
             'city' => 'nullable|string|max:255',
             'tax_number' => 'nullable|string|max:255',
-            'subscription_plan' => 'required|string',
-            'max_cameras' => 'nullable|integer|min:1',
-            'max_edge_servers' => 'nullable|integer|min:1',
+            'subscription_plan' => 'required|string|exists:subscription_plans,name',
+            // max_cameras and max_edge_servers removed - use package defaults
             'reseller_id' => 'nullable|exists:resellers,id',
             'distributor_id' => 'nullable|exists:distributors,id',
         ];

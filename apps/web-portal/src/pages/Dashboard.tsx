@@ -22,6 +22,7 @@ export function Dashboard() {
   const [policy, setPolicy] = useState<AiPolicyEffective | null>(null);
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<{
+    organization_name?: string | null;
     visitors: { today: number; trend: number };
     attendance: { today: number; late: number };
     weekly_stats: { day: string; alerts: number; visitors: number }[];
@@ -87,12 +88,14 @@ export function Dashboard() {
       
       if (dashboardRes) {
         setDashboardData({
+          organization_name: dashboardRes.organization_name,
           visitors: dashboardRes.visitors || { today: 0, trend: 0 },
           attendance: dashboardRes.attendance || { today: 0, late: 0 },
           weekly_stats: dashboardRes.weekly_stats || [],
         });
       } else {
         setDashboardData({
+          organization_name: null,
           visitors: { today: 0, trend: 0 },
           attendance: { today: 0, late: 0 },
           weekly_stats: [],
@@ -106,6 +109,7 @@ export function Dashboard() {
       setAlerts([]);
       setPolicy(null);
       setDashboardData({
+        organization_name: null,
         visitors: { today: 0, trend: 0 },
         attendance: { today: 0, late: 0 },
         weekly_stats: [],
@@ -132,7 +136,7 @@ export function Dashboard() {
     <div className="space-y-5">
       <div className="page-header">
         <div>
-          <h1 className="page-title">مرحبا، {organization?.name}</h1>
+          <h1 className="page-title">مرحبا، {dashboardData?.organization_name || organization?.name || 'المؤسسة'}</h1>
           <p className="page-subtitle">نظرة عامة على نظام المراقبة</p>
         </div>
         <Link to="/automation" className="btn-primary flex items-center gap-2 text-sm py-2.5 px-4">

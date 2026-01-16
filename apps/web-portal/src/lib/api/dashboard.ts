@@ -19,6 +19,7 @@ interface RecentAlert {
 }
 
 interface DashboardData extends DashboardStats {
+  organization_name?: string | null;
   recent_alerts: RecentAlert[];
   weekly_stats: { day: string; alerts: number; visitors: number }[];
 }

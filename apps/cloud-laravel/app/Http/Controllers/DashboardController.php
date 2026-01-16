@@ -84,6 +84,7 @@ class DashboardController extends Controller
 
         if (!$organizationId) {
             return response()->json([
+                'organization_name' => null,
                 'edge_servers' => ['online' => 0, 'total' => 0],
                 'cameras' => ['online' => 0, 'total' => 0],
                 'alerts' => ['today' => 0, 'unresolved' => 0],
@@ -93,6 +94,9 @@ class DashboardController extends Controller
                 'weekly_stats' => [],
             ]);
         }
+
+        // Fetch organization name
+        $organization = Organization::find($organizationId);
 
         $edgeServers = EdgeServer::where('organization_id', $organizationId)->get();
         $cameras = Camera::where('organization_id', $organizationId)->get();
@@ -180,6 +184,7 @@ class DashboardController extends Controller
             : 0;
 
         return response()->json([
+            'organization_name' => $organization?->name ?? null,
             'edge_servers' => [
                 'online' => $edgeServers->where('online', true)->count(),
                 'total' => $edgeServers->count(),
