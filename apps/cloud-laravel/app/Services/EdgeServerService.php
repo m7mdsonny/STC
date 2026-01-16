@@ -73,8 +73,14 @@ class EdgeServerService
                     'online' => false,
                 ]);
 
-                $edgeServer->setAttribute('edge_secret', $encryptedSecret);
-                $edgeServer->save();
+                // CRITICAL FIX: Use DB::table()->update() to bypass Eloquent casting
+                // This ensures the encrypted string is saved correctly even if column is TEXT
+                DB::table('edge_servers')
+                    ->where('id', $edgeServer->id)
+                    ->update(['edge_secret' => $encryptedSecret]);
+                
+                // Refresh model to get updated data
+                $edgeServer->refresh();
 
                 if ($licenseId) {
                     License::where('id', $licenseId)->update(['edge_server_id' => $edgeServer->id]);
