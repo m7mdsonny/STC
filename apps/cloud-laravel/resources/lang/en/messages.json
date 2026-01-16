@@ -1,0 +1,139 @@
+{
+    "validation": {
+        "required": "The :attribute field is required.",
+        "email": "The :attribute must be a valid email address.",
+        "min": {
+            "string": "The :attribute must be at least :min characters."
+        },
+        "max": {
+            "string": "The :attribute must not be greater than :max characters."
+        },
+        "unique": "The :attribute has already been taken.",
+        "confirmed": "The :attribute confirmation does not match.",
+        "exists": "The selected :attribute is invalid."
+    },
+    
+    "auth": {
+        "failed": "These credentials do not match our records.",
+        "password": "The provided password is incorrect.",
+        "throttle": "Too many login attempts. Please try again in :seconds seconds.",
+        "login_success": "Login successful.",
+        "logout_success": "Logout successful.",
+        "unauthorized": "Unauthorized.",
+        "session_expired": "Session expired."
+    },
+    
+    "messages": {
+        "success": "Operation successful.",
+        "error": "An error occurred.",
+        "created": "Created successfully.",
+        "updated": "Updated successfully.",
+        "deleted": "Deleted successfully.",
+        "not_found": "Not found.",
+        "forbidden": "Access denied.",
+        "server_error": "Server error.",
+        "validation_error": "Validation error."
+    },
+    
+    "cameras": {
+        "created": "Camera added successfully.",
+        "updated": "Camera updated successfully.",
+        "deleted": "Camera deleted successfully.",
+        "not_found": "Camera not found.",
+        "quota_exceeded": "Camera quota exceeded.",
+        "sync_success": "Camera synced successfully.",
+        "sync_failed": "Camera sync failed."
+    },
+    
+    "edge_servers": {
+        "created": "Edge server added successfully.",
+        "updated": "Edge server updated successfully.",
+        "deleted": "Edge server deleted successfully.",
+        "not_found": "Edge server not found.",
+        "quota_exceeded": "Edge server quota exceeded.",
+        "connection_failed": "Failed to connect to edge server.",
+        "connection_success": "Connected to edge server successfully."
+    },
+    
+    "organizations": {
+        "created": "Organization created successfully.",
+        "updated": "Organization updated successfully.",
+        "deleted": "Organization deleted successfully.",
+        "not_found": "Organization not found."
+    },
+    
+    "users": {
+        "created": "User created successfully.",
+        "updated": "User updated successfully.",
+        "deleted": "User deleted successfully.",
+        "not_found": "User not found.",
+        "password_changed": "Password changed successfully."
+    },
+    
+    "licenses": {
+        "created": "License created successfully.",
+        "updated": "License updated successfully.",
+        "deleted": "License deleted successfully.",
+        "activated": "License activated successfully.",
+        "suspended": "License suspended.",
+        "expired": "License expired.",
+        "invalid": "License is invalid.",
+        "not_found": "License not found."
+    },
+    
+    "alerts": {
+        "created": "Alert created successfully.",
+        "acknowledged": "Alert acknowledged.",
+        "resolved": "Alert resolved.",
+        "not_found": "Alert not found."
+    },
+    
+    "people": {
+        "created": "Person added successfully.",
+        "updated": "Person updated successfully.",
+        "deleted": "Person deleted successfully.",
+        "not_found": "Person not found."
+    },
+    
+    "vehicles": {
+        "created": "Vehicle added successfully.",
+        "updated": "Vehicle updated successfully.",
+        "deleted": "Vehicle deleted successfully.",
+        "not_found": "Vehicle not found."
+    },
+    
+    "backups": {
+        "created": "Backup created successfully.",
+        "restored": "Backup restored successfully.",
+        "deleted": "Backup deleted successfully.",
+        "not_found": "Backup not found.",
+        "in_progress": "Creating backup..."
+    },
+    
+    "automation": {
+        "created": "Rule created successfully.",
+        "updated": "Rule updated successfully.",
+        "deleted": "Rule deleted successfully.",
+        "enabled": "Rule enabled.",
+        "disabled": "Rule disabled.",
+        "not_found": "Rule not found."
+    },
+    
+    "ai_modules": {
+        "enabled": "Module enabled successfully.",
+        "disabled": "Module disabled.",
+        "not_available": "Module not available in your current plan.",
+        "quota_exceeded": "Module quota exceeded.",
+        "camera_linked": "Module linked to camera successfully.",
+        "camera_unlinked": "Module unlinked from camera."
+    },
+    
+    "subscription": {
+        "active": "Subscription is active.",
+        "expired": "Subscription expired.",
+        "suspended": "Subscription suspended.",
+        "grace_period": "Grace period.",
+        "no_license": "No license found.",
+        "upgrade_required": "Please upgrade your plan."
+    }
+}

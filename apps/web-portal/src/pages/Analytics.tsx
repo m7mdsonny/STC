@@ -1,13 +1,57 @@
-import { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, Users, Car, AlertTriangle, Calendar, Download, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { BarChart3, TrendingUp, Users, Car, AlertTriangle, Calendar, Download, Loader2, RefreshCw } from 'lucide-react';
 import { analyticsApi } from '../lib/api/analytics';
 import { alertsApi } from '../lib/api/alerts';
 import { vehiclesApi } from '../lib/api/vehicles';
+import { API_BASE_URL } from '../lib/apiClient';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import { format, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 
 const COLORS = ['#DCA000', '#10B981', '#3B82F6', '#EF4444', '#8B5CF6', '#F59E0B'];
+
+// Animated Counter Component for statistics
+function AnimatedStat({ value, suffix = '' }: { value: number; suffix?: string }) {
+  const [count, setCount] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(true);
+  const prevValue = useRef(0);
+
+  useEffect(() => {
+    if (value === 0) {
+      setCount(0);
+      return;
+    }
+
+    setIsAnimating(true);
+    const duration = 1000;
+    const startValue = prevValue.current;
+    let startTime: number;
+
+    const animate = (currentTime: number) => {
+      if (!startTime) startTime = currentTime;
+      const progress = Math.min((currentTime - startTime) / duration, 1);
+      const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+      setCount(Math.floor(easeOutQuart * (value - startValue) + startValue));
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        setCount(value);
+        setIsAnimating(false);
+        prevValue.current = value;
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [value]);
+
+  return (
+    <span className={`stats-number transition-all ${isAnimating ? 'text-stc-gold' : ''}`}>
+      {count.toLocaleString()}{suffix}
+    </span>
+  );
+}
 
 interface AnalyticsData {
   visitorData: { hour: string; count: number }[];
@@ -55,6 +99,7 @@ const defaultAnalyticsData: AnalyticsData = {
 
 export function Analytics() {
   const { organization } = useAuth();
+  const { showError } = useToast();
   const [dateRange, setDateRange] = useState('week');
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<AnalyticsData>(defaultAnalyticsData);
@@ -250,7 +295,8 @@ export function Analytics() {
       console.error('Error fetching analytics:', error);
       // Set default data to prevent crashes
       setData(defaultAnalyticsData);
-      alert('حدث خطأ في تحميل البيانات. يرجى المحاولة مرة أخرى.');
+      // FIXED: Use toast notification instead of alert()
+      showError('خطأ في تحميل البيانات', 'حدث خطأ في تحميل البيانات. يرجى المحاولة مرة أخرى.');
     } finally {
       setLoading(false);
     }
@@ -275,11 +321,11 @@ export function Analytics() {
       };
 
       // Call backend to generate PDF
-      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/analytics/export-pdf`, {
+      const response = await fetch(`${API_BASE_URL}/analytics/export-pdf`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token') || localStorage.getItem('token') || ''}`,
         },
         body: JSON.stringify(reportData),
       });
@@ -354,6 +400,14 @@ export function Analytics() {
             <option value="year">هذا العام</option>
           </select>
           <button 
+            onClick={fetchAnalyticsData}
+            className="btn-secondary flex items-center gap-2"
+            disabled={loading}
+          >
+            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+            <span>تحديث</span>
+          </button>
+          <button 
             onClick={handleExportPDF}
             className="btn-secondary flex items-center gap-2"
             disabled={loading}
@@ -365,53 +419,61 @@ export function Analytics() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="stat-card">
+        <div className="stat-card card-hover">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 rounded-xl bg-gradient-to-br from-stc-gold/20 to-stc-gold/5">
               <Users className="w-6 h-6 text-stc-gold" />
             </div>
-            <span className={`text-sm ${data.stats.visitorsChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+            <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${data.stats.visitorsChange >= 0 ? 'text-emerald-400 bg-emerald-500/20' : 'text-red-400 bg-red-500/20'}`}>
               {data.stats.visitorsChange >= 0 ? '+' : ''}{data.stats.visitorsChange}%
             </span>
           </div>
-          <p className="text-3xl font-bold text-white mb-1">{data.stats.totalVisitors.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-white mb-1">
+            <AnimatedStat value={data.stats.totalVisitors} />
+          </p>
           <p className="text-sm text-white/60">اجمالي الزوار</p>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card card-hover">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5">
               <Car className="w-6 h-6 text-emerald-500" />
             </div>
-            <span className={`text-sm ${data.stats.vehiclesChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+            <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${data.stats.vehiclesChange >= 0 ? 'text-emerald-400 bg-emerald-500/20' : 'text-red-400 bg-red-500/20'}`}>
               {data.stats.vehiclesChange >= 0 ? '+' : ''}{data.stats.vehiclesChange}%
             </span>
           </div>
-          <p className="text-3xl font-bold text-white mb-1">{data.stats.totalVehicles.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-white mb-1">
+            <AnimatedStat value={data.stats.totalVehicles} />
+          </p>
           <p className="text-sm text-white/60">المركبات</p>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card card-hover">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 rounded-xl bg-gradient-to-br from-red-500/20 to-red-500/5">
               <AlertTriangle className="w-6 h-6 text-red-500" />
             </div>
-            <span className={`text-sm ${data.stats.alertsChange <= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+            <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${data.stats.alertsChange <= 0 ? 'text-emerald-400 bg-emerald-500/20' : 'text-red-400 bg-red-500/20'}`}>
               {data.stats.alertsChange >= 0 ? '+' : ''}{data.stats.alertsChange}%
             </span>
           </div>
-          <p className="text-3xl font-bold text-white mb-1">{data.stats.totalAlerts.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-white mb-1">
+            <AnimatedStat value={data.stats.totalAlerts} />
+          </p>
           <p className="text-sm text-white/60">التنبيهات</p>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card card-hover">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-500/5">
               <TrendingUp className="w-6 h-6 text-blue-500" />
             </div>
-            <span className="text-emerald-400 text-sm">+15%</span>
+            <span className="text-sm font-medium px-2 py-0.5 rounded-full text-emerald-400 bg-emerald-500/20">+15%</span>
           </div>
-          <p className="text-3xl font-bold text-white mb-1">{data.stats.detectionRate}%</p>
+          <p className="text-3xl font-bold text-white mb-1">
+            <AnimatedStat value={data.stats.detectionRate} suffix="%" />
+          </p>
           <p className="text-sm text-white/60">نسبة الكشف</p>
         </div>
       </div>
@@ -615,28 +677,14 @@ export function Analytics() {
         </div>
       </div>
 
+      {/* FIXED: Remove hardcoded performance metrics - show "Under Development" until API is available */}
       <div className="card p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold">تقرير الاداء الشهري</h2>
-          <button className="btn-secondary text-sm">عرض التفاصيل</button>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-white/5 rounded-lg text-center">
-            <p className="text-3xl font-bold text-stc-gold mb-1">98.5%</p>
-            <p className="text-sm text-white/60">دقة الكشف</p>
-          </div>
-          <div className="p-4 bg-white/5 rounded-lg text-center">
-            <p className="text-3xl font-bold text-emerald-400 mb-1">99.9%</p>
-            <p className="text-sm text-white/60">وقت التشغيل</p>
-          </div>
-          <div className="p-4 bg-white/5 rounded-lg text-center">
-            <p className="text-3xl font-bold text-blue-400 mb-1">1.2s</p>
-            <p className="text-sm text-white/60">متوسط الاستجابة</p>
-          </div>
-          <div className="p-4 bg-white/5 rounded-lg text-center">
-            <p className="text-3xl font-bold text-red-400 mb-1">2.1%</p>
-            <p className="text-sm text-white/60">انذارات كاذبة</p>
-          </div>
+        <div className="text-center py-8 text-white/60">
+          <p>مؤشرات الأداء ستكون متاحة قريباً</p>
+          <p className="text-sm text-white/40 mt-2">يتم حالياً تطوير واجهة برمجة التطبيقات (API) لمؤشرات الأداء</p>
         </div>
       </div>
     </div>

@@ -5,11 +5,16 @@ namespace App\Http\Controllers;
 use App\Helpers\RoleHelper;
 use App\Models\AutomationRule;
 use App\Models\AutomationLog;
+use App\Services\AutomationRuleService;
+use App\Exceptions\DomainActionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AutomationRuleController extends Controller
 {
+    public function __construct(private AutomationRuleService $automationRuleService)
+    {
+    }
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -71,19 +76,6 @@ class AutomationRuleController extends Controller
             $organizationId = $request->get('organization_id');
         }
 
-        // Non-super-admin users must have organization
-        if (!$organizationId) {
-            return response()->json(['message' => 'Organization ID is required'], 422);
-        }
-
-        // Check permissions
-        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
-            if (!RoleHelper::canEdit($user->role)) {
-                return response()->json(['message' => 'Insufficient permissions to create automation rules'], 403);
-            }
-            $this->ensureOrganizationAccess($request, $organizationId);
-        }
-
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'name_ar' => 'nullable|string|max:255',
@@ -99,37 +91,19 @@ class AutomationRuleController extends Controller
             'priority' => 'nullable|integer|min:0',
         ]);
 
-        // Verify integration belongs to organization if provided
-        if (isset($data['integration_id'])) {
-            $integration = \App\Models\Integration::findOrFail($data['integration_id']);
-            if ($integration->organization_id !== (int) $organizationId) {
-                return response()->json(['message' => 'Integration does not belong to your organization'], 403);
-            }
+        $data['organization_id'] = $organizationId;
+
+        try {
+            $rule = $this->automationRuleService->createRule($data, $user);
+            return response()->json($rule, 201);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
-
-        $rule = AutomationRule::create([
-            ...$data,
-            'organization_id' => $organizationId,
-            'cooldown_seconds' => $data['cooldown_seconds'] ?? 60,
-            'is_active' => $data['is_active'] ?? true,
-            'priority' => $data['priority'] ?? 0,
-        ]);
-
-        $rule->load(['organization', 'integration']);
-        return response()->json($rule, 201);
     }
 
     public function update(Request $request, AutomationRule $automationRule): JsonResponse
     {
         $user = request()->user();
-
-        // Check ownership and permissions
-        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
-            $this->ensureOrganizationAccess(request(), $automationRule->organization_id);
-            if (!RoleHelper::canEdit($user->role)) {
-                return response()->json(['message' => 'Insufficient permissions to update automation rules'], 403);
-            }
-        }
 
         $data = $request->validate([
             'name' => 'sometimes|string|max:255',
@@ -146,49 +120,36 @@ class AutomationRuleController extends Controller
             'priority' => 'nullable|integer|min:0',
         ]);
 
-        // Verify integration belongs to organization if changed
-        if (isset($data['integration_id'])) {
-            $integration = \App\Models\Integration::findOrFail($data['integration_id']);
-            if ($integration->organization_id !== $automationRule->organization_id) {
-                return response()->json(['message' => 'Integration does not belong to your organization'], 403);
-            }
+        try {
+            $automationRule = $this->automationRuleService->updateRule($automationRule, $data, $user);
+            return response()->json($automationRule);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
-
-        $automationRule->update($data);
-        $automationRule->load(['organization', 'integration']);
-
-        return response()->json($automationRule);
     }
 
     public function destroy(AutomationRule $automationRule): JsonResponse
     {
         $user = request()->user();
 
-        // Check ownership and permissions
-        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
-            $this->ensureOrganizationAccess(request(), $automationRule->organization_id);
-            if (!RoleHelper::canManageOrganization($user->role)) {
-                return response()->json(['message' => 'Insufficient permissions to delete automation rules'], 403);
-            }
+        try {
+            $this->automationRuleService->deleteRule($automationRule, $user);
+            return response()->json(['message' => 'Automation rule deleted']);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
-
-        $automationRule->delete();
-
-        return response()->json(['message' => 'Automation rule deleted']);
     }
 
     public function toggleActive(AutomationRule $automationRule): JsonResponse
     {
         $user = request()->user();
 
-        // Check ownership
-        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
-            $this->ensureOrganizationAccess(request(), $automationRule->organization_id);
+        try {
+            $automationRule = $this->automationRuleService->toggleActive($automationRule, $user);
+            return response()->json($automationRule);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
-
-        $automationRule->update(['is_active' => !$automationRule->is_active]);
-
-        return response()->json($automationRule);
     }
 
     public function test(AutomationRule $automationRule): JsonResponse

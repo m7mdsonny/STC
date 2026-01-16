@@ -18,6 +18,7 @@ interface CreateCameraData {
   resolution?: string;
   fps?: number;
   enabled_modules?: string[];
+  organization_id?: string; // Required for super admin, auto-set for org users
 }
 
 export const camerasApi = {

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\SystemBackup;
+use App\Services\BackupService;
+use App\Exceptions\DomainActionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +14,9 @@ use Symfony\Component\Process\Process;
 
 class SystemBackupController extends Controller
 {
+    public function __construct(private BackupService $backupService)
+    {
+    }
     public function index(): JsonResponse
     {
         $this->ensureSuperAdmin(request());
@@ -94,17 +99,13 @@ class SystemBackupController extends Controller
         }
 
         try {
-            $backup = SystemBackup::create([
-                'file_path' => $path,
-                'status' => $status,
-                'meta' => array_merge($data['meta'] ?? [], [
-                    'description' => $data['description'] ?? null,
-                    'file_size' => Storage::size($path),
-                    'created_at' => now()->toIso8601String(),
-                ]),
-                'created_by' => $request->user()?->id,
-                'created_at' => now(),
+            $meta = array_merge($data['meta'] ?? [], [
+                'description' => $data['description'] ?? null,
+                'file_size' => Storage::size($path),
+                'created_at' => now()->toIso8601String(),
             ]);
+
+            $backup = $this->backupService->createBackup($path, $status, $meta, $request->user());
 
             return response()->json([
                 'id' => $backup->id,
@@ -114,6 +115,8 @@ class SystemBackupController extends Controller
                 'file_size' => $backup->meta['file_size'] ?? null,
                 'created_at' => $backup->created_at?->toISOString(),
             ], 201);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         } catch (\Exception $e) {
             \Log::error('Failed to create backup record: ' . $e->getMessage());
             return response()->json([
@@ -160,11 +163,7 @@ class SystemBackupController extends Controller
 
             $this->runRestore($backupPath);
 
-            $backup->update([
-                'status' => 'restored',
-                'restored_at' => now(),
-                'restored_by' => $request->user()?->id,
-            ]);
+            $this->backupService->markRestored($backup, $request->user());
 
             \Log::info('Database restore completed successfully', [
                 'backup_id' => $backup->id,
@@ -172,6 +171,8 @@ class SystemBackupController extends Controller
             ]);
 
             return response()->json(['message' => 'Database restored successfully']);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         } catch (\Exception $e) {
             \Log::error('Database restore failed', [
                 'backup_id' => $backup->id,
@@ -195,6 +196,38 @@ class SystemBackupController extends Controller
         }
 
         return Storage::download($backup->file_path, basename($backup->file_path));
+    }
+
+    public function destroy(SystemBackup $backup): JsonResponse
+    {
+        $this->ensureSuperAdmin(request());
+
+        try {
+            $backupId = $backup->id;
+            $filePath = $backup->file_path;
+            
+            $this->backupService->deleteBackup($backup, request()->user());
+
+            \Log::info('Backup deleted', [
+                'backup_id' => $backupId,
+                'file_path' => $filePath,
+                'user_id' => request()->user()?->id,
+            ]);
+
+            return response()->json(['message' => 'Backup deleted successfully']);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        } catch (\Exception $e) {
+            \Log::error('Failed to delete backup', [
+                'backup_id' => $backup->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to delete backup',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     protected function createDatabaseDump(): string

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Building2, Edit2, Pause } from 'lucide-react';
+import { Plus, Search, Building2, Edit2, Pause, Trash2 } from 'lucide-react';
 import { organizationsApi, subscriptionPlansApi } from '../../lib/api';
 import { DataTable } from '../../components/ui/DataTable';
 import { Modal } from '../../components/ui/Modal';
@@ -130,6 +130,21 @@ export function Organizations() {
     }
   };
 
+  const handleDelete = async (org: Organization) => {
+    if (!confirm(`هل أنت متأكد من حذف المؤسسة "${org.name}"؟ سيتم حذف جميع البيانات المرتبطة بها.`)) {
+      return;
+    }
+    try {
+      await organizationsApi.deleteOrganization(org.id);
+      showSuccess('تم الحذف', `تم حذف المؤسسة ${org.name} بنجاح`);
+      fetchOrganizations();
+    } catch (error) {
+      console.error('Error deleting organization:', error);
+      const { title, message } = getDetailedErrorMessage(error, 'حذف المؤسسة', 'حدث خطأ في حذف المؤسسة');
+      showError(title, message);
+    }
+  };
+
   const filteredOrgs = organizations.filter(org =>
     org.name.toLowerCase().includes(search.toLowerCase()) ||
     org.email?.toLowerCase().includes(search.toLowerCase())
@@ -210,6 +225,13 @@ export function Organizations() {
             title={org.is_active ? 'تعليق' : 'تفعيل'}
           >
             <Pause className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => handleDelete(org)}
+            className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-red-400"
+            title="حذف"
+          >
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
       ),

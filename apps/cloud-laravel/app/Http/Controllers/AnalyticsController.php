@@ -10,6 +10,8 @@ use App\Models\EdgeServer;
 use App\Models\Event;
 use App\Models\License;
 use App\Services\AnalyticsService;
+use App\Services\DomainActionService;
+use App\Exceptions\DomainActionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -18,9 +20,10 @@ class AnalyticsController extends Controller
 {
     protected AnalyticsService $analyticsService;
 
-    public function __construct(AnalyticsService $analyticsService)
+    public function __construct(AnalyticsService $analyticsService, DomainActionService $domainActionService)
     {
         $this->analyticsService = $analyticsService;
+        $this->analyticsService->setDomainActionService($domainActionService);
     }
 
     public function summary(Request $request): JsonResponse
@@ -407,13 +410,12 @@ class AnalyticsController extends Controller
             'schedule_cron' => 'nullable|string',
         ]);
 
-        $report = AnalyticsReport::create([
-            ...$data,
-            'created_by' => $request->user()?->id,
-            'status' => 'draft',
-        ]);
-
-        return response()->json($report, 201);
+        try {
+            $report = $this->analyticsService->createReport($data, $request->user());
+            return response()->json($report, 201);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
     }
 
     public function updateReport(Request $request, AnalyticsReport $report): JsonResponse
@@ -432,28 +434,36 @@ class AnalyticsController extends Controller
             'status' => 'nullable|string',
         ]);
 
-        $report->update($data);
-
-        return response()->json($report);
+        try {
+            $report = $this->analyticsService->updateReport($report, $data, $request->user());
+            return response()->json($report);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
     }
 
     public function deleteReport(AnalyticsReport $report): JsonResponse
     {
         $this->ensureSuperAdmin(request());
-        $report->delete();
-        return response()->json(['message' => 'Report deleted']);
+        
+        try {
+            $this->analyticsService->deleteReport($report, request()->user());
+            return response()->json(['message' => 'Report deleted']);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
     }
 
     public function generateReport(AnalyticsReport $report): JsonResponse
     {
         $this->ensureSuperAdmin(request());
-        $report->update([
-            'status' => 'generated',
-            'last_generated_at' => now(),
-            'file_url' => $report->file_url ?? '/api/v1/analytics/reports/' . $report->id . '/download',
-        ]);
-
-        return response()->json(['status' => $report->status, 'file_url' => $report->file_url]);
+        
+        try {
+            $report = $this->analyticsService->generateReport($report, request()->user());
+            return response()->json(['status' => $report->status, 'file_url' => $report->file_url]);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
     }
 
     public function downloadReport(AnalyticsReport $report): JsonResponse
@@ -492,9 +502,12 @@ class AnalyticsController extends Controller
             'shared_with' => 'nullable|array',
         ]);
 
-        $dashboard = AnalyticsDashboard::create($data);
-
-        return response()->json($dashboard, 201);
+        try {
+            $dashboard = $this->analyticsService->createDashboard($data, $request->user());
+            return response()->json($dashboard, 201);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
     }
 
     public function updateDashboard(Request $request, AnalyticsDashboard $dashboard): JsonResponse
@@ -509,16 +522,24 @@ class AnalyticsController extends Controller
             'shared_with' => 'nullable|array',
         ]);
 
-        $dashboard->update($data);
-
-        return response()->json($dashboard);
+        try {
+            $dashboard = $this->analyticsService->updateDashboard($dashboard, $data, $request->user());
+            return response()->json($dashboard);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
     }
 
     public function deleteDashboard(AnalyticsDashboard $dashboard): JsonResponse
     {
         $this->ensureSuperAdmin(request());
-        $dashboard->delete();
-        return response()->json(['message' => 'Dashboard deleted']);
+        
+        try {
+            $this->analyticsService->deleteDashboard($dashboard, request()->user());
+            return response()->json(['message' => 'Dashboard deleted']);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
     }
 
     public function createWidget(Request $request, AnalyticsDashboard $dashboard): JsonResponse
@@ -536,9 +557,12 @@ class AnalyticsController extends Controller
             'height' => 'nullable|integer',
         ]);
 
-        $widget = $dashboard->widgets()->create($data);
-
-        return response()->json($widget, 201);
+        try {
+            $widget = $this->analyticsService->createWidget($dashboard, $data, $request->user());
+            return response()->json($widget, 201);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
     }
 
     public function updateWidget(Request $request, AnalyticsDashboard $dashboard, AnalyticsWidget $widget): JsonResponse
@@ -556,16 +580,24 @@ class AnalyticsController extends Controller
             'height' => 'nullable|integer',
         ]);
 
-        $widget->update($data);
-
-        return response()->json($widget);
+        try {
+            $widget = $this->analyticsService->updateWidget($widget, $data, $request->user());
+            return response()->json($widget);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
     }
 
     public function deleteWidget(AnalyticsDashboard $dashboard, AnalyticsWidget $widget): JsonResponse
     {
         $this->ensureSuperAdmin(request());
-        $widget->delete();
-        return response()->json(['message' => 'Widget deleted']);
+        
+        try {
+            $this->analyticsService->deleteWidget($widget, request()->user());
+            return response()->json(['message' => 'Widget deleted']);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
     }
 
     public function export(Request $request): JsonResponse

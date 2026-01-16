@@ -1,0 +1,57 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - heading "تسجيل الدخول" [level=2] [ref=e8]
+        - paragraph [ref=e9]: ادخل بياناتك للوصول الى لوحة التحكم
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - generic [ref=e12]: البريد الالكتروني
+          - generic [ref=e13]:
+            - img [ref=e14]
+            - textbox "example@company.com" [active] [ref=e17]: owner@demo.local
+        - generic [ref=e18]:
+          - generic [ref=e19]: كلمة المرور
+          - generic [ref=e20]:
+            - img [ref=e21]
+            - textbox "********" [ref=e24]
+            - button [ref=e25] [cursor=pointer]:
+              - img [ref=e26]
+        - generic [ref=e29]:
+          - generic [ref=e30] [cursor=pointer]:
+            - checkbox "تذكرني" [ref=e31]
+            - generic [ref=e32]: تذكرني
+          - link "نسيت كلمة المرور؟" [ref=e33] [cursor=pointer]:
+            - /url: /forgot-password
+        - button "تسجيل الدخول" [ref=e34] [cursor=pointer]:
+          - generic [ref=e35]: تسجيل الدخول
+      - link "العودة للصفحة الرئيسية" [ref=e37] [cursor=pointer]:
+        - /url: /
+        - img [ref=e38]
+        - generic [ref=e41]: العودة للصفحة الرئيسية
+    - paragraph [ref=e42]:
+      - text: ليس لديك حساب؟
+      - link "تواصل معنا" [ref=e43] [cursor=pointer]:
+        - /url: /#contact
+  - generic [ref=e46]:
+    - img "STC Solutions" [ref=e47]
+    - heading "مرحبا بك في STC AI-VAP" [level=1] [ref=e48]:
+      - text: مرحبا بك في
+      - text: STC AI-VAP
+    - paragraph [ref=e49]:
+      - text: منصة تحليل الفيديو بالذكاء الاصطناعي
+      - text: حول كاميراتك الى عيون ذكية
+    - generic [ref=e50]:
+      - generic [ref=e51]:
+        - paragraph [ref=e52]: 9+
+        - paragraph [ref=e53]: موديولات ذكية
+      - generic [ref=e54]:
+        - paragraph [ref=e55]: "128"
+        - paragraph [ref=e56]: كاميرا كحد اقصى
+      - generic [ref=e57]:
+        - paragraph [ref=e58]: 24/7
+        - paragraph [ref=e59]: مراقبة مستمرة
+```

@@ -36,9 +36,14 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className={`relative bg-stc-navy rounded-2xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-hidden`}>
+      <div 
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+        className={`relative bg-stc-navy rounded-2xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-hidden`}
+      >
         <div className="flex items-center justify-between p-6 border-b border-white/10">
-          <h2 className="text-xl font-semibold">{title}</h2>
+          <h2 id="modal-title" className="text-xl font-semibold">{title}</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-white/10 rounded-lg transition-colors"

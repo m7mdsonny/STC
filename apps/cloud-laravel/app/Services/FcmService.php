@@ -99,6 +99,74 @@ class FcmService
             return false;
         }
     }
+
+    /**
+     * Send notification to all users in an organization
+     * 
+     * @param int $organizationId
+     * @param string $title
+     * @param string $body
+     * @param array $data
+     * @param string $priority
+     * @return bool
+     */
+    public function sendToOrganization(int $organizationId, string $title, string $body, array $data = [], string $priority = 'high'): bool
+    {
+        // Get all active device tokens for users in this organization
+        $deviceTokens = \App\Models\DeviceToken::whereHas('user', function ($query) use ($organizationId) {
+            $query->where('organization_id', $organizationId)
+                  ->where('is_active', true);
+        })
+        ->where('is_active', true)
+        ->pluck('token')
+        ->toArray();
+
+        if (empty($deviceTokens)) {
+            Log::info('No active device tokens found for organization', ['organization_id' => $organizationId]);
+            return false;
+        }
+
+        $notification = [
+            'title' => $title,
+            'body' => $body,
+            'sound' => 'default',
+        ];
+
+        // Add priority to data
+        $data['priority'] = $priority;
+
+        return $this->sendToMultipleDevices($deviceTokens, $notification, $data);
+    }
+
+    /**
+     * Send notification to a specific user
+     * 
+     * @param int $userId
+     * @param string $title
+     * @param string $body
+     * @param array $data
+     * @return bool
+     */
+    public function sendToUser(int $userId, string $title, string $body, array $data = []): bool
+    {
+        $deviceTokens = \App\Models\DeviceToken::where('user_id', $userId)
+            ->where('is_active', true)
+            ->pluck('token')
+            ->toArray();
+
+        if (empty($deviceTokens)) {
+            Log::info('No active device tokens found for user', ['user_id' => $userId]);
+            return false;
+        }
+
+        $notification = [
+            'title' => $title,
+            'body' => $body,
+            'sound' => 'default',
+        ];
+
+        return $this->sendToMultipleDevices($deviceTokens, $notification, $data);
+    }
 }
 
 

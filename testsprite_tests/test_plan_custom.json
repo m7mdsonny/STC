@@ -1,0 +1,195 @@
+{
+  "test_plan": {
+    "name": "STC AI-VAP E2E Tests",
+    "description": "End-to-end tests for login, logout, RBAC, dashboard navigation, and error handling",
+    "tests": [
+      {
+        "id": "test_001",
+        "name": "Login with valid credentials",
+        "type": "authentication",
+        "steps": [
+          "Navigate to /login",
+          "Enter email: superadmin@demo.local",
+          "Enter password: Super@12345",
+          "Click login button",
+          "Verify redirect to /admin (for super admin) or /dashboard (for regular user)",
+          "Verify user is authenticated",
+          "Take screenshot"
+        ]
+      },
+      {
+        "id": "test_002",
+        "name": "Login with invalid credentials",
+        "type": "authentication",
+        "steps": [
+          "Navigate to /login",
+          "Enter invalid email",
+          "Enter invalid password",
+          "Click login button",
+          "Verify error message is displayed",
+          "Verify user is not authenticated",
+          "Take screenshot"
+        ]
+      },
+      {
+        "id": "test_003",
+        "name": "Logout functionality",
+        "type": "authentication",
+        "steps": [
+          "Login as superadmin@demo.local",
+          "Click logout button",
+          "Verify redirect to /login",
+          "Verify session is cleared",
+          "Verify cannot access protected routes",
+          "Take screenshot"
+        ]
+      },
+      {
+        "id": "test_004",
+        "name": "Super Admin RBAC - Access admin routes",
+        "type": "rbac",
+        "steps": [
+          "Login as superadmin@demo.local",
+          "Navigate to /admin",
+          "Verify access granted",
+          "Navigate to /admin/organizations",
+          "Verify access granted",
+          "Navigate to /admin/users",
+          "Verify access granted",
+          "Take screenshot"
+        ]
+      },
+      {
+        "id": "test_005",
+        "name": "Regular User RBAC - Blocked from admin routes",
+        "type": "rbac",
+        "steps": [
+          "Login as owner@org1.local",
+          "Try to navigate to /admin",
+          "Verify redirect to /dashboard",
+          "Verify access denied message",
+          "Take screenshot"
+        ]
+      },
+      {
+        "id": "test_006",
+        "name": "Viewer Role - Read-only access",
+        "type": "rbac",
+        "steps": [
+          "Login as viewer@org1.local",
+          "Navigate to /dashboard",
+          "Verify can view dashboard",
+          "Try to access /team",
+          "Verify access denied (viewer cannot manage team)",
+          "Take screenshot"
+        ]
+      },
+      {
+        "id": "test_007",
+        "name": "Owner Role - Full organization access",
+        "type": "rbac",
+        "steps": [
+          "Login as owner@org1.local",
+          "Navigate to /team",
+          "Verify access granted",
+          "Navigate to /settings",
+          "Verify access granted",
+          "Navigate to /guide",
+          "Verify access granted",
+          "Take screenshot"
+        ]
+      },
+      {
+        "id": "test_008",
+        "name": "Dashboard navigation - Super Admin",
+        "type": "navigation",
+        "steps": [
+          "Login as superadmin@demo.local",
+          "Navigate to /admin",
+          "Verify dashboard loads",
+          "Verify statistics are displayed",
+          "Navigate to sidebar links",
+          "Verify all admin links are accessible",
+          "Take screenshot"
+        ]
+      },
+      {
+        "id": "test_009",
+        "name": "Dashboard navigation - Regular User",
+        "type": "navigation",
+        "steps": [
+          "Login as owner@org1.local",
+          "Navigate to /dashboard",
+          "Verify dashboard loads",
+          "Verify organization statistics displayed",
+          "Navigate to /live",
+          "Verify live view page loads",
+          "Navigate to /cameras",
+          "Verify cameras page loads",
+          "Navigate to /alerts",
+          "Verify alerts page loads",
+          "Take screenshot"
+        ]
+      },
+      {
+        "id": "test_010",
+        "name": "Error handling - Network error",
+        "type": "error_handling",
+        "steps": [
+          "Login as owner@org1.local",
+          "Simulate network disconnection",
+          "Try to navigate to /dashboard",
+          "Verify error message is displayed",
+          "Verify graceful error handling",
+          "Take screenshot"
+        ]
+      },
+      {
+        "id": "test_011",
+        "name": "Error handling - Unauthorized access",
+        "type": "error_handling",
+        "steps": [
+          "Login as viewer@org1.local",
+          "Try to access /team (requires manage permission)",
+          "Verify access denied message",
+          "Verify redirect to appropriate page",
+          "Take screenshot"
+        ]
+      },
+      {
+        "id": "test_012",
+        "name": "Error handling - Invalid route",
+        "type": "error_handling",
+        "steps": [
+          "Login as owner@org1.local",
+          "Navigate to /invalid-route",
+          "Verify 404 handling or redirect",
+          "Take screenshot"
+        ]
+      },
+      {
+        "id": "test_013",
+        "name": "Session persistence",
+        "type": "authentication",
+        "steps": [
+          "Login as superadmin@demo.local",
+          "Refresh page",
+          "Verify user remains logged in",
+          "Verify session persisted",
+          "Take screenshot"
+        ]
+      },
+      {
+        "id": "test_014",
+        "name": "Protected route redirect",
+        "type": "authentication",
+        "steps": [
+          "Navigate to /dashboard without login",
+          "Verify redirect to /login",
+          "After login, verify redirect back to /dashboard",
+          "Take screenshot"
+        ]
+      }
+    ]
+  }
+}

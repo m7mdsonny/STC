@@ -17,8 +17,11 @@ interface CreateOrganizationData {
   address?: string;
   city?: string;
   tax_number?: string;
-  subscription_plan?: SubscriptionPlanType;
+  subscription_plan: SubscriptionPlanType; // Required by backend
+  max_cameras?: number;
+  max_edge_servers?: number;
   reseller_id?: string;
+  distributor_id?: string;
 }
 
 interface OrganizationStats {

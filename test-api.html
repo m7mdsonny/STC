@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>STC API Test Suite</h1>
+
+    <div id="results"></div>
+
+    <button onclick="testPublicLanding()">Test Public Landing</button>
+    <button onclick="testEdgeServersList()">Test Edge Servers (will fail without auth)</button>
+    <button onclick="testHealthCheck()">Test Health Check</button>
+    <button onclick="testLandingPageDirect()">Test Landing Page Direct</button>
+
+    <script>
+        const results = document.getElementById('results');
+        const API_BASE = 'https://api.stcsolutions.online/api/v1';
+
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test ${type}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            results.appendChild(div);
+            console.log(message);
+        }
+
+        async function testPublicLanding() {
+            try {
+                log('Testing public landing endpoint...');
+                const response = await fetch(`${API_BASE}/public/landing`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    log(`✅ Public landing works! Content: ${JSON.stringify(data).substring(0, 100)}...`, 'success');
+                } else {
+                    log(`❌ Public landing failed: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Public landing error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testEdgeServersList() {
+            try {
+                log('Testing edge servers endpoint (should fail without auth)...');
+                const response = await fetch(`${API_BASE}/edge-servers`);
+                const data = await response.json();
+
+                log(`Response: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+            } catch (error) {
+                log(`Edge servers error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testHealthCheck() {
+            try {
+                log('Testing health check...');
+                // Try different possible health endpoints
+                const endpoints = [
+                    `${API_BASE}/health`,
+                    `${API_BASE}/status`,
+                    `${API_BASE}/ping`,
+                    'https://api.stcsolutions.online/health'
+                ];
+
+                for (const endpoint of endpoints) {
+                    try {
+                        const response = await fetch(endpoint);
+                        if (response.ok) {
+                            log(`✅ Health check works at: ${endpoint}`, 'success');
+                            return;
+                        }
+                    } catch (e) {
+                        // Continue to next endpoint
+                    }
+                }
+
+                log('❌ No health endpoint found', 'error');
+            } catch (error) {
+                log(`❌ Health check error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testLandingPageDirect() {
+            try {
+                log('Testing landing page direct access...');
+                // Try to fetch the landing page HTML
+                const response = await fetch('http://localhost:5173/');
+                if (response.ok) {
+                    const html = await response.text();
+                    if (html.includes('منصة تحليل الفيديو') || html.includes('AI-Powered Video Analytics')) {
+                        log('✅ Landing page loads with content', 'success');
+                    } else {
+                        log('❌ Landing page loads but appears empty', 'error');
+                    }
+                } else {
+                    log(`❌ Landing page failed to load: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Landing page direct test error: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run some tests
+        setTimeout(() => {
+            testPublicLanding();
+            testHealthCheck();
+        }, 1000);
+    </script>
+</body>
+</html>

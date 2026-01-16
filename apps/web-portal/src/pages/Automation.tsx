@@ -42,6 +42,7 @@ const actionIcons: Record<string, React.ElementType> = {
 
 export function Automation() {
   const { organization } = useAuth();
+  const { showSuccess, showError } = useToast();
   const [rules, setRules] = useState<AutomationRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -293,8 +294,16 @@ export function Automation() {
                             <button
                               onClick={() => handleEdit(rule)}
                               className="p-1 hover:bg-white/10 rounded"
+                              title="تعديل"
                             >
                               <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDelete(rule.id); }}
+                              className="p-1 hover:bg-red-500/20 rounded"
+                              title="حذف"
+                            >
+                              <Trash2 className="w-4 h-4 text-red-400" />
                             </button>
                           </div>
                         </div>

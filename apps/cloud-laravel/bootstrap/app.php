@@ -19,6 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\HandleCors::class,
             RequireHttps::class,
             SubstituteBindings::class,
+            \App\Http\Middleware\EnforceDomainServices::class,
+        ]);
+
+        $middleware->web(prepend: [
+            \App\Http\Middleware\EnforceDomainServices::class,
         ]);
 
         $middleware->alias([
@@ -27,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'active.subscription' => \App\Http\Middleware\EnsureActiveSubscription::class,
             'verify.edge.signature' => \App\Http\Middleware\VerifyEdgeSignature::class,
             'require.https' => RequireHttps::class,
+            'role' => \App\Http\Middleware\EnsureRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

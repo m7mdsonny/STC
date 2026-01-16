@@ -1,4 +1,4 @@
-import { apiClient } from '../apiClient';
+import { API_BASE_URL, apiClient } from '../apiClient';
 
 interface ReportFilters {
   organization_id?: string;
@@ -74,7 +74,7 @@ export const reportsApi = {
     });
     
     const url = `/reports/export/csv${params.toString() ? `?${params.toString()}` : ''}`;
-    const fullUrl = url.startsWith('http') ? url : `${import.meta.env.VITE_API_URL || 'https://api.stcsolutions.online/api/v1'}${url}`;
+    const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
     
     const token = localStorage.getItem('auth_token');
     const headers: HeadersInit = {
@@ -109,7 +109,7 @@ export const reportsApi = {
     });
     
     const url = `/reports/export/pdf${params.toString() ? `?${params.toString()}` : ''}`;
-    const fullUrl = url.startsWith('http') ? url : `${import.meta.env.VITE_API_URL || 'https://api.stcsolutions.online/api/v1'}${url}`;
+    const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
     
     const token = localStorage.getItem('auth_token');
     const headers: HeadersInit = {

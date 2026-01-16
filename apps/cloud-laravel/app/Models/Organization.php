@@ -90,4 +90,44 @@ class Organization extends BaseModel
     {
         return $this->hasMany(VehicleAccessLog::class);
     }
+
+    /**
+     * Get all licenses for this organization
+     */
+    public function licenses()
+    {
+        return $this->hasMany(License::class);
+    }
+
+    /**
+     * Get active licenses for this organization
+     */
+    public function activeLicenses()
+    {
+        return $this->hasMany(License::class)->where('status', 'active');
+    }
+
+    /**
+     * Get all users in this organization
+     */
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
+
+    /**
+     * Get all edge servers in this organization
+     */
+    public function edgeServers()
+    {
+        return $this->hasMany(EdgeServer::class);
+    }
+
+    /**
+     * Get all cameras in this organization
+     */
+    public function cameras()
+    {
+        return $this->hasMany(Camera::class);
+    }
 }
