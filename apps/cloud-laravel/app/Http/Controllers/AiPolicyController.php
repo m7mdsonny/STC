@@ -64,9 +64,23 @@ class AiPolicyController extends Controller
 
     public function destroy(AiPolicy $aiPolicy): JsonResponse
     {
-        $this->ensureSuperAdmin(request());
-        $aiPolicy->delete();
-        return response()->json(['message' => 'AI policy deleted']);
+        try {
+            $this->ensureSuperAdmin(request());
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        try {
+            if (!$aiPolicy->exists) {
+                return response()->json(['message' => 'AI policy not found'], 404);
+            }
+
+            $aiPolicy->delete();
+            return response()->json(['message' => 'Deleted successfully'], 200);
+        } catch (\Exception $e) {
+            \Log::error("Failed to delete AI policy {$aiPolicy->id}: " . $e->getMessage());
+            return response()->json(['error' => 'فشل الحذف: ' . $e->getMessage()], 500);
+        }
     }
 
     public function addEvent(Request $request, AiPolicy $aiPolicy): JsonResponse

@@ -132,18 +132,26 @@ class VehicleController extends Controller
 
     public function destroy(RegisteredVehicle $vehicle): JsonResponse
     {
-        $user = request()->user();
+        try {
+            $user = request()->user();
 
-        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
-            $this->ensureOrganizationAccess(request(), $vehicle->organization_id);
-            if (!RoleHelper::canManageOrganization($user->role)) {
-                return response()->json(['message' => 'Insufficient permissions'], 403);
+            if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
+                $this->ensureOrganizationAccess(request(), $vehicle->organization_id);
+                if (!RoleHelper::canManageOrganization($user->role)) {
+                    return response()->json(['message' => 'Unauthorized'], 403);
+                }
             }
+
+            if (!$vehicle->exists) {
+                return response()->json(['message' => 'Vehicle not found'], 404);
+            }
+
+            $vehicle->delete();
+            return response()->json(['message' => 'Deleted successfully'], 200);
+        } catch (\Exception $e) {
+            \Log::error("Failed to delete vehicle {$vehicle->id}: " . $e->getMessage());
+            return response()->json(['error' => 'فشل الحذف: ' . $e->getMessage()], 500);
         }
-
-        $vehicle->delete();
-
-        return response()->json(['message' => 'Vehicle deleted']);
     }
 
     public function toggleActive(RegisteredVehicle $vehicle): JsonResponse

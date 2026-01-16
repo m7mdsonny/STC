@@ -51,8 +51,22 @@ class NotificationPriorityController extends Controller
 
     public function destroy(NotificationPriority $notificationPriority): JsonResponse
     {
-        $this->ensureSuperAdmin(request());
-        $notificationPriority->delete();
-        return response()->json(['message' => 'Notification priority removed']);
+        try {
+            $this->ensureSuperAdmin(request());
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        try {
+            if (!$notificationPriority->exists) {
+                return response()->json(['message' => 'Notification priority not found'], 404);
+            }
+
+            $notificationPriority->delete();
+            return response()->json(['message' => 'Deleted successfully'], 200);
+        } catch (\Exception $e) {
+            \Log::error("Failed to delete notification priority {$notificationPriority->id}: " . $e->getMessage());
+            return response()->json(['error' => 'فشل الحذف: ' . $e->getMessage()], 500);
+        }
     }
 }

@@ -115,7 +115,6 @@ class UserController extends Controller
 
     public function destroy(User $user): JsonResponse
     {
-        // Use Policy for authorization (prevents self-deletion)
         try {
             $this->authorize('delete', $user);
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
@@ -127,39 +126,27 @@ class UserController extends Controller
         }
 
         try {
-            // Check if user exists
             if (!$user->exists) {
                 return response()->json(['message' => 'User not found'], 404);
             }
 
-            // Soft delete user
             $user->delete();
-            return response()->json(['message' => 'User deleted'], 200);
+            return response()->json(['message' => 'Deleted successfully'], 200);
         } catch (\Illuminate\Database\QueryException $e) {
-            \Log::error('Database error deleting user', [
-                'user_id' => $user->id,
-                'error' => $e->getMessage(),
-                'code' => $e->getCode(),
-            ]);
+            \Log::error("Failed to delete user {$user->id}: " . $e->getMessage());
             
             if ($e->getCode() == 23000) {
                 return response()->json([
-                    'message' => 'Cannot delete user: it has related records that must be removed first'
+                    'error' => 'فشل الحذف: لا يمكن حذف المستخدم لوجود سجلات مرتبطة به'
                 ], 422);
             }
             
             return response()->json([
-                'message' => 'Failed to delete user: ' . $e->getMessage()
+                'error' => 'فشل الحذف: ' . $e->getMessage()
             ], 500);
         } catch (\Exception $e) {
-            \Log::error('Failed to delete user', [
-                'user_id' => $user->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'Failed to delete user: ' . $e->getMessage()
-            ], 500);
+            \Log::error("Failed to delete user {$user->id}: " . $e->getMessage());
+            return response()->json(['error' => 'فشل الحذف: ' . $e->getMessage()], 500);
         }
     }
 

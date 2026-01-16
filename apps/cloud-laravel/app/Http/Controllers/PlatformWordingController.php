@@ -79,9 +79,23 @@ class PlatformWordingController extends Controller
 
     public function destroy(PlatformWording $wording): JsonResponse
     {
-        $this->ensureSuperAdmin(request());
-        $wording->delete();
-        return response()->json(['message' => 'Wording deleted']);
+        try {
+            $this->ensureSuperAdmin(request());
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        try {
+            if (!$wording->exists) {
+                return response()->json(['message' => 'Wording not found'], 404);
+            }
+
+            $wording->delete();
+            return response()->json(['message' => 'Deleted successfully'], 200);
+        } catch (\Exception $e) {
+            \Log::error("Failed to delete wording {$wording->id}: " . $e->getMessage());
+            return response()->json(['error' => 'فشل الحذف: ' . $e->getMessage()], 500);
+        }
     }
 
     public function getForOrganization(Request $request): JsonResponse

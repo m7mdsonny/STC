@@ -102,9 +102,23 @@ class UpdateAnnouncementController extends Controller
 
     public function destroy(UpdateAnnouncement $update): JsonResponse
     {
-        $this->ensureSuperAdmin(request());
-        $update->delete();
-        return response()->json(['message' => 'Update removed']);
+        try {
+            $this->ensureSuperAdmin(request());
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        try {
+            if (!$update->exists) {
+                return response()->json(['message' => 'Update not found'], 404);
+            }
+
+            $update->delete();
+            return response()->json(['message' => 'Deleted successfully'], 200);
+        } catch (\Exception $e) {
+            \Log::error("Failed to delete update {$update->id}: " . $e->getMessage());
+            return response()->json(['error' => 'فشل الحذف: ' . $e->getMessage()], 500);
+        }
     }
 
     public function togglePublish(UpdateAnnouncement $update): JsonResponse

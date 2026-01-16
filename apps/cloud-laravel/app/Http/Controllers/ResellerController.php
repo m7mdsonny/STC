@@ -32,9 +32,23 @@ class ResellerController extends Controller
 
     public function destroy(Reseller $reseller): JsonResponse
     {
-        $this->ensureSuperAdmin(request());
-        $reseller->delete();
-        return response()->json(['message' => 'Reseller deleted']);
+        try {
+            $this->ensureSuperAdmin(request());
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        try {
+            if (!$reseller->exists) {
+                return response()->json(['message' => 'Reseller not found'], 404);
+            }
+
+            $reseller->delete();
+            return response()->json(['message' => 'Deleted successfully'], 200);
+        } catch (\Exception $e) {
+            \Log::error("Failed to delete reseller {$reseller->id}: " . $e->getMessage());
+            return response()->json(['error' => 'فشل الحذف: ' . $e->getMessage()], 500);
+        }
     }
 
     protected function validateData(Request $request, ?int $ignoreId = null): array

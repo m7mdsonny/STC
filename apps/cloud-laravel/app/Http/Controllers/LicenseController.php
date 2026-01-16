@@ -90,7 +90,6 @@ class LicenseController extends Controller
 
     public function destroy(License $license): JsonResponse
     {
-        // Use Policy for authorization
         try {
             $this->authorize('delete', $license);
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
@@ -102,44 +101,31 @@ class LicenseController extends Controller
         }
 
         try {
-            // Check if license exists
             if (!$license->exists) {
                 return response()->json(['message' => 'License not found'], 404);
             }
 
-            // Unlink from edge server if linked
             if ($license->edge_server_id) {
                 $license->edgeServer()->update(['license_id' => null]);
             }
 
-            // Soft delete license
             $license->delete();
-            return response()->json(['message' => 'License deleted'], 200);
+            return response()->json(['message' => 'Deleted successfully'], 200);
         } catch (\Illuminate\Database\QueryException $e) {
-            \Log::error('Database error deleting license', [
-                'license_id' => $license->id,
-                'error' => $e->getMessage(),
-                'code' => $e->getCode(),
-            ]);
+            \Log::error("Failed to delete license {$license->id}: " . $e->getMessage());
             
             if ($e->getCode() == 23000) {
                 return response()->json([
-                    'message' => 'Cannot delete license: it has related records that must be removed first'
+                    'error' => 'فشل الحذف: لا يمكن حذف الترخيص لوجود سجلات مرتبطة به'
                 ], 422);
             }
             
             return response()->json([
-                'message' => 'Failed to delete license: ' . $e->getMessage()
+                'error' => 'فشل الحذف: ' . $e->getMessage()
             ], 500);
         } catch (\Exception $e) {
-            \Log::error('Failed to delete license', [
-                'license_id' => $license->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'Failed to delete license: ' . $e->getMessage()
-            ], 500);
+            \Log::error("Failed to delete license {$license->id}: " . $e->getMessage());
+            return response()->json(['error' => 'فشل الحذف: ' . $e->getMessage()], 500);
         }
     }
 
