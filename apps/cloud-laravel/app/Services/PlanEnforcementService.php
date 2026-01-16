@@ -171,13 +171,8 @@ class PlanEnforcementService
      */
     private function getEdgeServerQuota(Organization $org): ?int
     {
-        // Check active licenses first (highest quota wins)
-        $licenseQuota = $this->getMaxQuotaFromLicenses($org, 'max_edge_servers');
-        if ($licenseQuota !== null) {
-            return $licenseQuota;
-        }
-
-        // Check organization's subscription plan
+        // CRITICAL FIX: max_edge_servers is NOT in licenses table
+        // Check organization's subscription plan first
         if ($org->subscription_plan) {
             $plan = SubscriptionPlan::where('name', $org->subscription_plan)->first();
             if ($plan && isset($plan->max_edge_servers) && $plan->max_edge_servers > 0) {
