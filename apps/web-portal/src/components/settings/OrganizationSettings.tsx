@@ -9,7 +9,8 @@ import { getDetailedErrorMessage } from '../../lib/errorMessages';
 import type { SubscriptionPlan } from '../../types/database';
 
 export function OrganizationSettings() {
-  const { organization, canManage } = useAuth();
+  const { organization, canManage, user } = useAuth();
+  const { showError, showSuccess } = useToast();
   const [saving, setSaving] = useState(false);
   const [plan, setPlan] = useState<SubscriptionPlan | null>(null);
   const [stats, setStats] = useState({ cameras: 0, servers: 0, users: 0 });
@@ -150,6 +151,33 @@ export function OrganizationSettings() {
       default: return 'bg-gradient-to-r from-gray-500 to-gray-600';
     }
   };
+
+  // CRITICAL FIX: Show error if user has organization_id but organization failed to load
+  if (!organization && user?.organization_id) {
+    return (
+      <div className="space-y-6">
+        <div className="card p-6 bg-red-500/10 border border-red-500/30">
+          <h3 className="text-lg font-bold text-red-400 mb-2">خطأ في تحميل بيانات المؤسسة</h3>
+          <p className="text-white/70 mb-4">
+            فشل تحميل بيانات المؤسسة. قد تكون المؤسسة محذوفة أو معلقة. يرجى الاتصال بالدعم الفني.
+          </p>
+          <div className="text-sm text-white/50 font-mono bg-black/20 p-3 rounded">
+            معرف المؤسسة: {user.organization_id}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!organization) {
+    return (
+      <div className="space-y-6">
+        <div className="card p-6">
+          <p className="text-white/70">لا توجد مؤسسة مرتبطة بحسابك.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

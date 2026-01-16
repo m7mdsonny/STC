@@ -113,20 +113,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(normalizedUser);
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalizedUser));
 
+    // CRITICAL FIX: Better error handling for organization loading
     if (authUser.organization_id) {
       try {
         const org = await organizationsApi.getOrganization(authUser.organization_id);
         setOrganization(org);
-      } catch (error) {
-        console.warn('[AuthContext] Failed to load organization, using basic info from user', error);
-        // CRITICAL FIX: Create minimal organization object from user data
-        // This allows users to continue working even if they can't fetch full org details
-        setOrganization({
-          id: authUser.organization_id,
-          name: authUser.organization?.name || 'المؤسسة',
-          email: authUser.email,
-          is_active: true,
-        } as any);
+        console.log('Organization loaded successfully:', org.id, org.name);
+      } catch (error: any) {
+        console.error('Failed to load organization:', {
+          organization_id: authUser.organization_id,
+          user_id: authUser.id,
+          error: error?.message || error,
+        });
+        // Set organization to null but keep user logged in
+        // User will see error in settings page instead of being logged out
+        setOrganization(null);
       }
     } else {
       setOrganization(null);

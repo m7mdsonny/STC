@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react';
 import { Key, Plus, Search, Trash2, Copy, CheckCircle, XCircle, Calendar, Building2 } from 'lucide-react';
 import { licensesApi, organizationsApi } from '../../lib/api';
 import { Modal } from '../../components/ui/Modal';
-import { useToast } from '../../contexts/ToastContext';
-import { getDetailedErrorMessage } from '../../lib/errorMessages';
+import { useAuth } from '../../contexts/AuthContext';
 import type { License, Organization } from '../../types/database';
 
 export function Licenses() {
-  const { showSuccess, showError } = useToast();
+  const { isSuperAdmin } = useAuth();
   const [licenses, setLicenses] = useState<(License & { organization?: Organization })[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,12 +168,15 @@ export function Licenses() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">التراخيص</h1>
-          <p className="text-white/60">ادارة تراخيص المنصة</p>
+          <p className="text-white/60">عرض تراخيص المنصة (للقراءة فقط)</p>
         </div>
-        <button onClick={() => { resetForm(); setShowModal(true); }} className="btn-primary flex items-center gap-2">
-          <Plus className="w-5 h-5" />
-          <span>انشاء ترخيص</span>
-        </button>
+        {/* BUSINESS LOGIC: Licenses are auto-created with organizations - no manual creation */}
+        {isSuperAdmin && (
+          <button onClick={() => { resetForm(); setShowModal(true); }} className="btn-primary flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            <span>انشاء ترخيص اضافي</span>
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -306,28 +308,32 @@ export function Licenses() {
                     {license.expires_at ? new Date(license.expires_at).toLocaleDateString('ar-EG') : '-'}
                   </td>
                   <td className="p-4">
-                    <div className="flex items-center gap-2">
-                      {license.status === 'suspended' ? (
-                        <button
-                          onClick={() => updateStatus(license.id, 'active')}
-                          className="p-2 hover:bg-emerald-500/20 rounded"
-                          title="تفعيل"
-                        >
-                          <CheckCircle className="w-4 h-4 text-emerald-400" />
+                    {isSuperAdmin ? (
+                      <div className="flex items-center gap-2">
+                        {license.status === 'suspended' ? (
+                          <button
+                            onClick={() => updateStatus(license.id, 'active')}
+                            className="p-2 hover:bg-emerald-500/20 rounded"
+                            title="تفعيل"
+                          >
+                            <CheckCircle className="w-4 h-4 text-emerald-400" />
+                          </button>
+                        ) : license.status === 'active' && (
+                          <button
+                            onClick={() => updateStatus(license.id, 'suspended')}
+                            className="p-2 hover:bg-orange-500/20 rounded"
+                            title="ايقاف"
+                          >
+                            <XCircle className="w-4 h-4 text-orange-400" />
+                          </button>
+                        )}
+                        <button onClick={() => deleteLicense(license.id)} className="p-2 hover:bg-red-500/20 rounded" title="حذف">
+                          <Trash2 className="w-4 h-4 text-red-400" />
                         </button>
-                      ) : license.status === 'active' && (
-                        <button
-                          onClick={() => updateStatus(license.id, 'suspended')}
-                          className="p-2 hover:bg-orange-500/20 rounded"
-                          title="ايقاف"
-                        >
-                          <XCircle className="w-4 h-4 text-orange-400" />
-                        </button>
-                      )}
-                      <button onClick={() => deleteLicense(license.id)} className="p-2 hover:bg-red-500/20 rounded">
-                        <Trash2 className="w-4 h-4 text-red-400" />
-                      </button>
-                    </div>
+                      </div>
+                    ) : (
+                      <span className="text-white/40 text-sm">للقراءة فقط</span>
+                    )}
                   </td>
                 </tr>
               ))}

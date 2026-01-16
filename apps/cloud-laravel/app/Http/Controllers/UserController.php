@@ -119,12 +119,18 @@ class UserController extends Controller
         $this->authorize('delete', $user);
 
         try {
-            $this->userAssignmentService->deleteUser($user, request()->user());
-        } catch (DomainActionException $e) {
-            return response()->json(['message' => $e->getMessage()], $e->getStatus());
-        }
+            $user->delete();
+            return response()->json(['message' => 'User deleted'], 200);
+        } catch (\Exception $e) {
+            \Log::error('Failed to delete user', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
 
-        return response()->json(['message' => 'User deleted']);
+            return response()->json([
+                'message' => 'فشل حذف المستخدم: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function toggleActive(User $user): JsonResponse
