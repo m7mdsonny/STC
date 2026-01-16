@@ -33,7 +33,8 @@ class OrganizationPolicy
         }
         
         // Others can only view their own organization
-        return $user->organization_id === $organization->id;
+        // Use strict comparison to ensure type matching
+        return $user->organization_id !== null && (int) $user->organization_id === (int) $organization->id;
     }
 
     /**

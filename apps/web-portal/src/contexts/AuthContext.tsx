@@ -116,27 +116,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // CRITICAL FIX: Better error handling for organization loading
     if (authUser.organization_id) {
       try {
-        const org = await organizationsApi.getOrganization(String(authUser.organization_id));
+        const orgId = String(authUser.organization_id);
+        console.log('Loading organization:', { orgId, user_id: authUser.id });
+        
+        const org = await organizationsApi.getOrganization(orgId);
+        
         if (org && org.id) {
           setOrganization(org);
-          console.log('Organization loaded successfully:', org.id, org.name);
+          console.log('Organization loaded successfully:', { id: org.id, name: org.name });
         } else {
           console.warn('Organization data incomplete:', { org, organization_id: authUser.organization_id });
           setOrganization(null);
         }
       } catch (error: any) {
-        console.error('Failed to load organization:', {
+        const errorDetails = {
           organization_id: authUser.organization_id,
           user_id: authUser.id,
-          error: error?.message || error,
+          error: error?.message || String(error),
           status: error?.status,
           httpStatus: error?.httpStatus,
-        });
+        };
+        
+        console.error('Failed to load organization:', errorDetails);
+        
+        // Log to console with full error details for debugging
+        if (error?.httpStatus === 404) {
+          console.error('Organization not found (404) - may be deleted or user has wrong organization_id');
+        } else if (error?.httpStatus === 403) {
+          console.error('Access denied (403) - user may not have permission to view organization');
+        }
+        
         // Set organization to null but keep user logged in
         // User will see error in settings page instead of being logged out
         setOrganization(null);
       }
     } else {
+      console.log('User has no organization_id');
       setOrganization(null);
     }
   };

@@ -63,70 +63,84 @@ class OrganizationController extends Controller
 
     public function show(Request $request, $id): JsonResponse
     {
+        $origin = $request->header('Origin');
+        $allowedOrigins = ['https://stcsolutions.online', 'http://localhost:5173', 'http://localhost:3000'];
+        $allowedOrigin = in_array($origin, $allowedOrigins) ? $origin : 'https://stcsolutions.online';
+        
+        $corsHeaders = [
+            'Access-Control-Allow-Origin' => $allowedOrigin,
+            'Access-Control-Allow-Methods' => 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token',
+            'Access-Control-Allow-Credentials' => 'true',
+        ];
+
         try {
-            $organization = Organization::find($id);
+            $user = $request->user();
+            if (!$user) {
+                \Log::warning('Unauthenticated organization view attempt', ['organization_id' => $id]);
+                return response()->json(['message' => 'Unauthenticated'], 401)->withHeaders($corsHeaders);
+            }
+
+            // Find organization - check both active and soft-deleted
+            $organization = Organization::withTrashed()->find($id);
             
             if (!$organization) {
                 \Log::warning('Organization not found', [
                     'organization_id' => $id,
-                    'user_id' => $request->user()?->id,
+                    'user_id' => $user->id,
+                    'user_org_id' => $user->organization_id,
                 ]);
                 
-                $origin = $request->header('Origin');
-                $allowedOrigins = ['https://stcsolutions.online', 'http://localhost:5173', 'http://localhost:3000'];
-                $allowedOrigin = in_array($origin, $allowedOrigins) ? $origin : 'https://stcsolutions.online';
+                return response()->json(['message' => 'Organization not found'], 404)->withHeaders($corsHeaders);
+            }
+
+            // Check if organization is soft deleted
+            if ($organization->trashed()) {
+                \Log::warning('Attempt to view soft-deleted organization', [
+                    'organization_id' => $id,
+                    'user_id' => $user->id,
+                ]);
                 
-                return response()->json(['message' => 'Organization not found'], 404)
-                    ->header('Access-Control-Allow-Origin', $allowedOrigin)
-                    ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
-                    ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token')
-                    ->header('Access-Control-Allow-Credentials', 'true');
+                // Only super admin can view soft-deleted organizations
+                if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
+                    return response()->json(['message' => 'Organization not found'], 404)->withHeaders($corsHeaders);
+                }
             }
 
             // Use Policy for authorization
-            $this->authorize('view', $organization);
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            \Log::warning('Unauthorized view attempt', [
-                'organization_id' => $id,
-                'user_id' => $request->user()?->id,
+            try {
+                $this->authorize('view', $organization);
+            } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+                \Log::warning('Unauthorized view attempt', [
+                    'organization_id' => $id,
+                    'user_id' => $user->id,
+                    'user_org_id' => $user->organization_id,
+                    'org_id' => $organization->id,
+                ]);
+                
+                return response()->json(['message' => 'Unauthorized'], 403)->withHeaders($corsHeaders);
+            }
+
+            \Log::info('Organization loaded successfully', [
+                'organization_id' => $organization->id,
+                'user_id' => $user->id,
             ]);
             
-            $origin = $request->header('Origin');
-            $allowedOrigins = ['https://stcsolutions.online', 'http://localhost:5173', 'http://localhost:3000'];
-            $allowedOrigin = in_array($origin, $allowedOrigins) ? $origin : 'https://stcsolutions.online';
+            return response()->json($organization)->withHeaders($corsHeaders);
             
-            return response()->json(['message' => 'Unauthorized'], 403)
-                ->header('Access-Control-Allow-Origin', $allowedOrigin)
-                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
-                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token')
-                ->header('Access-Control-Allow-Credentials', 'true');
         } catch (\Exception $e) {
             \Log::error('Error loading organization', [
                 'organization_id' => $id,
                 'user_id' => $request->user()?->id,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
             
-            $origin = $request->header('Origin');
-            $allowedOrigins = ['https://stcsolutions.online', 'http://localhost:5173', 'http://localhost:3000'];
-            $allowedOrigin = in_array($origin, $allowedOrigins) ? $origin : 'https://stcsolutions.online';
-            
-            return response()->json(['message' => 'Failed to load organization'], 500)
-                ->header('Access-Control-Allow-Origin', $allowedOrigin)
-                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
-                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token')
-                ->header('Access-Control-Allow-Credentials', 'true');
+            return response()->json([
+                'message' => 'Failed to load organization',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500)->withHeaders($corsHeaders);
         }
-
-        $origin = $request->header('Origin');
-        $allowedOrigins = ['https://stcsolutions.online', 'http://localhost:5173', 'http://localhost:3000'];
-        $allowedOrigin = in_array($origin, $allowedOrigins) ? $origin : 'https://stcsolutions.online';
-        
-        return response()->json($organization)
-            ->header('Access-Control-Allow-Origin', $allowedOrigin)
-            ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
-            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token')
-            ->header('Access-Control-Allow-Credentials', 'true');
     }
 
     public function store(OrganizationStoreRequest $request): JsonResponse
