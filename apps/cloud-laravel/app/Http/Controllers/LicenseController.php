@@ -32,13 +32,15 @@ class LicenseController extends Controller
             if ($user->organization_id) {
                 $query->where('organization_id', $user->organization_id);
             } else {
-                return response()->json(['data' => [], 'total' => 0]);
+                return response()->json(['data' => [], 'total' => 0, 'per_page' => 15, 'current_page' => 1, 'last_page' => 1]);
             }
         }
 
         // Super admin can filter by organization
         if ($request->filled('organization_id') && RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
-            $query->where('organization_id', $request->get('organization_id'));
+            $orgId = $request->get('organization_id');
+            // Handle both string and integer organization_id
+            $query->where('organization_id', (int) $orgId);
         }
 
         if ($request->filled('status')) {
@@ -49,9 +51,26 @@ class LicenseController extends Controller
             $query->where('plan', $request->get('plan'));
         }
 
-        $licenses = $query->orderByDesc('created_at')->paginate((int) $request->get('per_page', 15));
+        $perPage = (int) $request->get('per_page', 15);
+        $licenses = $query->orderByDesc('created_at')->paginate($perPage);
 
-        return response()->json($licenses);
+        \Log::info('Licenses fetched', [
+            'user_id' => $user->id,
+            'organization_id' => $user->organization_id,
+            'filter_org_id' => $request->get('organization_id'),
+            'count' => $licenses->count(),
+            'total' => $licenses->total(),
+        ]);
+
+        $origin = $request->header('Origin');
+        $allowedOrigins = ['https://stcsolutions.online', 'http://localhost:5173', 'http://localhost:3000'];
+        $allowedOrigin = in_array($origin, $allowedOrigins) ? $origin : 'https://stcsolutions.online';
+
+        return response()->json($licenses)
+            ->header('Access-Control-Allow-Origin', $allowedOrigin)
+            ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token')
+            ->header('Access-Control-Allow-Credentials', 'true');
     }
 
     public function show(License $license): JsonResponse

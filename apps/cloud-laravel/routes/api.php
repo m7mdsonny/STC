@@ -283,6 +283,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/analytics/today-alerts', [AnalyticsController::class, 'todayAlerts']);
         Route::get('/analytics/response-times', [AnalyticsController::class, 'responseTimes']);
         Route::get('/analytics/compare', [AnalyticsController::class, 'compare']);
+        Route::get('/analytics/audience', [AnalyticsController::class, 'audience']);
+        Route::get('/analytics/audience/overview', [AnalyticsController::class, 'audienceOverview']);
         Route::get('/analytics/reports', [AnalyticsController::class, 'reports']);
         Route::post('/analytics/reports', [AnalyticsController::class, 'storeReport']);
         Route::get('/analytics/reports/{report}', [AnalyticsController::class, 'showReport']);

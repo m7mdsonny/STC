@@ -732,4 +732,121 @@ class AnalyticsController extends Controller
 
         return $this->summary($rangeRequest)->getData(true);
     }
+
+    /**
+     * Get audience statistics (visitors, demographics, etc.)
+     */
+    public function audience(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $organizationId = $user->organization_id ?? $request->get('organization_id');
+
+        if (!$organizationId) {
+            return response()->json(['error' => 'Organization ID required'], 400);
+        }
+
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->get('start_date')) : Carbon::today()->subDays(7);
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->get('end_date')) : Carbon::today();
+
+        // Get people counter events
+        $events = Event::where('organization_id', $organizationId)
+            ->whereBetween('occurred_at', [$startDate, $endDate])
+            ->where(function ($query) {
+                $query->where('event_type', 'people_detected')
+                    ->orWhereJsonContains('meta->module', 'people_counter')
+                    ->orWhere('ai_module', 'people_counter');
+            })
+            ->get();
+
+        // Aggregate audience stats
+        $stats = [];
+        foreach ($events as $event) {
+            $meta = $event->meta ?? [];
+            if (is_string($meta)) {
+                $meta = json_decode($meta, true) ?? [];
+            }
+
+            $date = Carbon::parse($event->occurred_at)->format('Y-m-d');
+            if (!isset($stats[$date])) {
+                $stats[$date] = [
+                    'date' => $date,
+                    'visitors' => 0,
+                    'male' => 0,
+                    'female' => 0,
+                ];
+            }
+
+            $stats[$date]['visitors']++;
+            if (isset($meta['gender'])) {
+                if ($meta['gender'] === 'male') {
+                    $stats[$date]['male']++;
+                } elseif ($meta['gender'] === 'female') {
+                    $stats[$date]['female']++;
+                }
+            }
+        }
+
+        return response()->json(array_values($stats));
+    }
+
+    /**
+     * Get audience overview (summary statistics)
+     */
+    public function audienceOverview(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $organizationId = $user->organization_id ?? $request->get('organization_id');
+
+        if (!$organizationId) {
+            return response()->json(['error' => 'Organization ID required'], 400);
+        }
+
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->get('start_date')) : Carbon::today()->subDays(7);
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->get('end_date')) : Carbon::today();
+
+        // Get people counter events
+        $events = Event::where('organization_id', $organizationId)
+            ->whereBetween('occurred_at', [$startDate, $endDate])
+            ->where(function ($query) {
+                $query->where('event_type', 'people_detected')
+                    ->orWhereJsonContains('meta->module', 'people_counter')
+                    ->orWhere('ai_module', 'people_counter');
+            })
+            ->get();
+
+        $totalVisitors = $events->count();
+        $maleCount = 0;
+        $femaleCount = 0;
+
+        foreach ($events as $event) {
+            $meta = $event->meta ?? [];
+            if (is_string($meta)) {
+                $meta = json_decode($meta, true) ?? [];
+            }
+
+            if (isset($meta['gender'])) {
+                if ($meta['gender'] === 'male') {
+                    $maleCount++;
+                } elseif ($meta['gender'] === 'female') {
+                    $femaleCount++;
+                }
+            }
+        }
+
+        return response()->json([
+            'total_visitors' => $totalVisitors,
+            'male_count' => $maleCount,
+            'female_count' => $femaleCount,
+            'age_distribution' => [
+                'age_0_12' => 0,
+                'age_13_19' => 0,
+                'age_20_35' => 0,
+                'age_36_50' => 0,
+                'age_51_65' => 0,
+                'age_65_plus' => 0,
+            ],
+            'peak_hours' => [],
+            'trend' => [],
+        ]);
+    }
 }

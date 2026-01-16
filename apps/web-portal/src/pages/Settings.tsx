@@ -72,16 +72,28 @@ export function Settings() {
     setLoadingLicenses(true);
     try {
       const result = await licensesApi.getLicenses({
-        organization_id: organization.id,
+        organization_id: String(organization.id),
         per_page: 100,
       });
+      
+      // Handle paginated response
+      const licensesList = Array.isArray(result.data) ? result.data : (result.data?.data || []);
+      
       // Filter to show only active licenses that are not bound to an edge server
-      const unboundLicenses = result.data.filter(
-        (license) => license.status === 'active' && !license.edge_server_id
+      const unboundLicenses = licensesList.filter(
+        (license: any) => license.status === 'active' && !license.edge_server_id
       );
+      
+      console.log('Fetched licenses:', {
+        total: licensesList.length,
+        unbound: unboundLicenses.length,
+        organization_id: organization.id,
+      });
+      
       setAvailableLicenses(unboundLicenses);
     } catch (error) {
       console.error('Failed to fetch licenses:', error);
+      setAvailableLicenses([]);
     }
     setLoadingLicenses(false);
   };

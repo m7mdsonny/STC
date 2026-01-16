@@ -138,24 +138,24 @@ export function Analytics() {
           start_date: start.toISOString().split('T')[0],
           end_date: end.toISOString().split('T')[0],
           per_page: 1000,
-        }),
+        }).catch(() => []),
 
         alertsApi.getAlerts({
           start_date: start.toISOString(),
           end_date: end.toISOString(),
           per_page: 1000,
-        }),
+        }).catch(() => ({ data: [] })),
 
-        vehiclesApi.getVehicleAccessLogs({
+        vehiclesApi?.getAccessLogs ? vehiclesApi.getAccessLogs({
           start_date: start.toISOString(),
           end_date: end.toISOString(),
           per_page: 1000,
-        }),
+        }).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
       ]);
 
-      const audienceData = audienceRes.data || [];
-      const alertsData = alertsRes.data || [];
-      const vehiclesData = vehiclesRes.data || [];
+      const audienceData = Array.isArray(audienceRes) ? audienceRes : (audienceRes?.data || []);
+      const alertsData = Array.isArray(alertsRes) ? alertsRes : (alertsRes?.data || []);
+      const vehiclesData = Array.isArray(vehiclesRes) ? vehiclesRes : (vehiclesRes?.data || []);
 
       const hourlyVisitors: { [key: string]: number } = {};
       for (let i = 6; i <= 22; i++) {
