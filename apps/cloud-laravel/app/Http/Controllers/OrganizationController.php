@@ -61,25 +61,64 @@ class OrganizationController extends Controller
         return response()->json($organizations);
     }
 
-    public function show(Organization $organization): JsonResponse
+    public function show(Request $request, $id): JsonResponse
     {
         try {
+            $organization = Organization::find($id);
+            
+            if (!$organization) {
+                \Log::warning('Organization not found', [
+                    'organization_id' => $id,
+                    'user_id' => $request->user()?->id,
+                ]);
+                
+                $origin = $request->header('Origin');
+                $allowedOrigins = ['https://stcsolutions.online', 'http://localhost:5173', 'http://localhost:3000'];
+                $allowedOrigin = in_array($origin, $allowedOrigins) ? $origin : 'https://stcsolutions.online';
+                
+                return response()->json(['message' => 'Organization not found'], 404)
+                    ->header('Access-Control-Allow-Origin', $allowedOrigin)
+                    ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+                    ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token')
+                    ->header('Access-Control-Allow-Credentials', 'true');
+            }
+
             // Use Policy for authorization
             $this->authorize('view', $organization);
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             \Log::warning('Unauthorized view attempt', [
-                'organization_id' => $organization->id,
-                'user_id' => request()->user()?->id,
+                'organization_id' => $id,
+                'user_id' => $request->user()?->id,
             ]);
-            return response()->json(['message' => 'Unauthorized'], 403);
+            
+            $origin = $request->header('Origin');
+            $allowedOrigins = ['https://stcsolutions.online', 'http://localhost:5173', 'http://localhost:3000'];
+            $allowedOrigin = in_array($origin, $allowedOrigins) ? $origin : 'https://stcsolutions.online';
+            
+            return response()->json(['message' => 'Unauthorized'], 403)
+                ->header('Access-Control-Allow-Origin', $allowedOrigin)
+                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token')
+                ->header('Access-Control-Allow-Credentials', 'true');
+        } catch (\Exception $e) {
+            \Log::error('Error loading organization', [
+                'organization_id' => $id,
+                'user_id' => $request->user()?->id,
+                'error' => $e->getMessage(),
+            ]);
+            
+            $origin = $request->header('Origin');
+            $allowedOrigins = ['https://stcsolutions.online', 'http://localhost:5173', 'http://localhost:3000'];
+            $allowedOrigin = in_array($origin, $allowedOrigins) ? $origin : 'https://stcsolutions.online';
+            
+            return response()->json(['message' => 'Failed to load organization'], 500)
+                ->header('Access-Control-Allow-Origin', $allowedOrigin)
+                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token')
+                ->header('Access-Control-Allow-Credentials', 'true');
         }
 
-        // Check if organization exists and is not soft deleted
-        if (!$organization->exists) {
-            return response()->json(['message' => 'Organization not found'], 404);
-        }
-
-        $origin = request()->header('Origin');
+        $origin = $request->header('Origin');
         $allowedOrigins = ['https://stcsolutions.online', 'http://localhost:5173', 'http://localhost:3000'];
         $allowedOrigin = in_array($origin, $allowedOrigins) ? $origin : 'https://stcsolutions.online';
         

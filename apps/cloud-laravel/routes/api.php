@@ -112,7 +112,7 @@ Route::prefix('v1')->group(function () {
 
         Route::get('/organizations', [OrganizationController::class, 'index']);
         Route::post('/organizations', [OrganizationController::class, 'store']);
-        Route::get('/organizations/{organization}', [OrganizationController::class, 'show']);
+        Route::get('/organizations/{id}', [OrganizationController::class, 'show'])->where('id', '[0-9]+');
         Route::put('/organizations/{organization}', [OrganizationController::class, 'update']);
         Route::delete('/organizations/{organization}', [OrganizationController::class, 'destroy']);
         Route::post('/organizations/{organization}/toggle-active', [OrganizationController::class, 'toggleActive']);
