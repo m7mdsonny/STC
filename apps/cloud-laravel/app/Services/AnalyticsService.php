@@ -2,7 +2,13 @@
 
 namespace App\Services;
 
+use App\Exceptions\DomainActionException;
+use App\Helpers\RoleHelper;
+use App\Models\AnalyticsDashboard;
+use App\Models\AnalyticsReport;
+use App\Models\AnalyticsWidget;
 use App\Models\Event;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -10,6 +16,185 @@ use Illuminate\Support\Collection;
 
 class AnalyticsService
 {
+    private ?DomainActionService $domainActionService = null;
+
+    public function setDomainActionService(DomainActionService $service): void
+    {
+        $this->domainActionService = $service;
+    }
+
+    // ==================== REPORT MUTATIONS ====================
+
+    /**
+     * Create an analytics report
+     */
+    public function createReport(array $data, User $actor): AnalyticsReport
+    {
+        if (!RoleHelper::isSuperAdmin($actor->role, $actor->is_super_admin ?? false)) {
+            throw new DomainActionException('Only super admins can create reports', 403);
+        }
+
+        return $this->executeMutation(function () use ($data, $actor) {
+            return AnalyticsReport::create([
+                ...$data,
+                'created_by' => $actor->id,
+                'status' => 'draft',
+            ]);
+        });
+    }
+
+    /**
+     * Update an analytics report
+     */
+    public function updateReport(AnalyticsReport $report, array $data, User $actor): AnalyticsReport
+    {
+        if (!RoleHelper::isSuperAdmin($actor->role, $actor->is_super_admin ?? false)) {
+            throw new DomainActionException('Only super admins can update reports', 403);
+        }
+
+        return $this->executeMutation(function () use ($report, $data) {
+            $report->update($data);
+            return $report->fresh();
+        });
+    }
+
+    /**
+     * Delete an analytics report
+     */
+    public function deleteReport(AnalyticsReport $report, User $actor): void
+    {
+        if (!RoleHelper::isSuperAdmin($actor->role, $actor->is_super_admin ?? false)) {
+            throw new DomainActionException('Only super admins can delete reports', 403);
+        }
+
+        $this->executeMutation(function () use ($report) {
+            $report->delete();
+        });
+    }
+
+    /**
+     * Generate a report
+     */
+    public function generateReport(AnalyticsReport $report, User $actor): AnalyticsReport
+    {
+        if (!RoleHelper::isSuperAdmin($actor->role, $actor->is_super_admin ?? false)) {
+            throw new DomainActionException('Only super admins can generate reports', 403);
+        }
+
+        return $this->executeMutation(function () use ($report) {
+            $report->update([
+                'status' => 'generated',
+                'last_generated_at' => now(),
+                'file_url' => $report->file_url ?? '/api/v1/analytics/reports/' . $report->id . '/download',
+            ]);
+            return $report->fresh();
+        });
+    }
+
+    // ==================== DASHBOARD MUTATIONS ====================
+
+    /**
+     * Create a dashboard
+     */
+    public function createDashboard(array $data, User $actor): AnalyticsDashboard
+    {
+        if (!RoleHelper::isSuperAdmin($actor->role, $actor->is_super_admin ?? false)) {
+            throw new DomainActionException('Only super admins can create dashboards', 403);
+        }
+
+        return $this->executeMutation(function () use ($data) {
+            return AnalyticsDashboard::create($data);
+        });
+    }
+
+    /**
+     * Update a dashboard
+     */
+    public function updateDashboard(AnalyticsDashboard $dashboard, array $data, User $actor): AnalyticsDashboard
+    {
+        if (!RoleHelper::isSuperAdmin($actor->role, $actor->is_super_admin ?? false)) {
+            throw new DomainActionException('Only super admins can update dashboards', 403);
+        }
+
+        return $this->executeMutation(function () use ($dashboard, $data) {
+            $dashboard->update($data);
+            return $dashboard->fresh();
+        });
+    }
+
+    /**
+     * Delete a dashboard
+     */
+    public function deleteDashboard(AnalyticsDashboard $dashboard, User $actor): void
+    {
+        if (!RoleHelper::isSuperAdmin($actor->role, $actor->is_super_admin ?? false)) {
+            throw new DomainActionException('Only super admins can delete dashboards', 403);
+        }
+
+        $this->executeMutation(function () use ($dashboard) {
+            $dashboard->delete();
+        });
+    }
+
+    // ==================== WIDGET MUTATIONS ====================
+
+    /**
+     * Create a widget
+     */
+    public function createWidget(AnalyticsDashboard $dashboard, array $data, User $actor): AnalyticsWidget
+    {
+        if (!RoleHelper::isSuperAdmin($actor->role, $actor->is_super_admin ?? false)) {
+            throw new DomainActionException('Only super admins can create widgets', 403);
+        }
+
+        return $this->executeMutation(function () use ($dashboard, $data) {
+            return $dashboard->widgets()->create($data);
+        });
+    }
+
+    /**
+     * Update a widget
+     */
+    public function updateWidget(AnalyticsWidget $widget, array $data, User $actor): AnalyticsWidget
+    {
+        if (!RoleHelper::isSuperAdmin($actor->role, $actor->is_super_admin ?? false)) {
+            throw new DomainActionException('Only super admins can update widgets', 403);
+        }
+
+        return $this->executeMutation(function () use ($widget, $data) {
+            $widget->update($data);
+            return $widget->fresh();
+        });
+    }
+
+    /**
+     * Delete a widget
+     */
+    public function deleteWidget(AnalyticsWidget $widget, User $actor): void
+    {
+        if (!RoleHelper::isSuperAdmin($actor->role, $actor->is_super_admin ?? false)) {
+            throw new DomainActionException('Only super admins can delete widgets', 403);
+        }
+
+        $this->executeMutation(function () use ($widget) {
+            $widget->delete();
+        });
+    }
+
+    /**
+     * Execute a mutation with domain service if available
+     */
+    private function executeMutation(\Closure $action): mixed
+    {
+        if ($this->domainActionService) {
+            return $this->domainActionService->execute(request(), $action, function () {
+                // Super admin bypass
+            });
+        }
+        
+        // Fallback to simple transaction
+        return DB::transaction($action);
+    }
     /**
      * Cache TTL in seconds
      */

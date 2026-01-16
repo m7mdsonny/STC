@@ -67,6 +67,7 @@ export function Licenses() {
 
     const expiresAt = new Date();
     expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+    const licenseKey = generateLicenseKey();
 
     try {
       await licensesApi.createLicense({
@@ -75,13 +76,18 @@ export function Licenses() {
         max_cameras: formData.max_cameras,
         modules: formData.modules,
         expires_at: expiresAt.toISOString(),
+        license_key: licenseKey,
+        is_trial: formData.is_trial,
       });
 
       setShowModal(false);
       resetForm();
       fetchData();
+      showSuccess('تم إنشاء الترخيص', `تم إنشاء الترخيص ${licenseKey} بنجاح وربطه بالمؤسسة المحددة.`);
     } catch (error) {
       console.error('Error creating license:', error);
+      const { title, message } = getDetailedErrorMessage(error, 'إنشاء الترخيص', 'فشل إنشاء الترخيص');
+      showError(title, message);
     }
   };
 

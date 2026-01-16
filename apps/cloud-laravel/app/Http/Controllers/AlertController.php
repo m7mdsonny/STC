@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Helpers\RoleHelper;
+use App\Services\AlertService;
+use App\Exceptions\DomainActionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +14,9 @@ use Illuminate\Support\Carbon;
 
 class AlertController extends Controller
 {
+    public function __construct(private AlertService $alertService)
+    {
+    }
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -107,24 +112,12 @@ class AlertController extends Controller
         $user = request()->user();
         $event = Event::where('event_type', 'alert')->findOrFail($id);
         
-        // Check ownership
-        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
-            if ($event->organization_id !== (int) $user->organization_id) {
-                return response()->json(['message' => 'Unauthorized'], 403);
-            }
+        try {
+            $this->alertService->acknowledge($event, $user);
+            return response()->json(['message' => 'Alert acknowledged']);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
-        
-        $meta = is_array($event->meta) ? $event->meta : [];
-        if (!is_array($meta)) {
-            $meta = [];
-        }
-        $meta['status'] = 'acknowledged';
-        $meta['acknowledged_by'] = $user->id;
-        $event->update([
-            'meta' => $meta,
-        ]);
-
-        return response()->json(['message' => 'Alert acknowledged']);
     }
 
     public function resolve(string $id): JsonResponse
@@ -132,34 +125,25 @@ class AlertController extends Controller
         $user = request()->user();
         $event = Event::where('event_type', 'alert')->findOrFail($id);
         
-        // Check ownership
-        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
-            if ($event->organization_id !== (int) $user->organization_id) {
-                return response()->json(['message' => 'Unauthorized'], 403);
-            }
+        try {
+            $this->alertService->resolve($event, $user);
+            return response()->json(['message' => 'Alert resolved']);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
-        
-        $meta = is_array($event->meta) ? $event->meta : [];
-        if (!is_array($meta)) {
-            $meta = [];
-        }
-        $meta['status'] = 'resolved';
-        $meta['resolved_by'] = $user->id;
-        $event->update([
-            'meta' => $meta,
-        ]);
-
-        return response()->json(['message' => 'Alert resolved']);
     }
 
     public function markFalseAlarm(string $id): JsonResponse
     {
+        $user = request()->user();
         $event = Event::where('event_type', 'alert')->findOrFail($id);
-        $meta = is_array($event->meta) ? $event->meta : [];
-        $meta['status'] = 'false_alarm';
-        $event->update(['meta' => $meta]);
-
-        return response()->json(['message' => 'Alert marked as false alarm']);
+        
+        try {
+            $this->alertService->markFalseAlarm($event, $user);
+            return response()->json(['message' => 'Alert marked as false alarm']);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
     }
 
     public function bulkAcknowledge(Request $request): JsonResponse
@@ -170,34 +154,15 @@ class AlertController extends Controller
             'ids.*' => 'required|integer|exists:events,id',
         ]);
 
-        $query = Event::whereIn('id', $data['ids'])
-            ->where('event_type', 'alert');
-
-        // Filter by organization
-        if ($user->organization_id) {
-            $query->where('organization_id', $user->organization_id);
-        } elseif (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        try {
+            $updated = $this->alertService->bulkAcknowledge($data['ids'], $user);
+            return response()->json([
+                'message' => "{$updated} alerts acknowledged",
+                'count' => $updated,
+            ]);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
-
-        // Update meta field for each event
-        $events = $query->get();
-        $updated = 0;
-        foreach ($events as $event) {
-            $meta = is_array($event->meta) ? $event->meta : [];
-            if (!is_array($meta)) {
-                $meta = [];
-            }
-            $meta['status'] = 'acknowledged';
-            $meta['acknowledged_by'] = $user->id;
-            $event->update(['meta' => $meta]);
-            $updated++;
-        }
-
-        return response()->json([
-            'message' => "{$updated} alerts acknowledged",
-            'count' => $updated,
-        ]);
     }
 
     public function bulkResolve(Request $request): JsonResponse
@@ -208,34 +173,15 @@ class AlertController extends Controller
             'ids.*' => 'required|integer|exists:events,id',
         ]);
 
-        $query = Event::whereIn('id', $data['ids'])
-            ->where('event_type', 'alert');
-
-        // Filter by organization
-        if ($user->organization_id) {
-            $query->where('organization_id', $user->organization_id);
-        } elseif (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        try {
+            $updated = $this->alertService->bulkResolve($data['ids'], $user);
+            return response()->json([
+                'message' => "{$updated} alerts resolved",
+                'count' => $updated,
+            ]);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
-
-        // Update meta field for each event
-        $events = $query->get();
-        $updated = 0;
-        foreach ($events as $event) {
-            $meta = is_array($event->meta) ? $event->meta : [];
-            if (!is_array($meta)) {
-                $meta = [];
-            }
-            $meta['status'] = 'resolved';
-            $meta['resolved_by'] = $user->id;
-            $event->update(['meta' => $meta]);
-            $updated++;
-        }
-
-        return response()->json([
-            'message' => "{$updated} alerts resolved",
-            'count' => $updated,
-        ]);
     }
 
     public function stats(Request $request): JsonResponse

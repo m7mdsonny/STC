@@ -1,0 +1,370 @@
+[
+  {
+    "id": "TC001",
+    "title": "Successful Login with Valid Credentials",
+    "description": "Verify that a user can login successfully using valid username and password",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to login page"
+      },
+      {
+        "type": "action",
+        "description": "Enter valid username and password"
+      },
+      {
+        "type": "action",
+        "description": "Click the login button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user is redirected to the dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify session cookie or token is set"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Login Failure with Invalid Credentials",
+    "description": "Verify that login fails and appropriate error is shown with invalid username or password",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to login page"
+      },
+      {
+        "type": "action",
+        "description": "Enter invalid username or password"
+      },
+      {
+        "type": "action",
+        "description": "Click the login button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify error message is displayed indicating invalid credentials"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user remains on login page"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Logout Successfully Ends Session",
+    "description": "Verify that logging out successfully terminates the session and redirects to login page",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login with valid credentials"
+      },
+      {
+        "type": "action",
+        "description": "Click the logout button/link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user is redirected to login page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify session cookie or token is cleared"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Session Persistence after Page Refresh",
+    "description": "Verify that after login, the user remains logged in after refreshing or reopening the page",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login with valid credentials"
+      },
+      {
+        "type": "action",
+        "description": "Refresh the browser page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user remains logged in and dashboard is displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Super Admin Access to All Admin Routes",
+    "description": "Verify that a super admin role can access all administration routes without restrictions",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as super admin user"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to each admin route in the system"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access is granted and pages load correctly"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Regular User Denied Access to Admin Routes",
+    "description": "Confirm that users without admin roles cannot access admin-only routes and receive proper denied access messages",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as a regular user (non-admin)"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to access admin routes directly via URL"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access is denied with appropriate error message or redirect"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Viewer Role Has Read-Only Access",
+    "description": "Ensure users with the viewer role can view content but cannot perform write, edit or delete actions",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as user with viewer role"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to various system pages with content"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user can view content"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that UI controls for create/edit/delete are disabled or not visible"
+      },
+      {
+        "type": "action",
+        "description": "Attempt URL based POST/PUT/DELETE actions if possible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify server returns permission denied errors"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Owner Role Has Full Organization Access",
+    "description": "Validate that users assigned the owner role can access and perform all functions available within their organization",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as an owner role user"
+      },
+      {
+        "type": "action",
+        "description": "Navigate through organization-level features and settings"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify owner can create, modify, and delete resources within organization"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Navigation to Dashboard Succeeds",
+    "description": "Verify users can navigate to the dashboard page from any given page",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as any valid user"
+      },
+      {
+        "type": "action",
+        "description": "Click dashboard link in navigation menu or sidebar"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify dashboard page loads correctly"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Navigation to All Accessible Pages",
+    "description": "Ensure users can navigate to all pages they have permission to access using the UI",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as a user with specific role"
+      },
+      {
+        "type": "action",
+        "description": "Use sidebar or menu to navigate through all accessible pages"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify pages load without access errors"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Sidebar Navigation Functionality",
+    "description": "Validate that the sidebar navigation menu works correctly and highlights the active page",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login to platform"
+      },
+      {
+        "type": "action",
+        "description": "Click different sidebar menu items"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the correct page loads"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the active menu item is highlighted"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Breadcrumbs and Navigation Indicators Work",
+    "description": "Verify that breadcrumbs and navigation indicators update correctly as users navigate through pages",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login and navigate through nested pages"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that breadcrumbs accurately reflect current page path"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify navigation indicators are intuitive and consistent"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Unauthorized Access Error Message Display",
+    "description": "Check that attempting to access unauthorized content/feature shows proper error message to the user",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as regular user"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to access admin-only route via direct URL"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that an unauthorized access error message is displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Protected Routes Redirect to Login for Unauthenticated Users",
+    "description": "Validate that unauthenticated users visiting protected routes are redirected to login page",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open protected route URL in a new browser session without authentication"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user is redirected to login page"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Network Errors Handled Gracefully",
+    "description": "Simulate network failures and confirm the system displays appropriate error messages and recovers gracefully",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login to platform"
+      },
+      {
+        "type": "action",
+        "description": "Simulate network disconnection or server timeout during data fetch"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user is shown a network error message"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify UI provides retry or fallback options"
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Invalid Routes Display Proper Error",
+    "description": "Verify that navigation to invalid or undefined URLs shows a user-friendly error page or 404 message",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Enter a non-existent URL path in the address bar"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user sees a 404 or 'Page not found' error message"
+      }
+    ]
+  }
+]

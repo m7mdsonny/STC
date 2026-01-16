@@ -6,6 +6,8 @@ use App\Helpers\RoleHelper;
 use App\Models\User;
 use App\Models\Organization;
 use App\Services\PlanEnforcementService;
+use App\Exceptions\DomainActionException;
+use App\Services\UserAssignmentService;
 use App\Http\Requests\UserStoreRequest;
 use App\Http\Requests\UserUpdateRequest;
 use Illuminate\Http\JsonResponse;
@@ -14,6 +16,12 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
+    public function __construct(
+        private UserAssignmentService $userAssignmentService,
+        private PlanEnforcementService $planEnforcementService
+    ) {
+    }
+
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -67,34 +75,24 @@ class UserController extends Controller
 
     public function store(UserStoreRequest $request): JsonResponse
     {
-        // Authorization is handled by UserStoreRequest
         $data = $request->validated();
+        $actor = $request->user();
 
-        // Normalize role
-        $data['role'] = RoleHelper::normalize($data['role']);
-
-        // Ensure organization_id is set for non-super-admin roles
-        if ($data['role'] !== RoleHelper::SUPER_ADMIN && empty($data['organization_id'])) {
-            return response()->json(['message' => 'Organization is required for this role'], 422);
-        }
-
-        // Check quota enforcement for organization users
-        if ($data['role'] !== RoleHelper::SUPER_ADMIN && !empty($data['organization_id'])) {
+        // PRODUCTION SAFETY: Enforce organization user limits
+        $organization = Organization::find($data['organization_id']);
+        if ($organization) {
             try {
-                $org = Organization::findOrFail($data['organization_id']);
-                $enforcementService = app(PlanEnforcementService::class);
-                $enforcementService->assertCanCreateUser($org);
+                $this->planEnforcementService->assertCanCreateUser($organization);
             } catch (\Exception $e) {
-                return response()->json([
-                    'message' => $e->getMessage()
-                ], 403);
+                return response()->json(['message' => $e->getMessage()], 422);
             }
         }
 
-        $user = User::create([
-            ...$data,
-            'password' => Hash::make($data['password']),
-        ]);
+        try {
+            $user = $this->userAssignmentService->createUser($data, $actor);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
 
         $user->role = RoleHelper::normalize($user->role);
         return response()->json($user, 201);
@@ -102,15 +100,14 @@ class UserController extends Controller
 
     public function update(UserUpdateRequest $request, User $user): JsonResponse
     {
-        // Authorization is handled by UserUpdateRequest
         $data = $request->validated();
 
-        // Normalize role if provided
-        if (isset($data['role'])) {
-            $data['role'] = RoleHelper::normalize($data['role']);
+        try {
+            $user = $this->userAssignmentService->updateUser($user, $data, $request->user());
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
 
-        $user->update($data);
         $user->role = RoleHelper::normalize($user->role);
 
         return response()->json($user);
@@ -141,8 +138,11 @@ class UserController extends Controller
         // Use Policy for authorization (prevents self-toggle)
         $this->authorize('toggleActive', $user);
 
-        $user->is_active = !$user->is_active;
-        $user->save();
+        try {
+            $user = $this->userAssignmentService->toggleActive($user, request()->user());
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
 
         return response()->json($user);
     }

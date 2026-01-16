@@ -6,11 +6,16 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Models\Notification;
 use App\Models\DeviceToken;
+use App\Services\NotificationSettingsService;
+use App\Exceptions\DomainActionException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class NotificationController extends Controller
 {
+    public function __construct(private NotificationSettingsService $notificationService)
+    {
+    }
     public function index(): JsonResponse
     {
         $user = request()->user();
@@ -40,20 +45,7 @@ class NotificationController extends Controller
         $user = $request->user();
 
         try {
-            $deviceToken = DeviceToken::updateOrCreate(
-                [
-                    'token' => $request->device_token,
-                    'user_id' => $user->id,
-                ],
-                [
-                    'device_type' => $request->platform,
-                    'device_id' => $request->device_id,
-                    'device_name' => $request->device_name,
-                    'app_version' => $request->app_version,
-                    'is_active' => true,
-                    'last_used_at' => now(),
-                ]
-            );
+            $deviceToken = $this->notificationService->registerDevice($request->all(), $user);
 
             Log::info('Device token registered', [
                 'user_id' => $user->id,
@@ -66,6 +58,8 @@ class NotificationController extends Controller
                 'message' => 'Device token registered successfully',
                 'device' => $deviceToken,
             ], 201);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         } catch (\Exception $e) {
             Log::error('Failed to register device token', [
                 'error' => $e->getMessage(),
@@ -91,9 +85,7 @@ class NotificationController extends Controller
         $user = $request->user();
 
         try {
-            DeviceToken::where('token', $request->device_token)
-                ->where('user_id', $user->id)
-                ->update(['is_active' => false]);
+            $this->notificationService->unregisterDevice($request->device_token, $user);
 
             Log::info('Device token unregistered', [
                 'user_id' => $user->id,
@@ -104,6 +96,8 @@ class NotificationController extends Controller
                 'success' => true,
                 'message' => 'Device token unregistered successfully',
             ]);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         } catch (\Exception $e) {
             Log::error('Failed to unregister device token', [
                 'error' => $e->getMessage(),
@@ -407,14 +401,11 @@ class NotificationController extends Controller
                 'vibration_enabled' => 'nullable|boolean',
             ]);
 
-            $priority = \App\Models\NotificationPriority::create([
-                'organization_id' => $user->organization_id,
-                'notification_type' => "{$data['module']}.{$data['alert_type']}",
-                'priority' => $data['severity'],
-                'is_critical' => $data['severity'] === 'critical',
-            ]);
+            $priority = $this->notificationService->createAlertPriority($data, $user);
 
             return response()->json($priority, 201);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         } catch (\Illuminate\Database\QueryException $e) {
             \Log::error('Error creating notification priority: ' . $e->getMessage());
             return response()->json([
@@ -456,14 +447,11 @@ class NotificationController extends Controller
                 'vibration_enabled' => 'nullable|boolean',
             ]);
 
-            if (isset($data['severity'])) {
-                $priority->update([
-                    'priority' => $data['severity'],
-                    'is_critical' => $data['severity'] === 'critical',
-                ]);
-            }
+            $priority = $this->notificationService->updateAlertPriority($priority, $data, $request->user());
 
             return response()->json($priority);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'message' => 'Notification priority not found'
@@ -499,8 +487,10 @@ class NotificationController extends Controller
             }
             
             $priority = \App\Models\NotificationPriority::findOrFail($id);
-            $priority->delete();
+            $this->notificationService->deleteAlertPriority($priority, request()->user());
             return response()->json(['message' => 'Alert priority deleted']);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'message' => 'Notification priority not found'

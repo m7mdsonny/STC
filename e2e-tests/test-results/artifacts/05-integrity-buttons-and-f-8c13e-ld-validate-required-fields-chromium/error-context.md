@@ -1,0 +1,203 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - img "STC Solutions" [ref=e7]
+        - paragraph [ref=e8]: منصة تحليل الفيديو بالذكاء الاصطناعي
+      - navigation [ref=e9]:
+        - link "لوحة التحكم" [ref=e10] [cursor=pointer]:
+          - /url: /admin
+          - img [ref=e11]
+          - generic [ref=e16]: لوحة التحكم
+        - link "مراقبة النظام" [ref=e17] [cursor=pointer]:
+          - /url: /admin/monitor
+          - img [ref=e18]
+          - generic [ref=e20]: مراقبة النظام
+        - link "المؤسسات" [ref=e21] [cursor=pointer]:
+          - /url: /admin/organizations
+          - img [ref=e22]
+          - generic [ref=e26]: المؤسسات
+        - link "المستخدمين" [ref=e27] [cursor=pointer]:
+          - /url: /admin/users
+          - img [ref=e28]
+          - generic [ref=e40]: المستخدمين
+        - link "سيرفرات Edge" [ref=e41] [cursor=pointer]:
+          - /url: /admin/edge-servers
+          - img [ref=e42]
+          - generic [ref=e45]: سيرفرات Edge
+        - link "التراخيص" [ref=e46] [cursor=pointer]:
+          - /url: /admin/licenses
+          - img [ref=e47]
+          - generic [ref=e51]: التراخيص
+        - link "الموزعين" [ref=e52] [cursor=pointer]:
+          - /url: /admin/resellers
+          - img [ref=e53]
+          - generic [ref=e58]: الموزعين
+        - link "الباقات" [ref=e59] [cursor=pointer]:
+          - /url: /admin/plans
+          - img [ref=e60]
+          - generic [ref=e62]: الباقات
+        - link "موديولات الذكاء الاصطناعي" [ref=e63] [cursor=pointer]:
+          - /url: /admin/ai-modules
+          - img [ref=e64]
+          - generic [ref=e66]: موديولات الذكاء الاصطناعي
+        - link "تدريب النماذج" [ref=e67] [cursor=pointer]:
+          - /url: /admin/model-training
+          - img [ref=e68]
+          - generic [ref=e71]: تدريب النماذج
+        - link "التكاملات" [ref=e72] [cursor=pointer]:
+          - /url: /admin/integrations
+          - img [ref=e73]
+          - generic [ref=e76]: التكاملات
+        - link "الرسائل" [ref=e77] [cursor=pointer]:
+          - /url: /admin/sms
+          - img [ref=e78]
+          - generic [ref=e80]: الرسائل
+        - link "صفحة الهبوط" [ref=e81] [cursor=pointer]:
+          - /url: /admin/landing
+          - img [ref=e82]
+          - generic [ref=e85]: صفحة الهبوط
+        - link "الاشعارات" [ref=e86] [cursor=pointer]:
+          - /url: /admin/notifications
+          - img [ref=e87]
+          - generic [ref=e90]: الاشعارات
+        - link "الاعدادات" [ref=e91] [cursor=pointer]:
+          - /url: /admin/settings
+          - img [ref=e92]
+          - generic [ref=e95]: الاعدادات
+        - link "تحكمات السوبر ادمن" [ref=e96] [cursor=pointer]:
+          - /url: /admin/super-settings
+          - img [ref=e97]
+          - generic [ref=e98]: تحكمات السوبر ادمن
+        - link "نصوص المنصة" [ref=e99] [cursor=pointer]:
+          - /url: /admin/wordings
+          - img [ref=e100]
+          - generic [ref=e102]: نصوص المنصة
+        - link "إعلانات التحديثات" [ref=e103] [cursor=pointer]:
+          - /url: /admin/updates
+          - img [ref=e104]
+          - generic [ref=e107]: إعلانات التحديثات
+        - link "نظام التحديثات" [ref=e108] [cursor=pointer]:
+          - /url: /admin/system-updates
+          - img [ref=e109]
+          - generic [ref=e112]: نظام التحديثات
+        - link "النسخ الاحتياطية" [ref=e113] [cursor=pointer]:
+          - /url: /admin/backups
+          - img [ref=e114]
+          - generic [ref=e118]: النسخ الاحتياطية
+        - link "طلبات التجربة المجانية" [ref=e119] [cursor=pointer]:
+          - /url: /admin/free-trial-requests
+          - img [ref=e120]
+          - generic [ref=e123]: طلبات التجربة المجانية
+      - generic [ref=e124]:
+        - generic [ref=e125]:
+          - generic [ref=e127]: S
+          - generic [ref=e128]:
+            - paragraph [ref=e129]: Super Administrator
+            - paragraph [ref=e130]: superadmin@demo.local
+        - button "تسجيل الخروج" [ref=e131] [cursor=pointer]:
+          - img [ref=e132]
+          - generic [ref=e135]: تسجيل الخروج
+  - generic [ref=e136]:
+    - banner [ref=e137]:
+      - generic [ref=e138]:
+        - heading "لوحة تحكم المشرف" [level=1] [ref=e140]
+        - generic [ref=e142]:
+          - img [ref=e143]
+          - textbox "بحث..." [ref=e146]
+        - generic [ref=e147]:
+          - button [ref=e149] [cursor=pointer]:
+            - img [ref=e150]
+          - generic [ref=e153]:
+            - generic [ref=e155]: S
+            - generic [ref=e156]:
+              - paragraph [ref=e157]: Super Administrator
+              - paragraph [ref=e158]: مشرف عام
+    - main [ref=e159]:
+      - generic [ref=e160]:
+        - generic [ref=e161]:
+          - generic [ref=e162]:
+            - heading "المؤسسات" [level=1] [ref=e163]
+            - paragraph [ref=e164]: ادارة المؤسسات والاشتراكات
+          - button "اضافة مؤسسة" [ref=e165] [cursor=pointer]:
+            - img [ref=e166]
+            - generic [ref=e167]: اضافة مؤسسة
+        - generic [ref=e169]:
+          - img [ref=e170]
+          - textbox "بحث عن مؤسسة..." [ref=e173]
+        - table [ref=e175]:
+          - rowgroup [ref=e176]:
+            - row "المؤسسة الباقة الحدود الحالة تاريخ الانشاء" [ref=e177]:
+              - columnheader "المؤسسة" [ref=e178]
+              - columnheader "الباقة" [ref=e179]
+              - columnheader "الحدود" [ref=e180]
+              - columnheader "الحالة" [ref=e181]
+              - columnheader "تاريخ الانشاء" [ref=e182]
+              - columnheader [ref=e183]
+          - rowgroup [ref=e184]:
+            - row "Demo Corporation contact@democorp.local اساسي 50 كاميرا 5 سيرفر نشط ٦‏/١‏/٢٠٢٦" [ref=e185]:
+              - cell "Demo Corporation contact@democorp.local" [ref=e186]:
+                - generic [ref=e187]:
+                  - img [ref=e189]
+                  - generic [ref=e193]:
+                    - paragraph [ref=e194]: Demo Corporation
+                    - paragraph [ref=e195]: contact@democorp.local
+              - cell "اساسي" [ref=e196]:
+                - generic [ref=e197]: اساسي
+              - cell "50 كاميرا 5 سيرفر" [ref=e198]:
+                - generic [ref=e199]:
+                  - paragraph [ref=e200]: 50 كاميرا
+                  - paragraph [ref=e201]: 5 سيرفر
+              - cell "نشط" [ref=e202]:
+                - generic [ref=e203]: نشط
+              - cell "٦‏/١‏/٢٠٢٦" [ref=e204]
+              - cell [ref=e205]:
+                - generic [ref=e206]:
+                  - button "تعديل" [ref=e207] [cursor=pointer]:
+                    - img [ref=e208]
+                  - button "تعليق" [ref=e210] [cursor=pointer]:
+                    - img [ref=e211]
+        - generic [ref=e216]:
+          - generic [ref=e217]:
+            - heading "اضافة مؤسسة جديدة" [level=2] [ref=e218]
+            - button [ref=e219] [cursor=pointer]:
+              - img [ref=e220]
+          - generic [ref=e224]:
+            - generic [ref=e225]:
+              - generic [ref=e226]:
+                - generic [ref=e227]: اسم المؤسسة (عربي)
+                - textbox [active] [ref=e228]
+              - generic [ref=e229]:
+                - generic [ref=e230]: اسم المؤسسة (انجليزي)
+                - textbox [ref=e231]
+              - generic [ref=e232]:
+                - generic [ref=e233]: البريد الالكتروني
+                - textbox [ref=e234]
+              - generic [ref=e235]:
+                - generic [ref=e236]: الهاتف
+                - textbox [ref=e237]
+              - generic [ref=e238]:
+                - generic [ref=e239]: المدينة
+                - textbox [ref=e240]
+              - generic [ref=e241]:
+                - generic [ref=e242]: الباقة
+                - combobox [ref=e243] [cursor=pointer]:
+                  - option "أساسي" [selected]
+                  - option "الخطة المميزة"
+                  - option "احترافي"
+                  - option "مؤسسي"
+              - generic [ref=e244]:
+                - generic [ref=e245]: الحد الاقصى للكاميرات
+                - spinbutton [ref=e246]: "4"
+              - generic [ref=e247]:
+                - generic [ref=e248]: الحد الاقصى للسيرفرات
+                - spinbutton [ref=e249]: "1"
+            - generic [ref=e250]:
+              - button "الغاء" [ref=e251] [cursor=pointer]
+              - button "اضافة المؤسسة" [ref=e252] [cursor=pointer]
+    - contentinfo [ref=e253]:
+      - paragraph [ref=e254]: STC AI-VAP v1.0 | STC Solutions 2026
+```

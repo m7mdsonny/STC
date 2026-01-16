@@ -1,0 +1,469 @@
+{
+  "project_name": "STC AI-VAP Platform",
+  "project_type": "SaaS Platform",
+  "description": "منصة SaaS متكاملة لتحليل الفيديو بالذكاء الاصطناعي - AI Video Analysis Platform",
+  "tech_stack": {
+    "frontend": {
+      "framework": "React 18.3",
+      "language": "TypeScript",
+      "build_tool": "Vite 5.4",
+      "routing": "React Router DOM 7.10",
+      "state_management": "@tanstack/react-query 5.90",
+      "styling": "Tailwind CSS 3.4",
+      "ui_components": "Custom components with Lucide React icons",
+      "dev_port": 5173
+    },
+    "backend": {
+      "framework": "Laravel 11",
+      "language": "PHP 8.2+",
+      "authentication": "Laravel Sanctum 4.0",
+      "database": "MySQL 8.0+ / MariaDB 10.3+",
+      "api_version": "v1",
+      "dev_port": 8000
+    },
+    "edge_server": {
+      "framework": "Python FastAPI",
+      "language": "Python 3.10+",
+      "features": ["OpenCV", "FFmpeg", "AI Model Processing"]
+    },
+    "mobile": {
+      "framework": "Flutter 3.16+",
+      "language": "Dart"
+    }
+  },
+  "authentication": {
+    "method": "Laravel Sanctum Bearer Token",
+    "endpoints": {
+      "login": "POST /api/v1/auth/login",
+      "logout": "POST /api/v1/auth/logout",
+      "get_current_user": "GET /api/v1/auth/me",
+      "update_profile": "PUT /api/v1/auth/profile",
+      "change_password": "PUT /api/v1/auth/password"
+    },
+    "token_storage": "localStorage (frontend)",
+    "session_management": "Token-based with Sanctum"
+  },
+  "role_based_access_control": {
+    "roles": [
+      {
+        "name": "super_admin",
+        "level": 5,
+        "description": "Full system access, can manage all organizations",
+        "arabic_label": "مشرف عام"
+      },
+      {
+        "name": "owner",
+        "level": 4,
+        "description": "Organization owner with full access to their organization",
+        "arabic_label": "مالك"
+      },
+      {
+        "name": "admin",
+        "level": 3,
+        "description": "Organization administrator with management permissions",
+        "arabic_label": "مدير"
+      },
+      {
+        "name": "editor",
+        "level": 2,
+        "description": "Can edit content but not manage organization",
+        "arabic_label": "محرر"
+      },
+      {
+        "name": "viewer",
+        "level": 1,
+        "description": "Read-only access",
+        "arabic_label": "مشاهد"
+      }
+    ],
+    "permissions": {
+      "super_admin": "Access to all admin routes and system management",
+      "owner": "Full organization management, team management, settings",
+      "admin": "Organization management, team management, settings",
+      "editor": "Can edit content, view all pages",
+      "viewer": "Read-only access to all organization pages"
+    },
+    "route_protection": {
+      "admin_only_routes": [
+        "/admin",
+        "/admin/monitor",
+        "/admin/organizations",
+        "/admin/users",
+        "/admin/licenses",
+        "/admin/edge-servers",
+        "/admin/resellers",
+        "/admin/plans",
+        "/admin/ai-modules",
+        "/admin/model-training",
+        "/admin/integrations",
+        "/admin/sms",
+        "/admin/notifications",
+        "/admin/settings",
+        "/admin/super-admins",
+        "/admin/super-settings",
+        "/admin/wordings",
+        "/admin/landing",
+        "/admin/updates",
+        "/admin/system-updates",
+        "/admin/backups",
+        "/admin/ai-commands",
+        "/admin/free-trial-requests"
+      ],
+      "require_manage_routes": [
+        "/team"
+      ],
+      "public_routes": [
+        "/",
+        "/login",
+        "/forgot-password",
+        "/request-demo"
+      ],
+      "authenticated_routes": [
+        "/dashboard",
+        "/live",
+        "/cameras",
+        "/alerts",
+        "/analytics",
+        "/people",
+        "/vehicles",
+        "/attendance",
+        "/market",
+        "/automation",
+        "/guide",
+        "/settings"
+      ]
+    }
+  },
+  "main_features": {
+    "public_pages": [
+      {
+        "name": "Landing Page",
+        "route": "/",
+        "description": "Public landing page with platform features and modules"
+      },
+      {
+        "name": "Login",
+        "route": "/login",
+        "description": "User authentication page"
+      },
+      {
+        "name": "Forgot Password",
+        "route": "/forgot-password",
+        "description": "Password recovery page"
+      },
+      {
+        "name": "Request Demo",
+        "route": "/request-demo",
+        "description": "Free trial request page"
+      }
+    ],
+    "organization_features": [
+      {
+        "name": "Dashboard",
+        "route": "/dashboard",
+        "description": "Main organization dashboard with statistics",
+        "roles": ["owner", "admin", "editor", "viewer"]
+      },
+      {
+        "name": "Live View",
+        "route": "/live",
+        "description": "Real-time camera feed monitoring with multi-camera layouts",
+        "roles": ["owner", "admin", "editor", "viewer"]
+      },
+      {
+        "name": "Cameras",
+        "route": "/cameras",
+        "description": "Camera management and configuration",
+        "roles": ["owner", "admin", "editor", "viewer"]
+      },
+      {
+        "name": "Alerts",
+        "route": "/alerts",
+        "description": "Alert management and notifications",
+        "roles": ["owner", "admin", "editor", "viewer"]
+      },
+      {
+        "name": "Analytics",
+        "route": "/analytics",
+        "description": "Data analytics and reporting",
+        "roles": ["owner", "admin", "editor", "viewer"]
+      },
+      {
+        "name": "People",
+        "route": "/people",
+        "description": "People detection and face recognition management",
+        "roles": ["owner", "admin", "editor", "viewer"]
+      },
+      {
+        "name": "Vehicles",
+        "route": "/vehicles",
+        "description": "Vehicle detection and license plate recognition",
+        "roles": ["owner", "admin", "editor", "viewer"]
+      },
+      {
+        "name": "Attendance",
+        "route": "/attendance",
+        "description": "Employee attendance tracking with face recognition",
+        "roles": ["owner", "admin", "editor", "viewer"]
+      },
+      {
+        "name": "Market",
+        "route": "/market",
+        "description": "AI modules marketplace",
+        "roles": ["owner", "admin", "editor", "viewer"]
+      },
+      {
+        "name": "Automation",
+        "route": "/automation",
+        "description": "AI command automation and workflows",
+        "roles": ["owner", "admin", "editor", "viewer"]
+      },
+      {
+        "name": "Team",
+        "route": "/team",
+        "description": "Team member management",
+        "roles": ["owner", "admin"]
+      },
+      {
+        "name": "Owner Guide",
+        "route": "/guide",
+        "description": "Owner's guide and documentation",
+        "roles": ["owner", "admin"]
+      },
+      {
+        "name": "Settings",
+        "route": "/settings",
+        "description": "Organization settings and configuration",
+        "roles": ["owner", "admin", "editor", "viewer"]
+      }
+    ],
+    "admin_features": [
+      {
+        "name": "Admin Dashboard",
+        "route": "/admin",
+        "description": "Super admin system dashboard"
+      },
+      {
+        "name": "System Monitor",
+        "route": "/admin/monitor",
+        "description": "System monitoring and health checks"
+      },
+      {
+        "name": "Organizations",
+        "route": "/admin/organizations",
+        "description": "Organization management"
+      },
+      {
+        "name": "Users",
+        "route": "/admin/users",
+        "description": "User management across all organizations"
+      },
+      {
+        "name": "Licenses",
+        "route": "/admin/licenses",
+        "description": "License key management"
+      },
+      {
+        "name": "Edge Servers",
+        "route": "/admin/edge-servers",
+        "description": "Edge server management and monitoring"
+      },
+      {
+        "name": "Resellers",
+        "route": "/admin/resellers",
+        "description": "Reseller management"
+      },
+      {
+        "name": "Plans",
+        "route": "/admin/plans",
+        "description": "Subscription plan management"
+      },
+      {
+        "name": "AI Modules",
+        "route": "/admin/ai-modules",
+        "description": "AI module configuration and management"
+      },
+      {
+        "name": "Model Training",
+        "route": "/admin/model-training",
+        "description": "AI model training management"
+      },
+      {
+        "name": "Integrations",
+        "route": "/admin/integrations",
+        "description": "Third-party integrations management"
+      },
+      {
+        "name": "SMS Settings",
+        "route": "/admin/sms",
+        "description": "SMS service configuration"
+      },
+      {
+        "name": "Notifications",
+        "route": "/admin/notifications",
+        "description": "System-wide notification management"
+      },
+      {
+        "name": "Admin Settings",
+        "route": "/admin/settings",
+        "description": "System settings"
+      },
+      {
+        "name": "Super Admin Management",
+        "route": "/admin/super-admins",
+        "description": "Super admin user management"
+      },
+      {
+        "name": "Super Admin Settings",
+        "route": "/admin/super-settings",
+        "description": "Super admin specific settings"
+      },
+      {
+        "name": "Platform Wordings",
+        "route": "/admin/wordings",
+        "description": "Platform text and translations management"
+      },
+      {
+        "name": "Landing Settings",
+        "route": "/admin/landing",
+        "description": "Landing page configuration"
+      },
+      {
+        "name": "Updates",
+        "route": "/admin/updates",
+        "description": "System update management"
+      },
+      {
+        "name": "System Updates",
+        "route": "/admin/system-updates",
+        "description": "System update deployment"
+      },
+      {
+        "name": "Backups",
+        "route": "/admin/backups",
+        "description": "Database backup management"
+      },
+      {
+        "name": "AI Command Center",
+        "route": "/admin/ai-commands",
+        "description": "AI command execution and monitoring"
+      },
+      {
+        "name": "Free Trial Requests",
+        "route": "/admin/free-trial-requests",
+        "description": "Free trial request management"
+      }
+    ]
+  },
+  "ai_modules": [
+    "Fire Detection (كشف الحريق والدخان)",
+    "Face Recognition (التعرف على الوجوه)",
+    "People Counting (عد الاشخاص)",
+    "Vehicle Recognition (التعرف على المركبات)",
+    "Attendance Tracking (تسجيل الحضور)",
+    "Intrusion Detection (كشف التسلل)",
+    "Suspicious Behavior Detection (كشف السلوك المشبوه في المتاجر)",
+    "Worker Safety Monitoring (مراقبة سلامة العمال)",
+    "Factory Monitoring (مراقبة المصانع)",
+    "Time Tracking (تتبع الوقت)"
+  ],
+  "api_endpoints": {
+    "public": [
+      "GET /api/v1/public/landing",
+      "POST /api/v1/public/contact",
+      "GET /api/v1/public/updates",
+      "GET /api/v1/branding",
+      "POST /api/v1/public/free-trial",
+      "GET /api/v1/public/free-trial/modules"
+    ],
+    "authenticated": [
+      "GET /api/v1/dashboard",
+      "GET /api/v1/dashboard/admin",
+      "GET /api/v1/organizations",
+      "POST /api/v1/organizations",
+      "GET /api/v1/organizations/{id}",
+      "PUT /api/v1/organizations/{id}",
+      "DELETE /api/v1/organizations/{id}",
+      "GET /api/v1/users",
+      "POST /api/v1/users",
+      "GET /api/v1/users/{id}",
+      "PUT /api/v1/users/{id}",
+      "DELETE /api/v1/users/{id}",
+      "GET /api/v1/notifications",
+      "GET /api/v1/subscription",
+      "GET /api/v1/edge-servers",
+      "GET /api/v1/cameras",
+      "GET /api/v1/alerts",
+      "GET /api/v1/analytics",
+      "GET /api/v1/people",
+      "GET /api/v1/vehicles",
+      "GET /api/v1/attendance"
+    ]
+  },
+  "ui_components": [
+    "Layout (Header, Sidebar, Main Content)",
+    "DataTable (with sorting, filtering, pagination)",
+    "Modal (for dialogs and forms)",
+    "Toast (notifications)",
+    "StatCard (dashboard statistics)",
+    "EdgeServerStatus (edge server monitoring)",
+    "EdgeServerMonitor (real-time monitoring)"
+  ],
+  "testing_requirements": {
+    "authentication_tests": [
+      "Login with valid credentials",
+      "Login with invalid credentials",
+      "Logout functionality",
+      "Session persistence",
+      "Token refresh",
+      "Password change",
+      "Forgot password flow"
+    ],
+    "rbac_tests": [
+      "Super admin access to all routes",
+      "Owner access to organization routes",
+      "Admin access to management routes",
+      "Editor access to edit routes",
+      "Viewer read-only access",
+      "Role-based route protection",
+      "Unauthorized access attempts"
+    ],
+    "ui_flow_tests": [
+      "Landing page navigation",
+      "Login flow",
+      "Dashboard navigation",
+      "Live view camera switching",
+      "Camera management",
+      "Alert creation and management",
+      "People management",
+      "Vehicle management",
+      "Attendance tracking",
+      "Settings configuration",
+      "Team management (owner/admin only)",
+      "Admin panel access (super admin only)"
+    ],
+    "end_to_end_tests": [
+      "Complete user registration and onboarding",
+      "Organization creation and setup",
+      "Camera integration and live feed",
+      "AI module activation and configuration",
+      "Alert generation and notification",
+      "Analytics data visualization",
+      "Multi-user collaboration",
+      "Role-based feature access",
+      "Edge server integration",
+      "Subscription management"
+    ]
+  },
+  "project_structure": {
+    "frontend_path": "apps/web-portal",
+    "backend_path": "apps/cloud-laravel",
+    "edge_server_path": "apps/edge-server",
+    "mobile_app_path": "apps/mobile-app"
+  },
+  "localization": {
+    "primary_language": "Arabic (العربية)",
+    "secondary_language": "English",
+    "rtl_support": true
+  }
+}

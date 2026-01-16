@@ -3,11 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Integration;
+use App\Services\IntegrationService;
+use App\Exceptions\DomainActionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class IntegrationController extends Controller
 {
+    public function __construct(private IntegrationService $integrationService)
+    {
+    }
     public function index(Request $request): JsonResponse
     {
         $this->ensureSuperAdmin($request);
@@ -55,15 +60,12 @@ class IntegrationController extends Controller
             'connection_config' => 'required|array',
         ]);
 
-        // Verify edge server belongs to organization
-        $edgeServer = \App\Models\EdgeServer::findOrFail($data['edge_server_id']);
-        if ($edgeServer->organization_id != $data['organization_id']) {
-            return response()->json(['message' => 'Edge server does not belong to the specified organization'], 422);
+        try {
+            $integration = $this->integrationService->createIntegration($data, $request->user());
+            return response()->json($integration, 201);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
-
-        $integration = Integration::create($data);
-
-        return response()->json($integration->load(['organization', 'edgeServer']), 201);
     }
 
     public function update(Request $request, Integration $integration): JsonResponse
@@ -77,25 +79,36 @@ class IntegrationController extends Controller
             'is_active' => 'sometimes|boolean',
         ]);
 
-        $integration->update($data);
-
-        return response()->json($integration->load(['organization', 'edgeServer']));
+        try {
+            $integration = $this->integrationService->updateIntegration($integration, $data, $request->user());
+            return response()->json($integration);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
     }
 
     public function destroy(Integration $integration): JsonResponse
     {
         $this->ensureSuperAdmin(request());
-        $integration->delete();
-        return response()->json(['message' => 'Integration deleted']);
+        
+        try {
+            $this->integrationService->deleteIntegration($integration, request()->user());
+            return response()->json(['message' => 'Integration deleted']);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
     }
 
     public function toggleActive(Integration $integration): JsonResponse
     {
         $this->ensureSuperAdmin(request());
-        $integration->is_active = !$integration->is_active;
-        $integration->save();
-
-        return response()->json($integration);
+        
+        try {
+            $integration = $this->integrationService->toggleActive($integration, request()->user());
+            return response()->json($integration);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
     }
 
     public function testConnection(Integration $integration): JsonResponse

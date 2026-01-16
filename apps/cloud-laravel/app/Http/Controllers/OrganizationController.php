@@ -10,6 +10,8 @@ use App\Models\User;
 use App\Http\Requests\OrganizationStoreRequest;
 use App\Http\Requests\OrganizationUpdateRequest;
 use App\Helpers\RoleHelper;
+use App\Exceptions\DomainActionException;
+use App\Services\OrganizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -17,6 +19,10 @@ use Illuminate\Support\Str;
 
 class OrganizationController extends Controller
 {
+    public function __construct(private OrganizationService $organizationService)
+    {
+    }
+
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -64,7 +70,6 @@ class OrganizationController extends Controller
 
     public function store(OrganizationStoreRequest $request): JsonResponse
     {
-        // Authorization is handled by OrganizationStoreRequest
         $data = $request->validated();
 
         $plan = SubscriptionPlan::where('name', $data['subscription_plan'])->first();
@@ -111,10 +116,13 @@ class OrganizationController extends Controller
 
     public function update(OrganizationUpdateRequest $request, Organization $organization): JsonResponse
     {
-        // Authorization is handled by OrganizationUpdateRequest
         $data = $request->validated();
 
-        $organization->update($data);
+        try {
+            $organization = $this->organizationService->updateOrganization($organization, $data, $request->user());
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
 
         return response()->json($organization);
     }
@@ -143,9 +151,12 @@ class OrganizationController extends Controller
     {
         // Use Policy for authorization
         $this->authorize('toggleActive', $organization);
-        
-        $organization->is_active = !$organization->is_active;
-        $organization->save();
+
+        try {
+            $organization = $this->organizationService->toggleOrganization($organization, request()->user());
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
 
         return response()->json($organization);
     }
@@ -159,14 +170,10 @@ class OrganizationController extends Controller
             'max_edge_servers' => 'nullable|integer|min:1',
         ]);
 
-        $organization->update($data);
-
-        $plan = SubscriptionPlan::where('name', $data['subscription_plan'])->first();
-        if ($plan && property_exists($plan, 'sms_quota')) {
-            $organization->smsQuota()->updateOrCreate(
-                ['organization_id' => $organization->id],
-                ['monthly_limit' => $plan->sms_quota ?? 0]
-            );
+        try {
+            $organization = $this->organizationService->updatePlan($organization, $data, $request->user());
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
 
         return response()->json($organization);
@@ -188,27 +195,19 @@ class OrganizationController extends Controller
 
     public function uploadLogo(Request $request, Organization $organization): JsonResponse
     {
-        $user = $request->user();
-        
-        // Check if user can manage this organization
-        if (!$user->is_super_admin && $user->organization_id !== $organization->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
         $request->validate([
             'logo' => 'required|file|mimes:png,jpg,jpeg,svg|max:5120', // 5MB max
         ]);
 
-        $file = $request->file('logo');
-        $path = $file->store('public/organizations/logos');
-        $url = Storage::url($path);
-
-        $organization->update(['logo_url' => $url]);
-
-        return response()->json([
-            'url' => $url,
-            'logo_url' => $url,
-            'organization' => $organization->fresh(),
-        ]);
+        try {
+            $result = $this->organizationService->uploadLogo(
+                $organization,
+                $request->file('logo'),
+                $request->user()
+            );
+            return response()->json($result);
+        } catch (DomainActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        }
     }
 }

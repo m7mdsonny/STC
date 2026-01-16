@@ -138,20 +138,32 @@ class AuthController extends Controller
 
     public function register(Request $request): JsonResponse
     {
+        // PRODUCTION SAFETY: Block public registration - only super admin can create users
+        $user = $request->user();
+        if (!$user || !$user->isSuperAdmin()) {
+            return response()->json([
+                'message' => 'User registration is disabled. Contact your administrator.',
+                'status' => 403
+            ], 403);
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
             'password_confirmation' => 'required|same:password',
-            'phone' => 'nullable|string|max:20'
+            'phone' => 'nullable|string|max:20',
+            'organization_id' => 'required|exists:organizations,id', // PRODUCTION SAFETY: Require organization
+            'role' => 'required|string|in:owner,admin,editor,operator,viewer'
         ]);
 
         $user = User::create([
+            'organization_id' => $request->organization_id, // PRODUCTION SAFETY: Enforce organization binding
             'name' => $request->name,
             'email' => strtolower($request->email),
             'password' => Hash::make($request->password),
             'phone' => $request->phone,
-            'role' => 'user',
+            'role' => $request->role,
             'is_active' => true
         ]);
 

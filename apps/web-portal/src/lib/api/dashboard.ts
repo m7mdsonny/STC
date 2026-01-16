@@ -25,14 +25,18 @@ interface DashboardData extends DashboardStats {
 
 interface AdminDashboardData {
   total_organizations: number;
-  active_licenses: number;
+  active_organizations?: number;
+  active_licenses?: number;
   total_edge_servers: number;
-  total_cameras: number;
+  online_edge_servers?: number; // Backend provides this field
+  total_cameras?: number;
   total_users: number;
   alerts_today: number;
-  revenue_this_month: number;
-  organizations_by_plan: { plan: string; count: number }[];
-  recent_activities: { id: string; type: string; description: string; created_at: string }[];
+  revenue_this_month?: number;
+  revenue_previous_month?: number; // TODO: Backend should provide this
+  revenue_year_total?: number; // TODO: Backend should provide this
+  organizations_by_plan?: { plan: string; count: number }[];
+  recent_activities?: { id: string; type: string; description: string; created_at: string }[];
 }
 
 interface SystemHealth {
@@ -62,18 +66,24 @@ export const dashboardApi = {
   },
 
   async getAdminDashboard(): Promise<AdminDashboardData> {
-    const { data, error } = await apiClient.get<AdminDashboardData>('/admin/dashboard');
+    const { data, error } = await apiClient.get<AdminDashboardData>('/dashboard/admin');
     if (error || !data) {
       throw new Error(error || 'Failed to fetch admin dashboard');
     }
     return data;
   },
 
-  async getSystemHealth(): Promise<SystemHealth> {
-    const { data, error } = await apiClient.get<SystemHealth>('/admin/system-health');
-    if (error || !data) {
-      throw new Error(error || 'Failed to fetch system health');
+  async getSystemHealth(): Promise<SystemHealth | null> {
+    // TODO: Backend endpoint /admin/system-health not implemented yet
+    // Return null for now, will be handled gracefully in SystemMonitor component
+    try {
+      const { data, error } = await apiClient.get<SystemHealth>('/admin/system-health');
+      if (error || !data) {
+        return null;
+      }
+      return data;
+    } catch {
+      return null;
     }
-    return data;
   },
 };

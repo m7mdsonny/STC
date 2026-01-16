@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Building2, Save, MapPin, Phone, Mail, FileText, Calendar, CreditCard, Camera, Server, Upload, Image, X } from 'lucide-react';
 import { organizationsApi } from '../../lib/api/organizations';
 import { settingsApi } from '../../lib/api/settings';
+import { API_BASE_URL } from '../../lib/apiClient';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { getDetailedErrorMessage } from '../../lib/errorMessages';
@@ -88,9 +89,7 @@ export function OrganizationSettings() {
       formData.append('logo', file);
       
       const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://stcsolutions.online/api/v1';
-      
-      const response = await fetch(`${apiUrl}/organizations/${organization.id}/upload-logo`, {
+      const response = await fetch(`${API_BASE_URL}/organizations/${organization.id}/upload-logo`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -70,14 +70,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(storedUser);
       }
 
-      const { user: currentUser, unauthorized } = await authApi.getCurrentUserDetailed({ skipRedirect: true });
+      const { user: currentUser, unauthorized, error } = await authApi.getCurrentUserDetailed({ skipRedirect: true });
 
       if (unauthorized) {
-        authApi.clearSession();
-        clearStoredUser();
-        setUser(null);
-        setProfile(null);
-        setOrganization(null);
+        // Only clear session on explicit 401 authentication failures
+        // Do NOT clear on 403 (subscription expired) or network errors
+        const is401Error = error === 'Unauthorized' || error?.includes('401') || error?.toLowerCase().includes('unauthenticated');
+        const is403SubscriptionError = error?.includes('subscription') || error?.includes('اشتراك');
+        
+        if (is401Error && !is403SubscriptionError) {
+          authApi.clearSession();
+          clearStoredUser();
+          setUser(null);
+          setProfile(null);
+          setOrganization(null);
+        }
+        // For 403 subscription errors, keep user logged in but restrict access
         return;
       }
 

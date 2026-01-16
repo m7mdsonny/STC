@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\RoleHelper;
+use App\Services\DomainActionService;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Support\Facades\App;
 
-abstract class Controller
+abstract class Controller extends BaseController
 {
     /**
      * Ensure user is super admin
@@ -72,5 +75,23 @@ abstract class Controller
         if ($organizationId && (int) $organizationId !== (int) $user->organization_id) {
             abort(403, 'Access denied to this organization');
         }
+    }
+
+    public function callAction($method, $parameters)
+    {
+        $request = request();
+        
+        // Only enforce domain service usage for mutation requests (non-GET/HEAD/OPTIONS)
+        // and only if user is authenticated (public routes are exempt)
+        if ($request instanceof Request 
+            && !in_array(strtoupper($request->method()), ['GET', 'HEAD', 'OPTIONS'])
+            && $request->user() // Only enforce if user is authenticated
+        ) {
+            /** @var DomainActionService $service */
+            $service = App::make(DomainActionService::class);
+            return $service->execute($request, fn () => parent::callAction($method, $parameters));
+        }
+
+        return parent::callAction($method, $parameters);
     }
 }

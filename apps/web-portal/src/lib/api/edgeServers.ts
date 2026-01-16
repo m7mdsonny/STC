@@ -13,6 +13,7 @@ interface CreateEdgeServerData {
   notes?: string;
   ip_address?: string;
   license_id?: string;
+  organization_id?: string;
 }
 
 export const edgeServersApi = {
@@ -33,7 +34,9 @@ export const edgeServersApi = {
   },
 
   async createEdgeServer(serverData: CreateEdgeServerData): Promise<EdgeServer> {
+    console.log('[edgeServersApi] POST /edge-servers', serverData);
     const { data, error } = await apiClient.post<EdgeServer>('/edge-servers', serverData);
+    console.log('[edgeServersApi] response /edge-servers', { data, error });
     if (error || !data) {
       throw new Error(error || 'Failed to create edge server');
     }

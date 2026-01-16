@@ -12,6 +12,7 @@ import { AI_MODULES } from '../types/database';
 
 export function Cameras() {
   const { organization, canManage } = useAuth();
+  const { showSuccess, showError } = useToast();
   const [cameras, setCameras] = useState<CameraType[]>([]);
   const [servers, setServers] = useState<EdgeServer[]>([]);
   const [loading, setLoading] = useState(true);
