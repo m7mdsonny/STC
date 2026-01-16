@@ -22,8 +22,6 @@ export function Organizations() {
     phone: '',
     city: '',
     subscription_plan: 'basic' as const,
-    max_cameras: 4,
-    max_edge_servers: 1,
   });
 
   useEffect(() => {
@@ -101,8 +99,6 @@ export function Organizations() {
       phone: '',
       city: '',
       subscription_plan: 'basic' as const,
-      max_cameras: 4,
-      max_edge_servers: 1,
     });
   };
 
@@ -115,8 +111,6 @@ export function Organizations() {
       phone: org.phone || '',
       city: org.city || '',
       subscription_plan: org.subscription_plan,
-      max_cameras: org.max_cameras,
-      max_edge_servers: org.max_edge_servers,
     });
     setShowModal(true);
   };
@@ -330,28 +324,9 @@ export function Organizations() {
                   <option key={plan.id} value={plan.name}>{plan.name_ar}</option>
                 ))}
               </select>
-            </div>
-            <div>
-              <label className="label">الحد الاقصى للكاميرات</label>
-              <input
-                type="number"
-                value={formData.max_cameras}
-                onChange={(e) => setFormData({ ...formData, max_cameras: parseInt(e.target.value) })}
-                className="input"
-                min="1"
-                max="128"
-              />
-            </div>
-            <div>
-              <label className="label">الحد الاقصى للسيرفرات</label>
-              <input
-                type="number"
-                value={formData.max_edge_servers}
-                onChange={(e) => setFormData({ ...formData, max_edge_servers: parseInt(e.target.value) })}
-                className="input"
-                min="1"
-                max="10"
-              />
+              <p className="text-xs text-white/50 mt-1">
+                الحدود تُحدد تلقائياً من الباقة المختارة
+              </p>
             </div>
           </div>
 
