@@ -170,24 +170,48 @@ class OrganizationController extends Controller
             $organization->delete();
             DB::commit();
             
-            return response()->json(['message' => 'Deleted successfully'], 200);
+            \Log::info("Organization deleted successfully", ['organization_id' => $organization->id]);
+            
+            $origin = request()->header('Origin');
+            $allowedOrigins = ['https://stcsolutions.online', 'http://localhost:5173', 'http://localhost:3000'];
+            $allowedOrigin = in_array($origin, $allowedOrigins) ? $origin : 'https://stcsolutions.online';
+            
+            return response()->json(['message' => 'Deleted successfully'], 200)
+                ->header('Access-Control-Allow-Origin', $allowedOrigin)
+                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token')
+                ->header('Access-Control-Allow-Credentials', 'true');
         } catch (\Illuminate\Database\QueryException $e) {
             DB::rollBack();
             \Log::error("Failed to delete organization {$organization->id}: " . $e->getMessage());
             
-            if ($e->getCode() == 23000) {
-                return response()->json([
-                    'error' => 'فشل الحذف: لا يمكن حذف المؤسسة لوجود سجلات مرتبطة بها'
-                ], 422);
-            }
+            $origin = request()->header('Origin');
+            $allowedOrigins = ['https://stcsolutions.online', 'http://localhost:5173', 'http://localhost:3000'];
+            $allowedOrigin = in_array($origin, $allowedOrigins) ? $origin : 'https://stcsolutions.online';
             
-            return response()->json([
-                'error' => 'فشل الحذف: ' . $e->getMessage()
-            ], 500);
+            $status = $e->getCode() == 23000 ? 422 : 500;
+            $message = $e->getCode() == 23000 
+                ? 'فشل الحذف: لا يمكن حذف المؤسسة لوجود سجلات مرتبطة بها'
+                : 'فشل الحذف: ' . $e->getMessage();
+            
+            return response()->json(['error' => $message], $status)
+                ->header('Access-Control-Allow-Origin', $allowedOrigin)
+                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token')
+                ->header('Access-Control-Allow-Credentials', 'true');
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error("Failed to delete organization {$organization->id}: " . $e->getMessage());
-            return response()->json(['error' => 'فشل الحذف: ' . $e->getMessage()], 500);
+            
+            $origin = request()->header('Origin');
+            $allowedOrigins = ['https://stcsolutions.online', 'http://localhost:5173', 'http://localhost:3000'];
+            $allowedOrigin = in_array($origin, $allowedOrigins) ? $origin : 'https://stcsolutions.online';
+            
+            return response()->json(['error' => 'فشل الحذف: ' . $e->getMessage()], 500)
+                ->header('Access-Control-Allow-Origin', $allowedOrigin)
+                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token')
+                ->header('Access-Control-Allow-Credentials', 'true');
         }
     }
 
