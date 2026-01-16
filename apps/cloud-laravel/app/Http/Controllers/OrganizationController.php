@@ -151,7 +151,6 @@ class OrganizationController extends Controller
 
     public function destroy(Organization $organization): JsonResponse
     {
-        // Use Policy for authorization
         try {
             $this->authorize('delete', $organization);
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
@@ -163,47 +162,32 @@ class OrganizationController extends Controller
         }
 
         try {
-            // Handle soft deletes and relationships
+            if (!$organization->exists) {
+                return response()->json(['message' => 'Organization not found'], 404);
+            }
+
             DB::beginTransaction();
-            
-            // Soft delete related records first if needed
-            $organization->users()->update(['deleted_at' => now()]);
-            $organization->licenses()->update(['deleted_at' => now()]);
-            $organization->edgeServers()->update(['deleted_at' => now()]);
-            
-            // Delete organization (soft delete if supported)
             $organization->delete();
-            
             DB::commit();
-            return response()->json(['message' => 'Organization deleted'], 200);
+            
+            return response()->json(['message' => 'Deleted successfully'], 200);
         } catch (\Illuminate\Database\QueryException $e) {
             DB::rollBack();
-            \Log::error('Database error deleting organization', [
-                'organization_id' => $organization->id,
-                'error' => $e->getMessage(),
-                'code' => $e->getCode(),
-            ]);
+            \Log::error("Failed to delete organization {$organization->id}: " . $e->getMessage());
             
-            // Check for foreign key constraint
             if ($e->getCode() == 23000) {
                 return response()->json([
-                    'message' => 'Cannot delete organization: it has related records that must be removed first'
+                    'error' => 'فشل الحذف: لا يمكن حذف المؤسسة لوجود سجلات مرتبطة بها'
                 ], 422);
             }
             
             return response()->json([
-                'message' => 'Failed to delete organization: ' . $e->getMessage()
+                'error' => 'فشل الحذف: ' . $e->getMessage()
             ], 500);
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Failed to delete organization', [
-                'organization_id' => $organization->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'Failed to delete organization: ' . $e->getMessage()
-            ], 500);
+            \Log::error("Failed to delete organization {$organization->id}: " . $e->getMessage());
+            return response()->json(['error' => 'فشل الحذف: ' . $e->getMessage()], 500);
         }
     }
 

@@ -114,7 +114,6 @@ class CameraController extends Controller
 
     public function destroy(Camera $camera): JsonResponse
     {
-        // Use Policy for authorization
         try {
             $this->authorize('delete', $camera);
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
@@ -126,40 +125,29 @@ class CameraController extends Controller
         }
 
         try {
-            // Check if camera exists
             if (!$camera->exists) {
                 return response()->json(['message' => 'Camera not found'], 404);
             }
 
             $this->cameraService->deleteCamera($camera, request()->user());
-            return response()->json(['message' => 'Camera deleted'], 200);
+            return response()->json(['message' => 'Deleted successfully'], 200);
         } catch (DomainActionException $e) {
             return response()->json(['message' => $e->getMessage()], $e->getStatus());
         } catch (\Illuminate\Database\QueryException $e) {
-            \Log::error('Database error deleting camera', [
-                'camera_id' => $camera->id,
-                'error' => $e->getMessage(),
-                'code' => $e->getCode(),
-            ]);
+            \Log::error("Failed to delete camera {$camera->id}: " . $e->getMessage());
             
             if ($e->getCode() == 23000) {
                 return response()->json([
-                    'message' => 'Cannot delete camera: it has related records that must be removed first'
+                    'error' => 'فشل الحذف: لا يمكن حذف الكاميرا لوجود سجلات مرتبطة بها'
                 ], 422);
             }
             
             return response()->json([
-                'message' => 'Failed to delete camera: ' . $e->getMessage()
+                'error' => 'فشل الحذف: ' . $e->getMessage()
             ], 500);
         } catch (\Exception $e) {
-            \Log::error('Failed to delete camera', [
-                'camera_id' => $camera->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'Failed to delete camera: ' . $e->getMessage()
-            ], 500);
+            \Log::error("Failed to delete camera {$camera->id}: " . $e->getMessage());
+            return response()->json(['error' => 'فشل الحذف: ' . $e->getMessage()], 500);
         }
     }
 
