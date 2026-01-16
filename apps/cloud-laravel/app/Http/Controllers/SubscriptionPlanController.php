@@ -65,8 +65,22 @@ class SubscriptionPlanController extends Controller
 
     public function destroy(SubscriptionPlan $subscriptionPlan): JsonResponse
     {
-        $this->ensureSuperAdmin(request());
-        $subscriptionPlan->delete();
-        return response()->json(['message' => 'Subscription plan deleted']);
+        try {
+            $this->ensureSuperAdmin(request());
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        try {
+            if (!$subscriptionPlan->exists) {
+                return response()->json(['message' => 'Subscription plan not found'], 404);
+            }
+
+            $subscriptionPlan->delete();
+            return response()->json(['message' => 'Deleted successfully'], 200);
+        } catch (\Exception $e) {
+            \Log::error("Failed to delete subscription plan {$subscriptionPlan->id}: " . $e->getMessage());
+            return response()->json(['error' => 'فشل الحذف: ' . $e->getMessage()], 500);
+        }
     }
 }

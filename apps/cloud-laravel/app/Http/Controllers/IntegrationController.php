@@ -89,13 +89,24 @@ class IntegrationController extends Controller
 
     public function destroy(Integration $integration): JsonResponse
     {
-        $this->ensureSuperAdmin(request());
-        
         try {
+            $this->ensureSuperAdmin(request());
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        try {
+            if (!$integration->exists) {
+                return response()->json(['message' => 'Integration not found'], 404);
+            }
+
             $this->integrationService->deleteIntegration($integration, request()->user());
-            return response()->json(['message' => 'Integration deleted']);
+            return response()->json(['message' => 'Deleted successfully'], 200);
         } catch (DomainActionException $e) {
             return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        } catch (\Exception $e) {
+            \Log::error("Failed to delete integration {$integration->id}: " . $e->getMessage());
+            return response()->json(['error' => 'فشل الحذف: ' . $e->getMessage()], 500);
         }
     }
 

@@ -127,13 +127,22 @@ class TrainingDatasetController extends Controller
      */
     public function destroy(Request $request, TrainingDataset $dataset): JsonResponse
     {
-        $user = $request->user();
-        // Ensure user has access
-        $this->ensureOrganizationAccess($request, $dataset->organization_id);
-        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false) && !RoleHelper::canManageOrganization($user->role)) {
-            return response()->json(['message' => 'Insufficient permissions'], 403);
+        try {
+            $user = $request->user();
+            $this->ensureOrganizationAccess($request, $dataset->organization_id);
+            if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false) && !RoleHelper::canManageOrganization($user->role)) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+
+            if (!$dataset->exists) {
+                return response()->json(['message' => 'Training dataset not found'], 404);
+            }
+
+            $dataset->delete();
+            return response()->json(['message' => 'Deleted successfully'], 200);
+        } catch (\Exception $e) {
+            \Log::error("Failed to delete training dataset {$dataset->id}: " . $e->getMessage());
+            return response()->json(['error' => 'فشل الحذف: ' . $e->getMessage()], 500);
         }
-        $dataset->delete();
-        return response()->json(['message' => 'Training dataset deleted']);
     }
 }

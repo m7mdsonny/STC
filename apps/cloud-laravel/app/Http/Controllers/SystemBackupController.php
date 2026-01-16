@@ -200,33 +200,24 @@ class SystemBackupController extends Controller
 
     public function destroy(SystemBackup $backup): JsonResponse
     {
-        $this->ensureSuperAdmin(request());
+        try {
+            $this->ensureSuperAdmin(request());
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
         try {
-            $backupId = $backup->id;
-            $filePath = $backup->file_path;
-            
+            if (!$backup->exists) {
+                return response()->json(['message' => 'Backup not found'], 404);
+            }
+
             $this->backupService->deleteBackup($backup, request()->user());
-
-            \Log::info('Backup deleted', [
-                'backup_id' => $backupId,
-                'file_path' => $filePath,
-                'user_id' => request()->user()?->id,
-            ]);
-
-            return response()->json(['message' => 'Backup deleted successfully']);
+            return response()->json(['message' => 'Deleted successfully'], 200);
         } catch (DomainActionException $e) {
             return response()->json(['message' => $e->getMessage()], $e->getStatus());
         } catch (\Exception $e) {
-            \Log::error('Failed to delete backup', [
-                'backup_id' => $backup->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'Failed to delete backup',
-                'error' => $e->getMessage(),
-            ], 500);
+            \Log::error("Failed to delete backup {$backup->id}: " . $e->getMessage());
+            return response()->json(['error' => 'فشل الحذف: ' . $e->getMessage()], 500);
         }
     }
 

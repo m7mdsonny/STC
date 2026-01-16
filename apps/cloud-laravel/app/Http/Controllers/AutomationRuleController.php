@@ -130,13 +130,19 @@ class AutomationRuleController extends Controller
 
     public function destroy(AutomationRule $automationRule): JsonResponse
     {
-        $user = request()->user();
-
         try {
+            if (!$automationRule->exists) {
+                return response()->json(['message' => 'Automation rule not found'], 404);
+            }
+
+            $user = request()->user();
             $this->automationRuleService->deleteRule($automationRule, $user);
-            return response()->json(['message' => 'Automation rule deleted']);
+            return response()->json(['message' => 'Deleted successfully'], 200);
         } catch (DomainActionException $e) {
             return response()->json(['message' => $e->getMessage()], $e->getStatus());
+        } catch (\Exception $e) {
+            \Log::error("Failed to delete automation rule {$automationRule->id}: " . $e->getMessage());
+            return response()->json(['error' => 'فشل الحذف: ' . $e->getMessage()], 500);
         }
     }
 

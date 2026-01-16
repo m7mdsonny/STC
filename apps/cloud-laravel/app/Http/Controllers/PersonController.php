@@ -134,18 +134,26 @@ class PersonController extends Controller
 
     public function destroy(RegisteredFace $person): JsonResponse
     {
-        $user = request()->user();
+        try {
+            $user = request()->user();
 
-        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
-            $this->ensureOrganizationAccess(request(), $person->organization_id);
-            if (!RoleHelper::canManageOrganization($user->role)) {
-                return response()->json(['message' => 'Insufficient permissions'], 403);
+            if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
+                $this->ensureOrganizationAccess(request(), $person->organization_id);
+                if (!RoleHelper::canManageOrganization($user->role)) {
+                    return response()->json(['message' => 'Unauthorized'], 403);
+                }
             }
+
+            if (!$person->exists) {
+                return response()->json(['message' => 'Person not found'], 404);
+            }
+
+            $person->delete();
+            return response()->json(['message' => 'Deleted successfully'], 200);
+        } catch (\Exception $e) {
+            \Log::error("Failed to delete person {$person->id}: " . $e->getMessage());
+            return response()->json(['error' => 'فشل الحذف: ' . $e->getMessage()], 500);
         }
-
-        $person->delete();
-
-        return response()->json(['message' => 'Person deleted']);
     }
 
     public function toggleActive(RegisteredFace $person): JsonResponse
