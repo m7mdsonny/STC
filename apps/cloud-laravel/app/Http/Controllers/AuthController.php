@@ -30,6 +30,19 @@ class AuthController extends Controller
                           ->orWhereRaw('LOWER(phone) = ?', [$identifier]);
                 })
                 ->first();
+            
+            // CRITICAL FIX: If user's organization was deleted, clear organization_id
+            if ($user && $user->organization_id) {
+                $orgExists = \App\Models\Organization::withTrashed()->find($user->organization_id);
+                if (!$orgExists || $orgExists->trashed()) {
+                    \Log::info('Clearing organization_id from user - organization was deleted', [
+                        'user_id' => $user->id,
+                        'organization_id' => $user->organization_id,
+                    ]);
+                    $user->organization_id = null;
+                    $user->save();
+                }
+            }
 
             if (!$user) {
                 Log::warning('Login attempt failed - user not found', [
@@ -120,6 +133,19 @@ class AuthController extends Controller
     {
         $user = $request->user();
         if ($user) {
+            // CRITICAL FIX: If user's organization was deleted, clear organization_id
+            if ($user->organization_id) {
+                $orgExists = \App\Models\Organization::withTrashed()->find($user->organization_id);
+                if (!$orgExists || ($orgExists->trashed() && !\App\Helpers\RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false))) {
+                    \Log::info('Clearing organization_id from user in /auth/me - organization was deleted', [
+                        'user_id' => $user->id,
+                        'organization_id' => $user->organization_id,
+                    ]);
+                    $user->organization_id = null;
+                    $user->save();
+                }
+            }
+            
             // Ensure role is normalized and is_super_admin is synced
             $normalizedRole = \App\Helpers\RoleHelper::normalize($user->role);
             $isSuperAdmin = ($normalizedRole === \App\Helpers\RoleHelper::SUPER_ADMIN);

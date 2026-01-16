@@ -91,18 +91,40 @@ class OrganizationController extends Controller
                     'user_org_id' => $user->organization_id,
                 ]);
                 
+                // If user's organization_id matches requested ID but org doesn't exist,
+                // the organization was deleted - clear user's organization_id
+                if ($user->organization_id && (int) $user->organization_id === (int) $id) {
+                    \Log::info('Clearing organization_id from user - organization was deleted', [
+                        'user_id' => $user->id,
+                        'organization_id' => $id,
+                    ]);
+                    $user->update(['organization_id' => null]);
+                }
+                
                 return response()->json(['message' => 'Organization not found'], 404)->withHeaders($corsHeaders);
             }
 
             // Check if organization is soft deleted
             if ($organization->trashed()) {
-                \Log::warning('Attempt to view soft-deleted organization', [
-                    'organization_id' => $id,
-                    'user_id' => $user->id,
-                ]);
+                // If user belongs to this organization, allow them to see it (even if deleted)
+                // This prevents errors in settings page
+                if ($user->organization_id && (int) $user->organization_id === (int) $organization->id) {
+                    \Log::info('Loading soft-deleted organization for user', [
+                        'organization_id' => $id,
+                        'user_id' => $user->id,
+                    ]);
+                    // Return the organization but mark it as deleted
+                    $orgData = $organization->toArray();
+                    $orgData['is_deleted'] = true;
+                    return response()->json($orgData)->withHeaders($corsHeaders);
+                }
                 
-                // Only super admin can view soft-deleted organizations
+                // Only super admin can view other soft-deleted organizations
                 if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
+                    \Log::warning('Attempt to view soft-deleted organization (not user\'s org)', [
+                        'organization_id' => $id,
+                        'user_id' => $user->id,
+                    ]);
                     return response()->json(['message' => 'Organization not found'], 404)->withHeaders($corsHeaders);
                 }
             }
@@ -241,10 +263,27 @@ class OrganizationController extends Controller
             }
 
             DB::beginTransaction();
+            
+            // CRITICAL FIX: Soft delete all users in this organization
+            // This prevents users from trying to access deleted organization
+            $usersCount = User::where('organization_id', $organization->id)->count();
+            if ($usersCount > 0) {
+                \Log::info('Soft deleting users in organization', [
+                    'organization_id' => $organization->id,
+                    'users_count' => $usersCount,
+                ]);
+                User::where('organization_id', $organization->id)->delete();
+            }
+            
+            // Soft delete organization
             $organization->delete();
+            
             DB::commit();
             
-            \Log::info("Organization deleted successfully", ['organization_id' => $organization->id]);
+            \Log::info("Organization deleted successfully", [
+                'organization_id' => $organization->id,
+                'users_deleted' => $usersCount,
+            ]);
             
             $origin = request()->header('Origin');
             $allowedOrigins = ['https://stcsolutions.online', 'http://localhost:5173', 'http://localhost:3000'];
