@@ -9,6 +9,7 @@ use App\Models\Organization;
 use App\Exceptions\DomainActionException;
 use App\Services\CameraService;
 use App\Services\EdgeServerService;
+use App\Services\PlanEnforcementService;
 use App\Http\Requests\CameraStoreRequest;
 use App\Http\Requests\CameraUpdateRequest;
 use Illuminate\Http\JsonResponse;
@@ -17,8 +18,10 @@ use Illuminate\Support\Facades\Crypt;
 
 class CameraController extends Controller
 {
-    public function __construct(private CameraService $cameraService)
-    {
+    public function __construct(
+        private CameraService $cameraService,
+        private PlanEnforcementService $planEnforcementService
+    ) {
     }
     public function index(Request $request): JsonResponse
     {
@@ -83,16 +86,9 @@ class CameraController extends Controller
     public function store(CameraStoreRequest $request): JsonResponse
     {
         $data = $request->validated();
-        $user = $request->user();
 
-        // PRODUCTION SAFETY: Enforce organization camera limits
-        if ($user->organization) {
-            try {
-                $this->planEnforcementService->assertCanCreateCamera($user->organization);
-            } catch (\Exception $e) {
-                return response()->json(['message' => $e->getMessage()], 422);
-            }
-        }
+        // Note: Plan enforcement is handled inside CameraService::createCamera()
+        // via OrganizationCapabilitiesResolver::ensureCameraCreation()
 
         try {
             $camera = $this->cameraService->createCamera($data, $request->user());
@@ -141,8 +137,7 @@ class CameraController extends Controller
 
         // Get snapshot from Edge Server
         try {
-            $edgeService = new EdgeServerService();
-            $snapshot = $edgeService->getCameraSnapshot($camera);
+            $snapshot = $this->edgeServerService->getCameraSnapshot($camera);
             
             if ($snapshot) {
                 // Ensure snapshot_url is present for frontend compatibility
@@ -177,9 +172,8 @@ class CameraController extends Controller
             $this->ensureOrganizationAccess(request(), $camera->organization_id);
         }
 
-        $edgeService = new EdgeServerService();
-        $hlsUrl = $edgeService->getHlsStreamUrl($camera);
-        $webrtcEndpoint = $edgeService->getWebRtcEndpoint($camera);
+        $hlsUrl = $this->edgeServerService->getHlsStreamUrl($camera);
+        $webrtcEndpoint = $this->edgeServerService->getWebRtcEndpoint($camera);
 
         return response()->json([
             'stream_url' => $hlsUrl, // For frontend compatibility

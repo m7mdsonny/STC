@@ -7,6 +7,7 @@ use App\Http\Requests\EdgeServerStoreRequest;
 use App\Http\Requests\EdgeServerUpdateRequest;
 use App\Exceptions\DomainActionException;
 use App\Services\EdgeServerService;
+use App\Services\PlanEnforcementService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\EdgeServer;
@@ -14,8 +15,10 @@ use App\Models\EdgeServerLog;
 
 class EdgeController extends Controller
 {
-    public function __construct(private EdgeServerService $edgeServerService)
-    {
+    public function __construct(
+        private EdgeServerService $edgeServerService,
+        private PlanEnforcementService $planEnforcementService
+    ) {
     }
     public function index(Request $request): JsonResponse
     {
@@ -76,14 +79,8 @@ class EdgeController extends Controller
         $data = $request->validated();
         $user = $request->user();
 
-        // PRODUCTION SAFETY: Enforce organization edge server limits
-        if ($user->organization) {
-            try {
-                $this->planEnforcementService->assertCanCreateEdge($user->organization);
-            } catch (\Exception $e) {
-                return response()->json(['message' => $e->getMessage()], 422);
-            }
-        }
+        // Note: Plan enforcement is handled inside EdgeServerService::createEdgeServer()
+        // via OrganizationCapabilitiesResolver::ensureEdgeServerCreation()
 
         try {
             $result = $this->edgeServerService->createEdgeServer($data, $user);
