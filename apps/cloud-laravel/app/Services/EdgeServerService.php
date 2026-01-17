@@ -242,10 +242,15 @@ class EdgeServerService
 
             $this->enforceHttps($edgeUrl);
 
+            // ⚠️ ARCHITECTURAL NOTE: This Cloud→Edge POST will FAIL if Edge is behind NAT.
+            // Better approach: Edge should poll Cloud for camera config changes via heartbeat response,
+            // or Cloud should send config via HMAC-protected command endpoint that Edge queries.
+            
             Log::info("Syncing camera to Edge Server", [
                 'camera_id' => $camera->camera_id,
                 'edge_url' => $edgeUrl,
-                'modules' => $edgeModules
+                'modules' => $edgeModules,
+                'warning' => 'Direct Cloud→Edge sync may fail if Edge has no public IP'
             ]);
 
             $response = Http::timeout(10)
@@ -288,6 +293,9 @@ class EdgeServerService
     /**
      * Remove camera from Edge Server
      * 
+     * ⚠️ ARCHITECTURAL NOTE: This Cloud→Edge DELETE will FAIL if Edge is behind NAT.
+     * Better approach: Edge should poll Cloud for camera deletions via heartbeat response.
+     * 
      * @param Camera $camera
      * @return bool
      */
@@ -307,6 +315,12 @@ class EdgeServerService
 
             $this->enforceHttps($edgeUrl);
 
+            // ⚠️ WARNING: Direct Cloud→Edge DELETE may fail if Edge has no public IP
+            Log::debug("Attempting to remove camera from Edge (may fail for NAT'd Edge)", [
+                'camera_id' => $camera->camera_id,
+                'edge_url' => $edgeUrl
+            ]);
+
             $response = Http::timeout(5)
                 ->delete("{$edgeUrl}/api/v1/cameras/{$camera->camera_id}");
 
@@ -325,6 +339,10 @@ class EdgeServerService
 
     /**
      * Send AI command to Edge Server
+     * 
+     * ⚠️ ARCHITECTURAL NOTE: This Cloud→Edge POST will FAIL if Edge is behind NAT.
+     * Better approach: Commands should be queued in Cloud database, Edge polls for them
+     * via GET /api/v1/ai-commands?edge_server_id=X&status=pending endpoint.
      * 
      * @param EdgeServer $edgeServer
      * @param array $commandData
@@ -372,6 +390,14 @@ class EdgeServerService
     /**
      * Get camera snapshot from Edge Server
      * 
+     * ⚠️ ARCHITECTURAL ISSUE: This method attempts direct Cloud→Edge connection.
+     * This will FAIL if Edge is behind NAT or has no public IP.
+     * 
+     * TODO: Refactor to Edge-initiated flow:
+     * - Edge should upload snapshots to Cloud Storage (S3, etc.)
+     * - Edge should send snapshot URLs via heartbeat
+     * - Cloud should retrieve from storage, not from Edge directly
+     * 
      * @param Camera $camera
      * @return array|null
      */
@@ -418,6 +444,14 @@ class EdgeServerService
     /**
      * Get HLS stream URL from Edge Server
      * 
+     * ⚠️ ARCHITECTURAL ISSUE: This returns Edge IP-based URLs which won't work
+     * if Edge is behind NAT or has no public IP.
+     * 
+     * TODO: Refactor to Edge-initiated flow:
+     * - Edge should use WebRTC/TURN for NAT traversal
+     * - Or Edge should stream through Cloud proxy/CDN
+     * - Or return null and let frontend handle via Edge's local connection
+     * 
      * @param Camera $camera
      * @return string|null
      */
@@ -442,6 +476,11 @@ class EdgeServerService
 
     /**
      * Get WebRTC signaling endpoint from Edge Server
+     * 
+     * ⚠️ ARCHITECTURAL ISSUE: This returns Edge IP-based URLs which won't work
+     * if Edge is behind NAT or has no public IP.
+     * 
+     * TODO: Refactor to use TURN server or Edge-initiated WebRTC signaling.
      * 
      * @param Camera $camera
      * @return string|null
@@ -489,11 +528,28 @@ class EdgeServerService
     /**
      * Check if Edge Server is online
      * 
+     * ⚠️ DEPRECATED: Direct Cloud→Edge health check is architecturally incorrect.
+     * Edge servers are behind NAT with no public IP/inbound access.
+     * 
+     * Use database-based check instead:
+     * $isOnline = ($edgeServer->last_seen_at && now()->diffInMinutes($edgeServer->last_seen_at) < 5);
+     * 
      * @param EdgeServer $edgeServer
      * @return bool
+     * @deprecated Use last_seen_at timestamp from database instead
      */
     public function checkEdgeServerHealth(EdgeServer $edgeServer): bool
     {
+        // Check database timestamp instead of direct connection
+        if (!$edgeServer->last_seen_at) {
+            return false;
+        }
+        
+        $minutesAgo = now()->diffInMinutes($edgeServer->last_seen_at);
+        return $minutesAgo < 5; // Online if heartbeat within 5 minutes
+        
+        // Old direct connection code (commented out - will fail for NAT'd Edge servers)
+        /*
         try {
             $edgeUrl = $this->getEdgeServerUrl($edgeServer);
             if (!$edgeUrl) {
@@ -509,6 +565,7 @@ class EdgeServerService
         } catch (\Exception $e) {
             return false;
         }
+        */
     }
 
     /**

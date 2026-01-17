@@ -37,8 +37,21 @@ class CommandRequest(BaseModel):
     image_reference: Optional[str] = None
 
 
+# ====================================================================
+# INTERNAL-ONLY ENDPOINTS (Local Network Access)
+# ====================================================================
+# NOTE: These endpoints are for LOCAL access only (local web UI, monitoring).
+# Cloud MUST NEVER connect to Edge directly. Edge initiates all outbound
+# connections to Cloud via heartbeat, events, etc.
+# Cloud queries Edge status from its database (last_seen_at from heartbeat).
+# ====================================================================
+
 @router.get("/status", dependencies=[Depends(verify_hmac_signature)])
 async def get_status(request: Request):
+    """
+    Internal-only status endpoint for local monitoring.
+    Cloud should query /api/v1/edge-servers/{id}/status instead.
+    """
     from main import state
 
     return {
@@ -66,6 +79,10 @@ async def get_status(request: Request):
 
 @router.get("/cameras", dependencies=[Depends(verify_hmac_signature)])
 async def list_cameras(request: Request):
+    """
+    Internal-only cameras endpoint for local access.
+    Cloud should query /api/v1/edge-servers/{id}/cameras instead.
+    """
     from main import state
 
     if not state.db or not state.is_licensed:
@@ -360,7 +377,10 @@ async def get_stream(camera_id: str, request: Request):
 # Health endpoint
 @router.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """
+    Internal-only health check endpoint for local monitoring.
+    Cloud determines Edge health from last heartbeat timestamp.
+    """
     from main import state
     
     return {

@@ -689,4 +689,85 @@ class EdgeController extends Controller
             'offline' => $offline,
         ]);
     }
+
+    /**
+     * Get Edge Server status (for frontend consumption)
+     * This endpoint queries the database, NOT the Edge Server directly.
+     * Edge status is derived from last heartbeat timestamp.
+     * 
+     * ARCHITECTURE: Cloud NEVER connects to Edge directly.
+     * Edge sends heartbeat to Cloud via POST /api/v1/edges/heartbeat
+     */
+    public function status(EdgeServer $edgeServer): JsonResponse
+    {
+        $this->authorize('view', $edgeServer);
+
+        $edgeServer->load(['organization', 'license']);
+        
+        // Calculate online status based on last_seen_at
+        // Edge is considered online if last heartbeat was within 5 minutes
+        $heartbeatTimeoutMinutes = 5;
+        $isOnline = false;
+        $lastSeen = $edgeServer->last_seen_at;
+        
+        if ($lastSeen) {
+            $minutesAgo = now()->diffInMinutes($lastSeen);
+            $isOnline = $minutesAgo < $heartbeatTimeoutMinutes;
+        }
+
+        // Get camera count for this edge server
+        $camerasCount = \App\Models\Camera::where('edge_server_id', $edgeServer->id)->count();
+
+        return response()->json([
+            'online' => $isOnline,
+            'last_seen_at' => $lastSeen?->toIso8601String(),
+            'version' => $edgeServer->version,
+            'uptime' => $edgeServer->system_info['uptime'] ?? null,
+            'cameras_count' => $camerasCount,
+            'organization_id' => $edgeServer->organization_id,
+            'license' => [
+                'plan' => $edgeServer->license?->plan ?? null,
+                'max_cameras' => $edgeServer->license?->max_cameras ?? null,
+                'modules' => $edgeServer->license?->modules ?? [],
+            ],
+            'system_info' => $edgeServer->system_info ?? [],
+        ]);
+    }
+
+    /**
+     * Get cameras for a specific Edge Server (for frontend consumption)
+     * This endpoint queries the database, NOT the Edge Server directly.
+     * Camera status is updated via Edge heartbeat.
+     * 
+     * ARCHITECTURE: Cloud NEVER connects to Edge directly.
+     * Edge reports camera status via heartbeat POST /api/v1/edges/heartbeat
+     */
+    public function cameras(Request $request, EdgeServer $edgeServer): JsonResponse
+    {
+        $this->authorize('view', $edgeServer);
+
+        $query = \App\Models\Camera::where('edge_server_id', $edgeServer->id);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->get('status'));
+        }
+
+        $perPage = (int) $request->get('per_page', 100);
+        $cameras = $query->with(['organization', 'edgeServer'])
+            ->orderByDesc('created_at')
+            ->paginate($perPage);
+
+        // Transform response
+        $cameras->getCollection()->transform(function ($camera) {
+            $config = $camera->config ?? [];
+            $camera->username = $config['username'] ?? null;
+            $camera->password_encrypted = isset($config['password']) ? '***' : null;
+            $camera->resolution = $config['resolution'] ?? '1920x1080';
+            $camera->fps = $config['fps'] ?? 15;
+            $camera->enabled_modules = $config['enabled_modules'] ?? [];
+            return $camera;
+        });
+
+        return response()->json($cameras);
+    }
 }

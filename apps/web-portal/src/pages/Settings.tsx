@@ -200,30 +200,36 @@ export function Settings() {
   };
 
   const testServerConnection = async (server: EdgeServer) => {
-    if (!server.ip_address) {
-      showError('خطأ', 'عنوان IP غير محدد لهذا السيرفر');
-      return;
-    }
-    
     setTestingServer(server.id);
     try {
-      // Try to connect to Edge Server directly
-      const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
-      await edgeServerService.setServerUrl(`${protocol}//${server.ip_address}:8080`);
-      const status = await edgeServerService.getStatus();
-      setServerStatuses(prev => ({ ...prev, [server.id]: status }));
+      // Check Edge Server status via Cloud API (NOT direct connection)
+      // Edge status is derived from last heartbeat timestamp
+      const status = await edgeServersApi.getStatus(server.id);
+      setServerStatuses(prev => ({ 
+        ...prev, 
+        [server.id]: {
+          status: status.online ? 'online' : 'offline',
+          server_id: server.id.toString(),
+          organization_id: status.organization_id.toString(),
+          version: status.version || 'unknown',
+          timestamp: status.last_seen_at || new Date().toISOString(),
+          cameras: status.cameras_count,
+          integrations: 0, // Not available from Cloud API
+          modules: status.license.modules || [],
+        }
+      }));
 
-      if (status) {
-        // Connection successful, trigger a config sync
+      if (status.online) {
+        // Edge is online (reporting heartbeat), trigger a config sync
         try {
           await edgeServersApi.syncConfig(server.id);
-          showSuccess('اتصال ناجح', `تم الاتصال بسيرفر ${server.name} بنجاح وتم طلب مزامنة الإعدادات`);
+          showSuccess('السيرفر متصل', `السيرفر ${server.name} متصل ويعمل بشكل طبيعي. تم طلب مزامنة الإعدادات`);
         } catch (syncError) {
-          // Connection works but sync failed - still show success for connection
-          showSuccess('اتصال ناجح', `تم الاتصال بسيرفر ${server.name} بنجاح`);
+          // Edge is online but sync failed - still show success for connection
+          showSuccess('السيرفر متصل', `السيرفر ${server.name} متصل ويعمل بشكل طبيعي`);
         }
       } else {
-        showError('فشل الاتصال', `فشل الاتصال بسيرفر ${server.name}. تأكد من تشغيل Edge Server وأنه متصل بالشبكة`);
+        showError('السيرفر غير متصل', `السيرفر ${server.name} غير متصل. تأكد من تشغيل Edge Server وأنه يرسل heartbeat للـ Cloud`);
       }
 
       fetchData();

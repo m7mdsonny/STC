@@ -113,6 +113,12 @@ class EventController extends Controller
             ],
         ]);
 
+        // Send notifications for standard AI events based on severity
+        // Critical and warning events should trigger mobile notifications
+        if (in_array($request->severity, ['critical', 'warning'])) {
+            $this->sendStandardEventNotification($event, $edge->organization_id, $aiModule);
+        }
+
         return response()->json(['ok' => true, 'event_id' => $event->id]);
     }
 
@@ -154,7 +160,73 @@ class EventController extends Controller
     }
 
     /**
-     * Send mobile notification via FCM
+     * Send notifications for standard AI events (non-enterprise)
+     */
+    private function sendStandardEventNotification(Event $event, int $organizationId, ?string $aiModule): void
+    {
+        try {
+            $fcmService = app(FcmService::class);
+            
+            // Map AI modules to friendly names
+            $moduleNames = [
+                'face' => 'Face Recognition',
+                'counter' => 'People Counter',
+                'fire' => 'Fire Detection',
+                'intrusion' => 'Intrusion Detection',
+                'vehicle' => 'Vehicle Recognition',
+                'attendance' => 'Attendance',
+                'loitering' => 'Loitering Detection',
+                'crowd' => 'Crowd Detection',
+                'object' => 'Object Detection',
+            ];
+            
+            $moduleName = $moduleNames[$aiModule] ?? ucfirst($aiModule ?? 'AI Detection');
+            $severityUpper = strtoupper($event->severity);
+            
+            $title = sprintf('%s Alert - %s', $moduleName, $severityUpper);
+            $body = sprintf(
+                '%s detected on camera %s',
+                $moduleName,
+                $event->camera_id ?? 'unknown'
+            );
+
+            // Build notification data
+            $data = [
+                'type' => 'ai_event',
+                'event_id' => $event->id,
+                'event_type' => $event->event_type,
+                'ai_module' => $aiModule,
+                'severity' => $event->severity,
+                'camera_id' => $event->camera_id,
+                'risk_score' => $event->risk_score,
+            ];
+
+            // Add priority based on severity
+            $priority = $event->severity === 'critical' ? 'high' : 'normal';
+
+            $fcmService->sendToOrganization(
+                $organizationId,
+                $title,
+                $body,
+                $data,
+                $priority
+            );
+
+            Log::info('Standard AI event notification sent', [
+                'event_id' => $event->id,
+                'module' => $aiModule,
+                'severity' => $event->severity,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send standard event notification', [
+                'error' => $e->getMessage(),
+                'event_id' => $event->id,
+            ]);
+        }
+    }
+
+    /**
+     * Send mobile notification via FCM (for enterprise alerts)
      */
     private function sendMobileNotification(array $alertData, int $organizationId): void
     {
@@ -188,6 +260,5 @@ class EventController extends Controller
                 'alert_data' => $alertData,
             ]);
         }
-    }
     }
 }
