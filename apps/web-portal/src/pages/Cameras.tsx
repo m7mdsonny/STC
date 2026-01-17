@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Camera, Plus, Settings, Trash2, Power, PowerOff, MapPin, Server, Search, Filter, Grid, List, Play, RefreshCw, Eye, Image } from 'lucide-react';
 import { camerasApi } from '../lib/api/cameras';
 import { edgeServersApi } from '../lib/api/edgeServers';
-import { edgeServerService, CameraSnapshot } from '../lib/edgeServer';
+// Removed edgeServerService import - using Cloud API only
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { getDetailedErrorMessage } from '../lib/errorMessages';
@@ -55,11 +55,9 @@ export function Cameras() {
       setCameras(camerasRes.data || []);
       const serversData = serversRes.data || [];
       setServers(serversData);
-      const onlineServer = serversData.find(s => s.status === 'online' && s.ip_address);
-      if (onlineServer?.ip_address) {
-        const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
-        await edgeServerService.setServerUrl(`${protocol}//${onlineServer.ip_address}:8000`);
-      }
+      // NOTE: Removed direct Edge connection setup
+      // Edge servers are accessed via Cloud API only
+      // Snapshots should be retrieved through Cloud API endpoint: /cameras/{id}/snapshot
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -68,29 +66,47 @@ export function Cameras() {
 
   const fetchSnapshot = useCallback(async (cameraId: string) => {
     setLoadingSnapshots(prev => ({ ...prev, [cameraId]: true }));
-    const snapshot = await edgeServerService.getSnapshot(cameraId);
-    if (snapshot?.image) {
-      setSnapshots(prev => ({ ...prev, [cameraId]: snapshot.image }));
+    try {
+      // Use Cloud API instead of direct Edge connection
+      // NOTE: Cloud API may attempt to fetch from Edge, which may fail if Edge is unreachable
+      // This is a known architectural limitation that needs Edge→Cloud snapshot sync
+      const snapshotUrl = await camerasApi.getSnapshot(cameraId);
+      if (snapshotUrl) {
+        setSnapshots(prev => ({ ...prev, [cameraId]: snapshotUrl }));
+      }
+    } catch (error) {
+      console.error(`Failed to fetch snapshot for camera ${cameraId}:`, error);
+    } finally {
+      setLoadingSnapshots(prev => ({ ...prev, [cameraId]: false }));
     }
-    setLoadingSnapshots(prev => ({ ...prev, [cameraId]: false }));
   }, []);
 
   const openLiveView = async (camera: CameraType) => {
     setSelectedCamera(camera);
     setShowLiveModal(true);
     setLiveSnapshot(null);
-    const snapshot = await edgeServerService.getSnapshot(camera.id);
-    if (snapshot?.image) {
-      setLiveSnapshot(snapshot.image);
+    try {
+      // Use Cloud API instead of direct Edge connection
+      const snapshotUrl = await camerasApi.getSnapshot(camera.id);
+      if (snapshotUrl) {
+        setLiveSnapshot(snapshotUrl);
+      }
+    } catch (error) {
+      console.error(`Failed to fetch snapshot for camera ${camera.id}:`, error);
     }
   };
 
   const refreshLiveView = async () => {
     if (!selectedCamera) return;
     setLiveSnapshot(null);
-    const snapshot = await edgeServerService.getSnapshot(selectedCamera.id);
-    if (snapshot?.image) {
-      setLiveSnapshot(snapshot.image);
+    try {
+      // Use Cloud API instead of direct Edge connection
+      const snapshotUrl = await camerasApi.getSnapshot(selectedCamera.id);
+      if (snapshotUrl) {
+        setLiveSnapshot(snapshotUrl);
+      }
+    } catch (error) {
+      console.error(`Failed to refresh snapshot for camera ${selectedCamera.id}:`, error);
     }
   };
 

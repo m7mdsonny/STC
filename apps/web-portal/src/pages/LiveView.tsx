@@ -28,22 +28,11 @@ export function LiveView() {
   useEffect(() => {
     if (organization) {
       fetchCameras();
-      setupEdgeServer();
     }
   }, [organization]);
 
-  const setupEdgeServer = async () => {
-    try {
-      const result = await edgeServersApi.getEdgeServers({ status: 'online', per_page: 1 });
-      const servers = result.data || [];
-      if (servers.length > 0 && servers[0].ip_address) {
-        const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
-        await edgeServerService.setServerUrl(`${protocol}//${servers[0].ip_address}:8000`);
-      }
-    } catch (error) {
-      console.error('Failed to setup edge server:', error);
-    }
-  };
+  // Removed setupEdgeServer - Edge servers are accessed via Cloud API only
+  // No direct Edge connections needed
 
   const fetchCameras = async () => {
     setLoading(true);

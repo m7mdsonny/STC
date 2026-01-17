@@ -142,6 +142,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/edge-servers/stats', [EdgeController::class, 'stats']); // Mobile app endpoint
         Route::post('/edge-servers', [EdgeController::class, 'store'])->middleware('active.subscription');
         Route::get('/edge-servers/{edgeServer}', [EdgeController::class, 'show']);
+        Route::get('/edge-servers/{edgeServer}/status', [EdgeController::class, 'status']);
+        Route::get('/edge-servers/{edgeServer}/cameras', [EdgeController::class, 'cameras']);
         Route::put('/edge-servers/{edgeServer}', [EdgeController::class, 'update'])->middleware('active.subscription');
         Route::delete('/edge-servers/{edgeServer}', [EdgeController::class, 'destroy']);
         Route::get('/edge-servers/{edgeServer}/logs', [EdgeController::class, 'logs']);
@@ -255,6 +257,12 @@ Route::prefix('v1')->group(function () {
             Route::get('/backups/{backup}/download', [SystemBackupController::class, 'download']);
             Route::delete('/backups/{backup}', [SystemBackupController::class, 'destroy']);
         });
+
+        // AI Health Check endpoints
+        Route::get('/ai-health/overall', [\App\Http\Controllers\AiHealthCheckController::class, 'overall']);
+        Route::get('/ai-health/modules', [\App\Http\Controllers\AiHealthCheckController::class, 'modules']);
+        Route::get('/ai-health/modules/{module}', [\App\Http\Controllers\AiHealthCheckController::class, 'module']);
+        Route::get('/ai-health/performance', [\App\Http\Controllers\AiHealthCheckController::class, 'performance']);
 
         Route::get('/analytics/summary', [AnalyticsController::class, 'summary']);
         Route::get('/analytics/time-series', [AnalyticsController::class, 'timeSeries']);

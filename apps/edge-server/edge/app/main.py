@@ -301,7 +301,10 @@ async def sync_config_command_legacy(request: Request):
 
 @app.get("/api/v1/status")
 async def api_status():
-    """API status endpoint"""
+    """
+    INTERNAL-ONLY: API status endpoint for local monitoring.
+    Cloud MUST NOT call this endpoint. Cloud queries Edge status from database.
+    """
     if not status_service:
         return JSONResponse(
             status_code=503,
@@ -313,7 +316,10 @@ async def api_status():
 
 @app.get("/health")
 async def health():
-    """Health check endpoint"""
+    """
+    INTERNAL-ONLY: Health check endpoint for local monitoring.
+    Cloud determines Edge health from last heartbeat timestamp.
+    """
     return JSONResponse(content={"healthy": True})
 
 

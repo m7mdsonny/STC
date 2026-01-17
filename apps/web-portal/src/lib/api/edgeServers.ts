@@ -89,4 +89,54 @@ export const edgeServersApi = {
     }
     return data;
   },
+
+  /**
+   * Get Edge Server status from Cloud API (NOT from Edge directly)
+   * Status is derived from last heartbeat timestamp stored in database
+   */
+  async getStatus(id: string): Promise<{
+    online: boolean;
+    last_seen_at: string | null;
+    version: string | null;
+    uptime: number | null;
+    cameras_count: number;
+    organization_id: number;
+    license: {
+      plan: string | null;
+      max_cameras: number | null;
+      modules: string[];
+    };
+    system_info: Record<string, unknown>;
+  }> {
+    const { data, error } = await apiClient.get<{
+      online: boolean;
+      last_seen_at: string | null;
+      version: string | null;
+      uptime: number | null;
+      cameras_count: number;
+      organization_id: number;
+      license: {
+        plan: string | null;
+        max_cameras: number | null;
+        modules: string[];
+      };
+      system_info: Record<string, unknown>;
+    }>(`/edge-servers/${id}/status`);
+    if (error || !data) {
+      throw new Error(error || 'Failed to fetch edge server status');
+    }
+    return data;
+  },
+
+  /**
+   * Get cameras for an Edge Server from Cloud API (NOT from Edge directly)
+   * Camera data is synced from Edge via heartbeat
+   */
+  async getCameras(id: string, filters: { status?: string; per_page?: number } = {}): Promise<PaginatedResponse<any>> {
+    const { data, error } = await apiClient.get<PaginatedResponse<any>>(`/edge-servers/${id}/cameras`, filters as Record<string, string | number>);
+    if (error || !data) {
+      throw new Error(error || 'Failed to fetch cameras');
+    }
+    return data;
+  },
 };

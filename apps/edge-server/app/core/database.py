@@ -52,8 +52,13 @@ class CloudDatabase:
             if settings.CLOUD_API_KEY:
                 self._headers["Authorization"] = f"Bearer {settings.CLOUD_API_KEY}"
 
+            # Remove /api/v1 from base_url if present, since all endpoints include it
+            base_url = settings.CLOUD_API_URL.rstrip('/')
+            if base_url.endswith('/api/v1'):
+                base_url = base_url[:-7]  # Remove '/api/v1'
+            
             self.client = httpx.AsyncClient(
-                base_url=settings.CLOUD_API_URL.rstrip('/'),
+                base_url=base_url,
                 headers=self._headers,
                 timeout=30.0
             )
