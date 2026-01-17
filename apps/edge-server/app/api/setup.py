@@ -24,8 +24,8 @@ SETUP_HTML = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>STC AI-VAP Edge Server Setup</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             min-height: 100vh;
@@ -33,74 +33,74 @@ SETUP_HTML = """
             align-items: center;
             justify-content: center;
             padding: 20px;
-        }
-        .container {
+        }}
+        .container {{
             background: white;
             border-radius: 16px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             width: 100%;
             max-width: 500px;
             padding: 40px;
-        }
-        .logo {
+        }}
+        .logo {{
             text-align: center;
             margin-bottom: 30px;
-        }
-        .logo h1 {
+        }}
+        .logo h1 {{
             color: #1a1a2e;
             font-size: 24px;
             font-weight: 700;
-        }
-        .logo p {
+        }}
+        .logo p {{
             color: #6b7280;
             font-size: 14px;
             margin-top: 5px;
-        }
-        .status {
+        }}
+        .status {{
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 25px;
             font-size: 14px;
-        }
-        .status.success {
+        }}
+        .status.success {{
             background: #d1fae5;
             color: #065f46;
             border: 1px solid #a7f3d0;
-        }
-        .status.warning {
+        }}
+        .status.warning {{
             background: #fef3c7;
             color: #92400e;
             border: 1px solid #fcd34d;
-        }
-        .status.error {
+        }}
+        .status.error {{
             background: #fee2e2;
             color: #991b1b;
             border: 1px solid #fca5a5;
-        }
-        .form-group {
+        }}
+        .form-group {{
             margin-bottom: 20px;
-        }
-        label {
+        }}
+        label {{
             display: block;
             font-weight: 600;
             color: #374151;
             margin-bottom: 8px;
             font-size: 14px;
-        }
-        input {
+        }}
+        input {{
             width: 100%;
             padding: 12px 16px;
             border: 2px solid #e5e7eb;
             border-radius: 8px;
             font-size: 14px;
             transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        input:focus {
+        }}
+        input:focus {{
             outline: none;
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        button {
+        }}
+        button {{
             width: 100%;
             padding: 14px;
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
@@ -111,24 +111,24 @@ SETUP_HTML = """
             font-weight: 600;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
-        }
-        button:hover {
+        }}
+        button:hover {{
             transform: translateY(-1px);
             box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.4);
-        }
-        .help {
+        }}
+        .help {{
             margin-top: 8px;
             font-size: 12px;
             color: #9ca3af;
-        }
-        .footer {
+        }}
+        .footer {{
             text-align: center;
             margin-top: 25px;
             padding-top: 20px;
             border-top: 1px solid #e5e7eb;
             font-size: 12px;
             color: #9ca3af;
-        }
+        }}
     </style>
 </head>
 <body>
