@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class EdgeNonce extends BaseModel
+class EdgeNonce extends Model
 {
     protected $table = 'edge_nonces';
     
