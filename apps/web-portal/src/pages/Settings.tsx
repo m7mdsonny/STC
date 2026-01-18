@@ -73,14 +73,38 @@ export function Settings() {
     setLoadingLicenses(true);
     try {
       const result = await licensesApi.getLicenses({
-        organization_id: organization.id,
+        organization_id: String(organization.id), // Ensure string format
         per_page: 100,
       });
       
-      // Handle paginated response
-      const licensesList = Array.isArray(result.data) 
-        ? result.data 
-        : (result.data?.data || []);
+      // Handle paginated response - Laravel pagination returns { data: [...], total: N, ... }
+      let licensesList: License[] = [];
+      
+      if (Array.isArray(result)) {
+        // Direct array response
+        licensesList = result;
+      } else if (result && typeof result === 'object') {
+        // Paginated response object
+        if (Array.isArray(result.data)) {
+          licensesList = result.data;
+        } else if (result.data && Array.isArray(result.data.data)) {
+          licensesList = result.data.data;
+        } else if (result.data && typeof result.data === 'object') {
+          // Try to find array in result.data
+          const possibleArrays = Object.values(result.data).filter(Array.isArray);
+          if (possibleArrays.length > 0) {
+            licensesList = possibleArrays[0] as License[];
+          }
+        }
+      }
+      
+      console.log('[Settings] License fetch response', { 
+        resultType: typeof result,
+        hasData: !!(result && typeof result === 'object' && result.data),
+        dataType: result?.data ? typeof result.data : 'none',
+        licensesCount: licensesList.length,
+        rawResult: result
+      });
       
       // Filter to show only active licenses that are not bound to an edge server
       const unboundLicenses = licensesList.filter(
@@ -90,7 +114,8 @@ export function Settings() {
       setAvailableLicenses(unboundLicenses);
       console.log('[Settings] Loaded licenses', { 
         total: licensesList.length, 
-        unbound: unboundLicenses.length 
+        unbound: unboundLicenses.length,
+        organizationId: organization.id
       });
     } catch (error) {
       console.error('[Settings] Failed to fetch licenses:', error);

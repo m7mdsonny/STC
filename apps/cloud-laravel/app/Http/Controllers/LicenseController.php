@@ -29,16 +29,23 @@ class LicenseController extends Controller
         // Super admin can see all licenses
         if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
             // Organization owners/admins can see their org's licenses
+            // Always filter by user's organization_id (even if organization_id is in request)
             if ($user->organization_id) {
                 $query->where('organization_id', $user->organization_id);
             } else {
-                return response()->json(['data' => [], 'total' => 0]);
+                return response()->json([
+                    'data' => [], 
+                    'total' => 0,
+                    'per_page' => (int) $request->get('per_page', 15),
+                    'current_page' => 1,
+                    'last_page' => 1,
+                ]);
             }
-        }
-
-        // Super admin can filter by organization
-        if ($request->filled('organization_id') && RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
-            $query->where('organization_id', $request->get('organization_id'));
+        } else {
+            // Super admin can filter by organization
+            if ($request->filled('organization_id')) {
+                $query->where('organization_id', $request->get('organization_id'));
+            }
         }
 
         if ($request->filled('status')) {
@@ -49,7 +56,8 @@ class LicenseController extends Controller
             $query->where('plan', $request->get('plan'));
         }
 
-        $licenses = $query->orderByDesc('created_at')->paginate((int) $request->get('per_page', 15));
+        $perPage = (int) $request->get('per_page', 15);
+        $licenses = $query->orderByDesc('created_at')->paginate($perPage);
 
         return response()->json($licenses);
     }
