@@ -133,7 +133,7 @@ export function Analytics() {
     try {
       const { start, end } = getDateRange();
 
-      const [audienceRes, alertsRes, vehiclesRes] = await Promise.all([
+      const [audienceRes, alertsRes, vehiclesRes, moduleActivityRes] = await Promise.all([
         analyticsApi.getAudienceStats({
           start_date: start.toISOString().split('T')[0],
           end_date: end.toISOString().split('T')[0],
@@ -151,6 +151,13 @@ export function Analytics() {
           end_date: end.toISOString(),
           per_page: 1000,
         }),
+
+        // CRITICAL: Use real analytics data from events table (not alerts)
+        analyticsApi.getModuleActivity({
+          organization_id: organization.id.toString(),
+          start_date: start.toISOString().split('T')[0],
+          end_date: end.toISOString().split('T')[0],
+        }).catch(() => []),
       ]);
 
       const audienceData = audienceRes.data || [];
@@ -224,24 +231,18 @@ export function Analytics() {
         { name: 'اناث', value: totalFemale },
       ];
 
-      const moduleMap: { [key: string]: string } = {
-        fire_detection: 'حريق',
-        intrusion_detection: 'تسلل',
-        face_recognition: 'وجوه',
-        vehicle_recognition: 'مركبات',
-        people_counter: 'ازدحام',
-      };
-
-      const alertsByModuleCount: { [key: string]: number } = {};
-      alertsData.forEach((alert) => {
-        const module = alert.module || 'other';
-        alertsByModuleCount[module] = (alertsByModuleCount[module] || 0) + 1;
-      });
-
-      const alertsByModule = Object.entries(alertsByModuleCount).map(([module, count]) => ({
-        module: moduleMap[module] || module,
-        count,
-      }));
+      // CRITICAL: Use real module activity data from events table (not from alerts)
+      // This ensures we get accurate data from the analytics pipeline
+      const moduleActivityData = moduleActivityRes || [];
+      
+      // Map module IDs to Arabic names using AI_MODULES
+      const alertsByModule = moduleActivityData.map((item) => {
+        const moduleInfo = AI_MODULES.find(m => m.id === item.module);
+        return {
+          module: moduleInfo?.nameAr || item.module,
+          count: item.count,
+        };
+      }).sort((a, b) => b.count - a.count); // Sort by count descending
 
       const totalVisitors = audienceData.reduce((sum, r) => sum + (r.total_count || 0), 0);
       const totalAlerts = alertsData.length;
