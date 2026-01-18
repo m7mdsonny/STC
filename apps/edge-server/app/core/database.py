@@ -144,7 +144,25 @@ class CloudDatabase:
         # Prepare body for signing
         body_bytes = b""
         if 'json' in kwargs:
-            body_bytes = json.dumps(kwargs['json'], ensure_ascii=False).encode('utf-8')
+            # CRITICAL: Validate and clean payload before JSON encoding
+            payload = kwargs['json']
+            try:
+                # Check for problematic values (tuples of length 4)
+                if isinstance(payload, dict):
+                    cleaned_payload = {}
+                    for key, value in payload.items():
+                        if isinstance(value, tuple) and len(value) == 4:
+                            logger.warning(f"Converting tuple of length 4 to list for key '{key}': {value}")
+                            cleaned_payload[key] = list(value)
+                        elif isinstance(value, tuple):
+                            cleaned_payload[key] = list(value)
+                        else:
+                            cleaned_payload[key] = value
+                    payload = cleaned_payload
+                body_bytes = json.dumps(payload, ensure_ascii=False).encode('utf-8')
+            except (TypeError, ValueError) as e:
+                logger.error(f"Error preparing JSON payload: {e}, payload type: {type(payload)}")
+                raise
         elif 'data' in kwargs:
             if isinstance(kwargs['data'], (str, bytes)):
                 body_bytes = kwargs['data'].encode('utf-8') if isinstance(kwargs['data'], str) else kwargs['data']
