@@ -672,24 +672,32 @@ class CloudDatabase:
             return None
 
     def _get_system_info(self) -> Dict:
-        """Get system information"""
+        """Get system information - returns clean dict with no tuples"""
         import platform
         try:
             import psutil
-            return {
-                "platform": platform.system(),
-                "platform_version": platform.version(),
-                "processor": platform.processor(),
-                "cpu_count": psutil.cpu_count(),
-                "cpu_percent": psutil.cpu_percent(interval=0.1),
-                "memory_total_gb": round(psutil.virtual_memory().total / (1024**3), 2),
-                "memory_used_percent": psutil.virtual_memory().percent,
-                "disk_total_gb": round(psutil.disk_usage('/').total / (1024**3), 2),
-                "disk_used_percent": psutil.disk_usage('/').percent,
+            # CRITICAL: Ensure all values are JSON-serializable (no tuples)
+            info = {
+                "platform": str(platform.system()),
+                "platform_version": str(platform.version()),
+                "processor": str(platform.processor()),
+                "cpu_count": int(psutil.cpu_count()),
+                "cpu_percent": float(psutil.cpu_percent(interval=0.1)),
+                "memory_total_gb": float(round(psutil.virtual_memory().total / (1024**3), 2)),
+                "memory_used_percent": float(psutil.virtual_memory().percent),
             }
+            # Get disk usage safely (may fail on Windows with '/')
+            try:
+                disk_usage = psutil.disk_usage('/')
+                info["disk_total_gb"] = float(round(disk_usage.total / (1024**3), 2))
+                info["disk_used_percent"] = float(disk_usage.percent)
+            except (OSError, PermissionError):
+                # Windows may not allow '/' access
+                pass
+            return info
         except ImportError:
             return {
-                "platform": platform.system(),
-                "platform_version": platform.version(),
-                "processor": platform.processor(),
+                "platform": str(platform.system()),
+                "platform_version": str(platform.version()),
+                "processor": str(platform.processor()),
             }
