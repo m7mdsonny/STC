@@ -134,9 +134,14 @@ class CloudDatabase:
         is_edge_endpoint = endpoint.startswith('/api/v1/edges/')
         
         # Prepare headers (start with base headers)
-        # CRITICAL: Safely copy headers - ensure it's a dict
+        # CRITICAL: Safely copy headers - ensure it's a dict (never use dict() on tuple/list)
         if isinstance(self._headers, dict):
-            headers = dict(self._headers)
+            # Use dict comprehension or copy() to avoid dict() constructor issues
+            headers = {k: v for k, v in self._headers.items()}
+        elif isinstance(self._headers, (tuple, list)):
+            logger.error(f"CRITICAL: _headers is tuple/list (length {len(self._headers)}), not dict! Resetting to empty dict")
+            logger.error(f"_headers value: {self._headers}")
+            headers = {}
         else:
             logger.warning(f"Unexpected _headers type: {type(self._headers)}, resetting to empty dict")
             headers = {}
