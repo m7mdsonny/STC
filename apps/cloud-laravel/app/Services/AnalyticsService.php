@@ -197,8 +197,9 @@ class AnalyticsService
     }
     /**
      * Cache TTL in seconds
+     * Reduced for faster updates - analytics should be near real-time
      */
-    private const CACHE_TTL = 300; // 5 minutes
+    private const CACHE_TTL = 60; // 1 minute (faster updates for better UX)
 
     /**
      * Get time series data for events
@@ -533,13 +534,23 @@ class AnalyticsService
         ?Carbon $endDate = null
     ): array {
         if (!$startDate) {
-            $startDate = Carbon::today()->subDays(7)->startOfDay();
+            $startDate = Carbon::today()->subDays(30)->startOfDay(); // Last 30 days for better data
         }
         if (!$endDate) {
             $endDate = Carbon::today()->endOfDay();
         }
 
-        return $this->getByModule($organizationId, $startDate, $endDate);
+        // Clear cache key for fresh data
+        $cacheKey = $this->getCacheKey('by_module', [
+            $organizationId,
+            $startDate->toDateString(),
+            $endDate->toDateString(),
+        ]);
+        
+        // Use shorter cache for module activity (30 seconds for near real-time)
+        return Cache::remember($cacheKey, 30, function () use ($organizationId, $startDate, $endDate) {
+            return $this->getByModule($organizationId, $startDate, $endDate);
+        });
     }
 
     /**

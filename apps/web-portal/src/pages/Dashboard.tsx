@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Camera, AlertTriangle, Users, UserCheck, Server, Zap } from 'lucide-react';
+import { Camera, AlertTriangle, Users, UserCheck, Server, Zap, BarChart3, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { dashboardApi } from '../lib/api/dashboard';
 import { camerasApi } from '../lib/api/cameras';
@@ -11,8 +11,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { StatCard } from '../components/ui/StatCard';
 import { EdgeServerStatus } from '../components/ui/EdgeServerStatus';
 import { EdgeServerMonitor } from '../components/ui/EdgeServerMonitor';
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import type { Alert, Camera as CameraType, EdgeServer } from '../types/database';
+import { AI_MODULES } from '../types/database';
 
 export function Dashboard() {
   const { organization } = useAuth();
@@ -36,6 +37,25 @@ export function Dashboard() {
   useEffect(() => {
     if (organization) {
       fetchData();
+      
+      // Auto-refresh analytics every 30 seconds for near real-time updates
+      const analyticsInterval = setInterval(() => {
+        if (organization?.id) {
+          // Only refresh analytics data, not all dashboard data
+          analyticsApi.getModuleActivity({ organization_id: organization.id.toString() })
+            .then(moduleActivityRes => {
+              setAnalyticsData(prev => ({
+                ...prev,
+                moduleActivity: moduleActivityRes || [],
+              }));
+            })
+            .catch(() => {
+              // Silent fail - keep existing data
+            });
+        }
+      }, 30000); // 30 seconds
+      
+      return () => clearInterval(analyticsInterval);
     }
   }, [organization]);
 
@@ -295,6 +315,90 @@ export function Dashboard() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Module Activity Analytics Section */}
+      <div className="card p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold">نشاط وحدات الذكاء الاصطناعي</h2>
+          <Link to="/analytics" className="text-xs text-stc-gold hover:underline flex items-center gap-1">
+            <BarChart3 className="w-4 h-4" />
+            <span>عرض التفاصيل</span>
+          </Link>
+        </div>
+        {analyticsLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="w-6 h-6 border-2 border-stc-gold border-t-transparent rounded-full animate-spin" />
+            <span className="text-white/60 text-sm mr-2">جاري التحميل...</span>
+          </div>
+        ) : !analyticsData?.moduleActivity || analyticsData.moduleActivity.length === 0 ? (
+          <div className="text-center py-8 text-white/50">
+            <BarChart3 className="w-12 h-12 mx-auto mb-2 opacity-30" />
+            <p className="text-sm">لا توجد بيانات تحليلات حتى الآن</p>
+            <p className="text-xs text-white/40 mt-1">التحليلات ستظهر تلقائياً عند معالجة الفيديوهات</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Pie Chart */}
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={analyticsData.moduleActivity.map(item => ({
+                      name: AI_MODULES.find(m => m.id === item.module)?.nameAr || item.module,
+                      value: item.count,
+                    }))}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {analyticsData.moduleActivity.map((entry, index) => {
+                      const colors = ['#DCA000', '#10B981', '#3B82F6', '#EF4444', '#8B5CF6', '#F59E0B', '#06B6D4', '#EC4899'];
+                      return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                    })}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Module List */}
+            <div className="space-y-2">
+              {analyticsData.moduleActivity
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 8)
+                .map((item) => {
+                  const moduleInfo = AI_MODULES.find(m => m.id === item.module);
+                  const percentage = analyticsData.moduleActivity.reduce((sum, m) => sum + m.count, 0) > 0
+                    ? (item.count / analyticsData.moduleActivity.reduce((sum, m) => sum + m.count, 0)) * 100
+                    : 0;
+                  return (
+                    <div key={item.module} className="p-3 bg-white/5 rounded-lg border border-white/10">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-white">
+                          {moduleInfo?.nameAr || item.module}
+                        </span>
+                        <span className="text-lg font-bold text-stc-gold">
+                          {item.count.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="w-full bg-white/10 rounded-full h-2">
+                        <div
+                          className="bg-stc-gold h-2 rounded-full transition-all"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-white/50 mt-1">{percentage.toFixed(1)}% من إجمالي النشاط</p>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
