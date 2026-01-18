@@ -635,14 +635,17 @@ class CloudDatabase:
         if success and result:
             # CRITICAL: Log successful event creation for debugging analytics
             event_type = payload.get('event_type', 'unknown')
-            module = payload.get('meta', {}).get('module', 'unknown')
+            meta = payload.get('meta', {})
+            module = meta.get('module', 'unknown')
             if event_type == 'analytics':
-                logger.debug(f"Analytics event sent to Cloud: module={module}, camera_id={payload.get('camera_id')}")
+                logger.info(f"Analytics event sent to Cloud: module={module}, camera_id={payload.get('camera_id')}, event_id={result.get('event_id') or result.get('id')}")
             return True, result.get('event_id') or result.get('id') or result.get('alert_id')
 
         # CRITICAL: Log failed event creation
         event_type = payload.get('event_type', 'unknown')
-        logger.warning(f"Failed to send event to Cloud: event_type={event_type}, result={result}")
+        meta = payload.get('meta', {})
+        module = meta.get('module', 'unknown')
+        logger.warning(f"Failed to send event to Cloud: event_type={event_type}, module={module}, result={result}")
         return False, None
 
     async def create_event(self, event_data: Dict) -> bool:
