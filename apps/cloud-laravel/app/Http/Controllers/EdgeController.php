@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\EdgeServer;
 use App\Models\EdgeServerLog;
+use App\Models\License;
 
 class EdgeController extends Controller
 {
