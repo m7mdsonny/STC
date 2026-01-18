@@ -306,8 +306,24 @@ class CloudDatabase:
         from main import state
         
         # Get organization_id and license_id from state if not provided
-        org_id = organization_id or (state.license_data.get('organization_id') if state.license_data else None)
-        lic_id = license_id or (state.license_data.get('license_id') if state.license_data else None)
+        # CRITICAL: Ensure values are integers, not tuples or other types
+        org_id_raw = organization_id or (state.license_data.get('organization_id') if state.license_data else None)
+        lic_id_raw = license_id or (state.license_data.get('license_id') if state.license_data else None)
+        
+        # Convert to int if needed (handle tuple/string cases)
+        org_id = None
+        if org_id_raw is not None:
+            if isinstance(org_id_raw, (list, tuple)):
+                org_id = int(org_id_raw[0]) if org_id_raw else None
+            else:
+                org_id = int(org_id_raw) if org_id_raw else None
+        
+        lic_id = None
+        if lic_id_raw is not None:
+            if isinstance(lic_id_raw, (list, tuple)):
+                lic_id = int(lic_id_raw[0]) if lic_id_raw else None
+            else:
+                lic_id = int(lic_id_raw) if lic_id_raw else None
         
         if not org_id:
             logger.warning("Cannot send heartbeat: organization_id is required")
