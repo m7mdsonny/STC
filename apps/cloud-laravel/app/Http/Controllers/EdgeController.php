@@ -682,6 +682,19 @@ class EdgeController extends Controller
                 ], 401);
             }
 
+            // CRITICAL: Ensure organization_id is available
+            if (!$edge->organization_id) {
+                \Illuminate\Support\Facades\Log::error('Edge cameras fetch: organization_id missing', [
+                    'edge_id' => $edge->id,
+                    'edge_key' => substr($edge->edge_key ?? 'unknown', 0, 8) . '...',
+                ]);
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Edge server is not associated with an organization. Please check its configuration.',
+                    'error' => 'missing_organization_id'
+                ], 400);
+            }
+
             // Get cameras for this edge server's organization
             $query = \App\Models\Camera::where('organization_id', $edge->organization_id)
                 ->where('edge_server_id', $edge->id);
