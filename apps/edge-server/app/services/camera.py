@@ -52,7 +52,12 @@ class CameraService:
         )
 
         self.cameras[camera_id] = stream
-        logger.info(f"Camera added: {name} ({camera_id})")
+        
+        # CRITICAL: Log enabled modules for debugging AI processing
+        if modules:
+            logger.info(f"Camera added: {name} ({camera_id}) with {len(modules)} enabled modules: {modules}")
+        else:
+            logger.warning(f"Camera added: {name} ({camera_id}) with NO enabled modules - AI processing will not run")
 
         if self._running:
             asyncio.create_task(self._process_camera(camera_id))

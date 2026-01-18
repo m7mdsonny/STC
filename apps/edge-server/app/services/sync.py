@@ -110,18 +110,24 @@ class SyncService:
         system_info = self.db._get_system_info() if self.db else None
 
         # Get real camera statuses from camera service
+        # CRITICAL: Send cameras_status even if cameras are offline (for real status tracking)
         cameras_status = []
         if state.camera_service:
             all_statuses = state.camera_service.get_all_status()
             cameras_status = [
                 {
                     "camera_id": status.get("camera_id") or status.get("id"),
-                    "status": status.get("status", "offline"),
+                    "status": status.get("status", "offline"),  # Real status: online/offline/error
                     "last_frame_time": status.get("last_frame_time"),
                 }
                 for status in all_statuses
-                if status  # Filter out None values
+                if status  # Filter out None values (shouldn't happen, but safety check)
             ]
+            
+            # CRITICAL: Log if cameras_status is empty but cameras exist
+            # This helps diagnose if cameras aren't being tracked
+            if not cameras_status and state.camera_service.cameras:
+                logger.warning(f"Heartbeat: {len(state.camera_service.cameras)} cameras exist but cameras_status is empty")
 
         success = await self.db.heartbeat(
             edge_id=edge_id,
@@ -226,6 +232,12 @@ class SyncService:
                             config = {}
                     enabled_modules = config.get('enabled_modules', [])
                     
+                    # CRITICAL: Log enabled modules for debugging
+                    if enabled_modules:
+                        logger.info(f"Camera {camera_id} ({name}): Enabled modules: {enabled_modules}")
+                    else:
+                        logger.warning(f"Camera {camera_id} ({name}): No enabled modules - AI processing will not run")
+                    
                     # Add camera to camera_service if not already present
                     if camera_id not in state.camera_service.cameras:
                         await state.camera_service.add_camera(
@@ -234,7 +246,7 @@ class SyncService:
                             rtsp_url=rtsp_url,  # RTSP URL with credentials inline
                             modules=enabled_modules
                         )
-                        logger.info(f"Added camera {camera_id} to camera_service from sync")
+                        logger.info(f"Added camera {camera_id} ({name}) to camera_service from sync with {len(enabled_modules)} modules")
                     else:
                         # Update existing camera RTSP URL if changed
                         existing = state.camera_service.cameras[camera_id]

@@ -193,7 +193,12 @@ async def start_services():
     async def ai_processor(camera_id: str, frame, enabled_modules: list):
         """Process frame through AI modules"""
         if not state.ai_manager:
+            logger.warning("AI manager not initialized - skipping frame processing")
             return
+        
+        # CRITICAL: Log if no modules enabled (common issue)
+        if not enabled_modules:
+            logger.debug(f"Camera {camera_id}: No enabled modules for AI processing")
         
         # Get metadata from sync service
         metadata = {}
@@ -212,8 +217,9 @@ async def start_services():
             metadata=metadata
         )
         
-        # Send alerts and events to Cloud
+        # Send alerts, events, and analytics to Cloud
         if state.db and state.is_connected:
+            # Send alerts (critical events requiring attention)
             for alert in results.get('alerts', []):
                 alert_data = {
                     'camera_id': camera_id,
@@ -226,6 +232,7 @@ async def start_services():
                 }
                 await state.db.create_alert(alert_data)
             
+            # Send events (general events for tracking)
             for event in results.get('events', []):
                 event_data = {
                     'camera_id': camera_id,
@@ -234,8 +241,58 @@ async def start_services():
                     'metadata': event,
                 }
                 await state.db.create_event(event_data)
+            
+            # CRITICAL: Send analytics (detections and module activity) to Cloud
+            # Analytics include all detections and module processing results for dashboard analytics
+            detections = results.get('detections', [])
+            module_activity = results.get('modules', {})
+            
+            # CRITICAL: Send separate analytics events for each module for proper module activity tracking
+            # Each module gets its own event with ai_module set correctly for AnalyticsService
+            modules_processed = list(module_activity.keys())
+            
+            if modules_processed:
+                # Send analytics event for each module to enable module activity tracking
+                for module_id in modules_processed:
+                    module_detections = [d for d in detections if d.get('module') == module_id]
+                    module_data = module_activity.get(module_id, {})
+                    
+                    analytics_data = {
+                        'camera_id': camera_id,
+                        'type': 'analytics',
+                        'severity': 'info',
+                        'module': module_id,  # CRITICAL: Set module in metadata so EventController extracts it to ai_module
+                        'metadata': {
+                            'detections': module_detections,
+                            'module_activity': module_data,
+                            'detection_count': len(module_detections),
+                            'module': module_id,
+                        },
+                    }
+                    await state.db.submit_analytics(analytics_data)
+            elif detections:
+                # Fallback: If no module_activity but we have detections, send aggregate analytics
+                analytics_data = {
+                    'camera_id': camera_id,
+                    'type': 'analytics',
+                    'severity': 'info',
+                    'metadata': {
+                        'detections': detections,
+                        'enabled_modules': enabled_modules,
+                        'detection_count': len(detections),
+                    },
+                }
+                await state.db.submit_analytics(analytics_data)
+            
+            # Log AI processing for debugging
+            if detections or modules_processed:
+                logger.debug(f"AI processing: Camera {camera_id} - {len(detections)} detections, {len(modules_processed)} modules: {modules_processed}")
 
     camera_service.register_processor(ai_processor)
+
+    # CRITICAL: Start camera service to enable camera processing
+    # Without this, cameras added from sync won't start processing
+    await camera_service.start()
 
     # Initialize Sync Service
     sync_service = SyncService(state.db)

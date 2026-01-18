@@ -46,7 +46,17 @@ export function EdgeServerMonitor() {
       const response = await edgeServersApi.getEdgeServers({ per_page: 100 });
 
       const serversWithStatus = (response.data || []).map((server) => {
-        const lastHeartbeat = new Date(server.last_heartbeat || new Date());
+        // CRITICAL: Handle null last_heartbeat correctly
+        // If last_heartbeat is null, server is offline
+        if (!server.last_heartbeat) {
+          return {
+            ...server,
+            status: 'offline' as const,
+            cameras_count: 0,
+          };
+        }
+
+        const lastHeartbeat = new Date(server.last_heartbeat);
         const now = new Date();
         const diffMinutes = (now.getTime() - lastHeartbeat.getTime()) / (1000 * 60);
 
@@ -124,7 +134,12 @@ export function EdgeServerMonitor() {
     }
   };
 
-  const getLastHeartbeatText = (lastHeartbeat: string) => {
+  const getLastHeartbeatText = (lastHeartbeat: string | null | undefined) => {
+    // CRITICAL: Handle null/undefined last_heartbeat
+    if (!lastHeartbeat) {
+      return 'لم يتصل بعد';
+    }
+
     const date = new Date(lastHeartbeat);
     const now = new Date();
     const diffSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);

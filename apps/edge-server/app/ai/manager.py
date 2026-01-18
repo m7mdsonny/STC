@@ -111,12 +111,21 @@ class AIModuleManager:
             'modules': {},
         }
 
+        # CRITICAL: Process all enabled modules
+        if not enabled_modules:
+            logger.debug(f"AI processing: Camera {camera_id} - No enabled modules")
+            return results
+
+        logger.debug(f"AI processing: Camera {camera_id} - Enabled modules: {enabled_modules}")
+
         for module_id in enabled_modules:
             if module_id not in self.modules:
+                logger.warning(f"AI module '{module_id}' not found - available modules: {list(self.modules.keys())}")
                 continue
 
             module = self.modules[module_id]
             if not module.is_enabled():
+                logger.debug(f"AI module '{module_id}' is disabled")
                 continue
 
             try:
@@ -137,8 +146,12 @@ class AIModuleManager:
                     'detections_count': len(module_result.get('detections', [])),
                 }
 
+                # Log successful processing
+                if module_result.get('detections'):
+                    logger.debug(f"AI module '{module_id}': {len(module_result['detections'])} detections")
+
             except Exception as e:
-                logger.error(f"Error processing frame with module '{module_id}': {e}")
+                logger.error(f"Error processing frame with module '{module_id}': {e}", exc_info=True)
                 results['modules'][module_id] = {
                     'processed': False,
                     'error': str(e),

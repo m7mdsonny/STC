@@ -53,9 +53,15 @@ class EdgeController extends Controller
         $edgeServers = $query->with(['organization', 'license'])->orderByDesc('last_seen_at')->paginate($perPage);
         
         // Explicitly remove edge_secret from response if somehow present
+        // CRITICAL: Map last_seen_at to last_heartbeat for frontend compatibility
         $edgeServers->getCollection()->transform(function ($edge) {
             if (isset($edge->edge_secret)) {
                 unset($edge->edge_secret);
+            }
+            // Map last_seen_at to last_heartbeat for frontend compatibility
+            // Real status calculated from last_seen_at timestamp (updated on heartbeat)
+            if (isset($edge->last_seen_at)) {
+                $edge->last_heartbeat = $edge->last_seen_at;
             }
             return $edge;
         });
@@ -71,6 +77,11 @@ class EdgeController extends Controller
         // SECURITY: Never expose edge_secret in show endpoint
         $edgeData = $edgeServer->load(['organization', 'license'])->toArray();
         unset($edgeData['edge_secret']); // Explicitly remove if present
+        
+        // CRITICAL: Map last_seen_at to last_heartbeat for frontend compatibility
+        if (isset($edgeData['last_seen_at'])) {
+            $edgeData['last_heartbeat'] = $edgeData['last_seen_at'];
+        }
         
         return response()->json($edgeData);
     }
@@ -815,6 +826,7 @@ class EdgeController extends Controller
         return response()->json([
             'online' => $isOnline,
             'last_seen_at' => $lastSeen?->toIso8601String(),
+            'last_heartbeat' => $lastSeen?->toIso8601String(), // CRITICAL: Map to last_heartbeat for frontend compatibility
             'version' => $edgeServer->version,
             'uptime' => $edgeServer->system_info['uptime'] ?? null,
             'cameras_count' => $camerasCount,

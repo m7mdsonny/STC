@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Camera, AlertTriangle, Users, UserCheck, Server, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { dashboardApi } from '../lib/api/dashboard';
@@ -117,17 +117,20 @@ export function Dashboard() {
 
   // CRITICAL: Calculate online status from real heartbeat data (not cached status)
   // Server status = real heartbeat + active connection
-  const now = new Date();
-  const onlineServers = servers.filter(s => {
-    if (!s.last_heartbeat) return false;
-    try {
-      const heartbeatDate = new Date(s.last_heartbeat);
-      const diff = (now.getTime() - heartbeatDate.getTime()) / 60000;
-      return diff < 5; // Online if heartbeat within 5 minutes
-    } catch {
-      return false;
-    }
-  }).length;
+  // Calculate in useMemo to recalculate on every render with fresh timestamp
+  const onlineServers = useMemo(() => {
+    const now = new Date();
+    return servers.filter(s => {
+      if (!s.last_heartbeat) return false;
+      try {
+        const heartbeatDate = new Date(s.last_heartbeat);
+        const diff = (now.getTime() - heartbeatDate.getTime()) / 60000;
+        return diff < 5; // Online if heartbeat within 5 minutes
+      } catch {
+        return false;
+      }
+    }).length;
+  }, [servers]);
   
   // Camera status comes from database (updated via heartbeat from edge server)
   // Real status based on RTSP stream availability

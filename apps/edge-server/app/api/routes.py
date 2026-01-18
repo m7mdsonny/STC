@@ -71,7 +71,8 @@ async def get_status(request: Request):
             "modules": state.license_data.get('modules') if state.license_data else []
         },
         "cameras": {
-            "active": len(state.cameras),
+            # CRITICAL: Use camera_service.cameras (real cameras), not state.cameras (legacy dict)
+            "active": len(state.camera_service.cameras) if state.camera_service else 0,
             "max": settings.MAX_CAMERAS
         }
     }
@@ -359,11 +360,19 @@ async def get_snapshot(camera_id: str, request: Request):
 async def get_stream(camera_id: str, request: Request):
     """Get camera stream URL"""
     from main import state
+    from app.services.camera import CameraService
     
-    if camera_id not in state.cameras:
+    # CRITICAL: Check camera_service.cameras (real cameras), not state.cameras (legacy dict)
+    camera_service = getattr(state, 'camera_service', None)
+    if not camera_service:
+        camera_service = CameraService()
+        state.camera_service = camera_service
+    
+    if camera_id not in camera_service.cameras:
         raise HTTPException(status_code=404, detail=f"Camera {camera_id} not found")
     
     # Return HLS stream URL
+    # CRITICAL: Edge-only streaming - video traffic NEVER touches cloud
     # In production, implement actual HLS streaming
     stream_url = f"http://{settings.SERVER_HOST}:{settings.SERVER_PORT}/streams/{camera_id}/playlist.m3u8"
     
