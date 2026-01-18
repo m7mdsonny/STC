@@ -138,19 +138,19 @@ export function Analytics() {
           start_date: start.toISOString().split('T')[0],
           end_date: end.toISOString().split('T')[0],
           per_page: 1000,
-        }),
+        }).catch(() => ({ data: [] })),
 
         alertsApi.getAlerts({
           start_date: start.toISOString(),
           end_date: end.toISOString(),
           per_page: 1000,
-        }),
+        }).catch(() => ({ data: [] })),
 
-        vehiclesApi.getVehicleAccessLogs({
-          start_date: start.toISOString(),
-          end_date: end.toISOString(),
+        vehiclesApi.getAccessLogs({
+          from: start.toISOString(),
+          to: end.toISOString(),
           per_page: 1000,
-        }),
+        }).catch(() => ({ data: [] })),
 
         // CRITICAL: Use real analytics data from events table (not alerts)
         analyticsApi.getModuleActivity({
