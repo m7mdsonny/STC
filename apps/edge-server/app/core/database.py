@@ -146,32 +146,36 @@ class CloudDatabase:
             else:
                 body_bytes = json.dumps(kwargs['data'], ensure_ascii=False).encode('utf-8')
         
-        # Use HMAC signing for Edge endpoints
+        # Use HMAC signing for Edge endpoints (if credentials are available)
+        # CRITICAL: Allow initial heartbeat without HMAC during first-time registration
         if is_edge_endpoint:
-            if not HMACSigner:
-                logger.error("HMACSigner not available - cannot authenticate Edge requests")
-                return False, "HMAC authentication not available"
-            
             # Load credentials if not already loaded
             if not self._edge_key or not self._edge_secret:
                 self._load_edge_credentials()
             
-            if not self._edge_key or not self._edge_secret:
-                logger.error("Edge credentials not found - cannot sign request")
-                logger.error("Please ensure Edge Server is registered and credentials are stored")
-                return False, "Edge credentials not configured"
-            
-            # Generate HMAC signature
-            signer = HMACSigner(self._edge_key, self._edge_secret)
-            # Use full path including /api/v1/edges/...
-            path = endpoint
-            sig_headers = signer.generate_signature(method.upper(), path, body_bytes)
-            
-            # Add HMAC headers and remove Bearer token
-            headers.update(sig_headers)
-            headers.pop('Authorization', None)  # Remove Bearer token for Edge endpoints
-            
-            logger.debug(f"Using HMAC authentication for {endpoint}")
+            # Only use HMAC if credentials are available
+            # For initial heartbeat (registration), credentials won't exist yet
+            if self._edge_key and self._edge_secret:
+                if not HMACSigner:
+                    logger.error("HMACSigner not available - cannot authenticate Edge requests")
+                    return False, "HMAC authentication not available"
+                
+                # Generate HMAC signature
+                signer = HMACSigner(self._edge_key, self._edge_secret)
+                # Use full path including /api/v1/edges/...
+                path = endpoint
+                sig_headers = signer.generate_signature(method.upper(), path, body_bytes)
+                
+                # Add HMAC headers and remove Bearer token
+                headers.update(sig_headers)
+                headers.pop('Authorization', None)  # Remove Bearer token for Edge endpoints
+                
+                logger.debug(f"Using HMAC authentication for {endpoint}")
+            else:
+                # Initial registration - send without HMAC
+                # Cloud will match by license_id and organization_id
+                logger.info(f"Sending {endpoint} without HMAC (initial registration)")
+                headers.pop('Authorization', None)  # Remove Bearer token even without HMAC
         # For non-Edge endpoints, keep Bearer token if available
 
         # Update kwargs with signed headers
