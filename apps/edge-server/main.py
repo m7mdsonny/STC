@@ -255,8 +255,10 @@ async def lifespan(app: FastAPI):
         logger.warning("Running in SETUP MODE - visit /setup")
 
     logger.info("=" * 60)
-    logger.info(f"API: http://{settings.SERVER_HOST}:{settings.SERVER_PORT}")
-    logger.info(f"Setup: http://{settings.SERVER_HOST}:{settings.SERVER_PORT}/setup")
+    # Show localhost URL for user access (0.0.0.0 is correct for binding, but not for browser access)
+    display_host = "localhost" if settings.SERVER_HOST == "0.0.0.0" else settings.SERVER_HOST
+    logger.info(f"API: http://{display_host}:{settings.SERVER_PORT}")
+    logger.info(f"Setup: http://{display_host}:{settings.SERVER_PORT}/setup")
     logger.info("=" * 60)
 
     yield

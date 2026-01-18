@@ -162,106 +162,118 @@ class LicenseController extends Controller
     public function validateKey(Request $request): JsonResponse
     {
         try {
-            // SECURITY: L1-H2 - STRICT HMAC REQUIREMENT
-            // HMAC authentication is now MANDATORY - no license_key-only fallback
-            // Edge servers must use heartbeat endpoint first to obtain edge_key/edge_secret
+            // CRITICAL FIX: Allow initial license validation WITHOUT HMAC during first-time setup
+            // Edge Server needs license_id and organization_id BEFORE it can send heartbeat
+            // Once Edge Server receives credentials from heartbeat, it should use HMAC for subsequent validations
             $edgeKey = $request->header('X-EDGE-KEY');
             $timestamp = $request->header('X-EDGE-TIMESTAMP');
             $signature = $request->header('X-EDGE-SIGNATURE');
             
-            // Require all HMAC headers
-            if (!$edgeKey || !$timestamp || !$signature) {
-                Log::warning('License validation: HMAC headers missing', [
-                    'ip' => $request->ip(),
-                    'has_edge_key' => !empty($edgeKey),
-                    'has_timestamp' => !empty($timestamp),
-                    'has_signature' => !empty($signature),
-                ]);
-                return response()->json([
-                    'valid' => false,
-                    'reason' => 'hmac_required',
-                    'message' => 'HMAC authentication required. Use heartbeat endpoint to obtain edge_key and edge_secret first.'
-                ], 401);
-            }
+            $hasHmac = $edgeKey && $timestamp && $signature;
+            $requiresHmac = false; // Will be set to true if Edge Server already has credentials
             
-            // HMAC authentication headers present - verify signature
-            $edgeServer = EdgeServer::where('edge_key', $edgeKey)->first();
-            if (!$edgeServer || !$edgeServer->edge_secret) {
-                Log::warning('License validation: HMAC headers present but edge server not found or missing secret', [
-                    'edge_key' => substr($edgeKey ?? '', 0, 8) . '...',
+            // If HMAC headers are present, verify them
+            if ($hasHmac) {
+                $edgeServer = EdgeServer::where('edge_key', $edgeKey)->first();
+                if ($edgeServer && $edgeServer->edge_secret && $edgeServer->last_seen_at) {
+                    // Edge Server already has credentials and is registered - require HMAC
+                    $requiresHmac = true;
+                }
+            } else {
+                // No HMAC headers - allow for initial setup, but log it
+                Log::info('License validation: Initial setup without HMAC (first-time registration)', [
                     'ip' => $request->ip(),
                 ]);
-                return response()->json([
-                    'valid' => false,
-                    'reason' => 'invalid_credentials',
-                    'message' => 'Invalid edge credentials. Use heartbeat endpoint to register and obtain credentials.'
-                ], 401);
             }
             
-            // Verify timestamp (replay protection)
-            $requestTime = (int) $timestamp;
-            $currentTime = time();
-            $timeDiff = abs($currentTime - $requestTime);
-            if ($timeDiff > 300) { // 5 minutes
-                Log::warning('License validation: HMAC timestamp out of range', [
-                    'edge_key' => substr($edgeKey, 0, 8) . '...',
-                    'time_diff' => $timeDiff,
-                ]);
-                return response()->json([
-                    'valid' => false,
-                    'reason' => 'timestamp_invalid',
-                    'message' => 'Request timestamp is too old or too far in the future'
-                ], 401);
-            }
-            
-            // Decrypt edge_secret for HMAC calculation
-            try {
-                $decryptedSecret = \Illuminate\Support\Facades\Crypt::decryptString($edgeServer->edge_secret);
-            } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
-                Log::error('License validation: Failed to decrypt edge_secret', [
+            // If HMAC is required (Edge Server already has credentials), verify it
+            if ($requiresHmac) {
+                $edgeServer = EdgeServer::where('edge_key', $edgeKey)->first();
+                if (!$edgeServer || !$edgeServer->edge_secret) {
+                    Log::warning('License validation: HMAC headers present but edge server not found or missing secret', [
+                        'edge_key' => substr($edgeKey ?? '', 0, 8) . '...',
+                        'ip' => $request->ip(),
+                    ]);
+                    return response()->json([
+                        'valid' => false,
+                        'reason' => 'invalid_credentials',
+                        'message' => 'Invalid edge credentials. Use heartbeat endpoint to register and obtain credentials.'
+                    ], 401);
+                }
+                
+                // Verify timestamp (replay protection)
+                $requestTime = (int) $timestamp;
+                $currentTime = time();
+                $timeDiff = abs($currentTime - $requestTime);
+                if ($timeDiff > 300) { // 5 minutes
+                    Log::warning('License validation: HMAC timestamp out of range', [
+                        'edge_key' => substr($edgeKey, 0, 8) . '...',
+                        'time_diff' => $timeDiff,
+                    ]);
+                    return response()->json([
+                        'valid' => false,
+                        'reason' => 'timestamp_invalid',
+                        'message' => 'Request timestamp is too old or too far in the future'
+                    ], 401);
+                }
+                
+                // Decrypt edge_secret for HMAC calculation
+                try {
+                    $decryptedSecret = \Illuminate\Support\Facades\Crypt::decryptString($edgeServer->edge_secret);
+                } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+                    Log::error('License validation: Failed to decrypt edge_secret', [
+                        'edge_key' => substr($edgeKey, 0, 8) . '...',
+                        'edge_server_id' => $edgeServer->id,
+                    ]);
+                    return response()->json([
+                        'valid' => false,
+                        'reason' => 'configuration_error',
+                        'message' => 'Edge server configuration error'
+                    ], 500);
+                }
+
+                // Verify signature
+                $method = 'POST';
+                $path = $request->path();
+                $bodyHash = hash('sha256', $request->getContent() ?: '');
+                $signatureString = "{$method}|{$path}|{$timestamp}|{$bodyHash}";
+                $expectedSignature = hash_hmac('sha256', $signatureString, $decryptedSecret);
+                
+                if (!hash_equals($expectedSignature, $signature)) {
+                    Log::warning('License validation: HMAC signature verification failed', [
+                        'edge_key' => substr($edgeKey, 0, 8) . '...',
+                        'ip' => $request->ip(),
+                    ]);
+                    return response()->json([
+                        'valid' => false,
+                        'reason' => 'invalid_signature',
+                        'message' => 'Invalid signature'
+                    ], 401);
+                }
+                
+                Log::debug('License validation: HMAC signature verified', [
                     'edge_key' => substr($edgeKey, 0, 8) . '...',
                     'edge_server_id' => $edgeServer->id,
                 ]);
-                return response()->json([
-                    'valid' => false,
-                    'reason' => 'configuration_error',
-                    'message' => 'Edge server configuration error'
-                ], 500);
-            }
-
-            // Verify signature
-            $method = 'POST';
-            $path = $request->path();
-            $bodyHash = hash('sha256', $request->getContent() ?: '');
-            $signatureString = "{$method}|{$path}|{$timestamp}|{$bodyHash}";
-            $expectedSignature = hash_hmac('sha256', $signatureString, $decryptedSecret);
-            
-            if (!hash_equals($expectedSignature, $signature)) {
-                Log::warning('License validation: HMAC signature verification failed', [
-                    'edge_key' => substr($edgeKey, 0, 8) . '...',
-                    'ip' => $request->ip(),
-                ]);
-                return response()->json([
-                    'valid' => false,
-                    'reason' => 'invalid_signature',
-                    'message' => 'Invalid signature'
-                ], 401);
             }
             
-            Log::debug('License validation: HMAC signature verified', [
-                'edge_key' => substr($edgeKey, 0, 8) . '...',
-                'edge_server_id' => $edgeServer->id,
-            ]);
-            
-            // HMAC verified - now validate license_key (still required for license lookup)
+            // Validate license_key (required for all requests)
             $request->validate([
                 'license_key' => 'required|string',
                 'edge_id' => 'required|string',
             ]);
 
-            $license = License::where('license_key', $request->license_key)
-                ->where('organization_id', $edgeServer->organization_id)
-                ->first();
+            // Find license by license_key
+            // If HMAC was verified, we know the edge_server's organization_id
+            // Otherwise, we need to find the license first to check organization
+            if ($requiresHmac && isset($edgeServer)) {
+                $license = License::where('license_key', $request->license_key)
+                    ->where('organization_id', $edgeServer->organization_id)
+                    ->first();
+            } else {
+                // Initial setup - find license by key only
+                $license = License::where('license_key', $request->license_key)->first();
+            }
             if (!$license) {
                 return response()->json([
                     'valid' => false,
