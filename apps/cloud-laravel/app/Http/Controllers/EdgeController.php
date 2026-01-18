@@ -319,29 +319,67 @@ class EdgeController extends Controller
                 }
             } else {
                 // No HMAC provided - check if this is initial registration
-                // For initial registration, edge_id must be provided in request body
+                // For initial registration, edge_id or license_id must be provided
                 $edgeId = $request->input('edge_id');
+                $organizationId = $request->input('organization_id');
+                $licenseId = $request->input('license_id');
                 
-                if (!$edgeId) {
-                    return response()->json([
-                        'ok' => false,
-                        'message' => 'HMAC authentication required for registered edge servers. For initial registration, provide edge_id in request body.',
-                    ], 401);
+                // Try to find Edge Server by edge_id first
+                if ($edgeId) {
+                    $edge = EdgeServer::where('edge_id', $edgeId)->first();
+                } else {
+                    $edge = null;
                 }
                 
-                // Find or create edge server for initial registration
-                $edge = EdgeServer::where('edge_id', $edgeId)->first();
+                // If not found by edge_id, try to find by license_id and organization_id
+                if (!$edge && $licenseId && $organizationId) {
+                    $edge = EdgeServer::where('license_id', $licenseId)
+                        ->where('organization_id', $organizationId)
+                        ->whereNull('last_seen_at') // Only match unregistered servers
+                        ->first();
+                    
+                    // If found, update edge_id to match what Edge Server sent (or will send)
+                    if ($edge && $edgeId) {
+                        $edge->edge_id = $edgeId;
+                        $edge->save();
+                    }
+                }
+                
+                // If still not found, try to find any unregistered edge server for this organization
+                if (!$edge && $organizationId) {
+                    $edge = EdgeServer::where('organization_id', $organizationId)
+                        ->whereNull('last_seen_at')
+                        ->where(function($query) use ($licenseId) {
+                            if ($licenseId) {
+                                $query->where('license_id', $licenseId)
+                                      ->orWhereNull('license_id');
+                            } else {
+                                $query->whereNull('license_id');
+                            }
+                        })
+                        ->first();
+                    
+                    // If found, update edge_id and license_id
+                    if ($edge) {
+                        if ($edgeId) {
+                            $edge->edge_id = $edgeId;
+                        }
+                        if ($licenseId && !$edge->license_id) {
+                            $edge->license_id = $licenseId;
+                        }
+                        $edge->save();
+                    }
+                }
                 
                 if (!$edge) {
-                    // This should not happen - edge should be created via web portal first
                     return response()->json([
                         'ok' => false,
-                        'message' => 'Edge server not found. Please register via web portal first.',
+                        'message' => 'Edge server not found. Please create the Edge Server in the web portal first, or ensure you provide the correct license_id and organization_id.',
                     ], 404);
                 }
                 
-                // If edge already has credentials, require HMAC
-                if ($edge->edge_key && $edge->edge_secret) {
+                // If edge already has credentials and was registered before, require HMAC
+                if ($edge->edge_key && $edge->edge_secret && $edge->last_seen_at) {
                     return response()->json([
                         'ok' => false,
                         'message' => 'HMAC authentication required. This edge server is already registered.',

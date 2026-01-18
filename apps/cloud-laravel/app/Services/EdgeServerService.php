@@ -80,7 +80,8 @@ class EdgeServerService
                     License::where('id', $licenseId)->update(['edge_server_id' => $edgeServer->id]);
                 }
 
-                $edgeServer->update(['secret_delivered_at' => now()]);
+                // Do NOT set secret_delivered_at here - it should only be set after secret is returned to Edge
+                // Edge Server will receive the secret via heartbeat response during initial registration
 
                 return $edgeServer;
             });

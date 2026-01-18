@@ -129,7 +129,12 @@ export function Settings() {
         console.log('[Settings] edge server created', newServer);
         showSuccess(
           'تم الإضافة بنجاح',
-          `تم إضافة السيرفر ${serverForm.name} بنجاح. معرف السيرفر: ${newServer.edge_id || newServer.id}\n${newServer.license ? `تم ربطه بالترخيص: ${newServer.license.license_key}` : 'يرجى ربطه بترخيص لاحقاً'}\nيرجى استخدام معرف السيرفر في Edge Server للربط.`
+          `تم إضافة السيرفر ${serverForm.name} بنجاح.\n\n${newServer.license ? `✅ تم ربطه بالترخيص: ${newServer.license.license_key}\n\n` : '⚠️ لم يتم ربط ترخيص - يرجى ربط ترخيص لاحقاً من صفحة الترخيصات\n\n'}` +
+          `📋 الخطوات التالية:\n` +
+          `1. افتح صفحة Setup في Edge Server (http://localhost:8080/setup)\n` +
+          `2. أدخل Cloud API URL و License Key\n` +
+          `3. Edge Server سيتم ربطه تلقائياً عند إرسال heartbeat\n\n` +
+          `💡 ملاحظة: Edge Server سيتم ربطه تلقائياً عند إرسال heartbeat باستخدام License Key.`
         );
       }
 
