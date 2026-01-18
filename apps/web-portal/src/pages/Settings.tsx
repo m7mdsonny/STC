@@ -400,20 +400,18 @@ export function Settings() {
                                 <span>فحص الحالة</span>
                               </button>
                               {server.status === 'online' && (
-                                    <button
-                                      onClick={() => forceSync(server)}
-                                      disabled={syncingServer === server.id}
-                                      className="btn-secondary flex-1 flex items-center justify-center gap-2"
-                                    >
-                                      <Activity
-                                        className={`w-4 h-4 ${
-                                          syncingServer === server.id ? 'animate-pulse' : ''
-                                        }`}
-                                      />
-                                      <span>مزامنة</span>
-                                    </button>
-                                  )}
-                                </>
+                                <button
+                                  onClick={() => forceSync(server)}
+                                  disabled={syncingServer === server.id}
+                                  className="btn-secondary flex-1 flex items-center justify-center gap-2"
+                                >
+                                  <Activity
+                                    className={`w-4 h-4 ${
+                                      syncingServer === server.id ? 'animate-pulse' : ''
+                                    }`}
+                                  />
+                                  <span>مزامنة</span>
+                                </button>
                               )}
                               <button
                                 onClick={() => editServer(server)}
