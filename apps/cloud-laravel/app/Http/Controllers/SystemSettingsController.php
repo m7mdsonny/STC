@@ -97,7 +97,12 @@ class SystemSettingsController extends Controller
             \Artisan::call('config:clear');
             \Artisan::call('cache:clear');
             \Artisan::call('route:clear');
-            \Artisan::call('view:clear');
+            
+            // Only call view:clear if resources/views directory exists (API-only apps may not have views)
+            $viewsPath = resource_path('views');
+            if (is_dir($viewsPath)) {
+                \Artisan::call('view:clear');
+            }
 
             return response()->json(['success' => true, 'message' => 'Cache cleared successfully']);
         } catch (\Throwable $e) {

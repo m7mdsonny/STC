@@ -175,18 +175,27 @@ class EdgeServerService
             return false;
         }
         
-        if (!$edgeServer->ip_address) {
-            Log::warning("Edge Server {$edgeServer->id} has no IP address");
-            return false;
+        // Check if Edge Server is online (using last_seen_at for accurate status)
+        $isOnline = false;
+        if ($edgeServer->last_seen_at) {
+            $lastSeen = \Carbon\Carbon::parse($edgeServer->last_seen_at);
+            $isOnline = $lastSeen->isAfter(\Carbon\Carbon::now()->subMinutes(5));
         }
-
-        // Check if Edge Server is online
-        if (!$edgeServer->online) {
-            Log::warning("Edge Server {$edgeServer->id} is offline, cannot sync camera");
+        
+        if (!$isOnline && !$edgeServer->online) {
+            // Don't log warning - Edge Server will sync when it comes online
             return false;
         }
 
         try {
+            // Get Edge Server URL (uses internal_ip if available, falls back to ip_address)
+            $edgeUrl = $this->getEdgeServerUrl($edgeServer);
+            if (!$edgeUrl) {
+                // Don't log warning - internal_ip will be available after first heartbeat
+                // Camera sync will happen automatically when Edge Server syncs configuration
+                return false;
+            }
+
             $config = $camera->config ?? [];
             $password = null;
             
@@ -229,11 +238,6 @@ class EdgeServerService
                 'fps' => $config['fps'] ?? 15,
                 'enabled_modules' => $edgeModules, // Send mapped module names
             ];
-
-            $edgeUrl = $this->getEdgeServerUrl($edgeServer);
-            if (!$edgeUrl) {
-                return false;
-            }
 
             $this->enforceHttps($edgeUrl);
 
@@ -433,7 +437,20 @@ class EdgeServerService
                 return null;
             }
         } catch (\Exception $e) {
-            Log::error("Error getting camera snapshot: {$e->getMessage()}");
+            // Connection timeout or unreachable Edge Server - don't log as error
+            // This is expected when Edge Server is offline or unreachable
+            $errorMessage = $e->getMessage();
+            $isTimeout = str_contains($errorMessage, 'Connection timed out') || 
+                        str_contains($errorMessage, 'cURL error 28') ||
+                        str_contains($errorMessage, 'timed out');
+            
+            if ($isTimeout) {
+                // Don't log timeout errors - Edge Server may be offline or unreachable
+                Log::debug("Camera snapshot unavailable: Edge Server unreachable or timeout ({$camera->camera_id})");
+            } else {
+                // Log actual errors (not timeouts)
+                Log::warning("Error getting camera snapshot: {$errorMessage}");
+            }
             return null;
         }
     }
@@ -582,19 +599,24 @@ class EdgeServerService
     /**
      * Enforce HTTPS for production environments.
      * In local/development environments, HTTP is allowed with a warning logged.
+     * Internal IPs (192.168.x.x, 10.x.x.x, 172.16-31.x.x, 127.0.0.1) don't require HTTPS warnings.
      */
     private function enforceHttps(string $edgeUrl): void
     {
         if (!str_starts_with($edgeUrl, 'https://')) {
+            // Check if URL uses internal/private IP (don't warn for internal networks)
+            $isInternalIp = preg_match('/https?:\/\/(?:192\.168\.|10\.|172\.(?:1[6-9]|2[0-9]|3[01])\.|127\.0\.0\.1|localhost)/', $edgeUrl);
+            
             $environment = config('app.env', 'production');
             
-            // Only enforce in production
-            if ($environment === 'production') {
+            // Only log warning in production for non-internal IPs
+            // Internal IPs (192.168.x.x, 10.x.x.x, etc.) are expected to use HTTP in private networks
+            if ($environment === 'production' && !$isInternalIp) {
                 Log::warning("Edge server URL {$edgeUrl} does not use HTTPS. This is a security risk in production.");
+            } else {
+                // Log debug for internal IPs or development environments
+                Log::debug("Edge server communication using HTTP: {$edgeUrl}" . ($isInternalIp ? ' (internal IP - HTTP is acceptable)' : ''));
             }
-            
-            // Log warning for non-HTTPS in all environments
-            Log::debug("Edge server communication using HTTP: {$edgeUrl}");
         }
     }
 }
