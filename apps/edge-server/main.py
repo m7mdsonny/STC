@@ -13,10 +13,22 @@ BASE_DIR = Path(__file__).parent
 sys.path.insert(0, str(BASE_DIR))
 os.chdir(BASE_DIR)
 
-from config.settings import settings
-from app.core.license import LocalLicenseStore
-
-settings.ensure_directories()
+# CRITICAL: Wrap imports in try-except to prevent crashes when file is opened directly
+try:
+    from config.settings import settings
+    from app.core.license import LocalLicenseStore
+    
+    settings.ensure_directories()
+except Exception as e:
+    # If running as script, print error; if importing, just warn
+    if __name__ == "__main__":
+        print(f"Error loading configuration: {e}")
+        print("\nPress Enter to exit...")
+        input()
+        sys.exit(1)
+    else:
+        # Re-raise if importing from another module
+        raise
 
 logger.remove()
 logger.add(
@@ -394,7 +406,15 @@ if __name__ == "__main__":
         print("\nShutting down gracefully...")
         sys.exit(0)
     except Exception as e:
-        print(f"Fatal error: {e}")
+        print(f"\n{'='*60}")
+        print(f"FATAL ERROR: {e}")
+        print(f"{'='*60}")
         import traceback
         traceback.print_exc()
+        print(f"\n{'='*60}")
+        print("Press Enter to exit...")
+        try:
+            input()
+        except (EOFError, KeyboardInterrupt):
+            pass
         sys.exit(1)
