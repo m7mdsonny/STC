@@ -193,8 +193,10 @@ class CloudDatabase:
                 
                 # Generate HMAC signature
                 signer = HMACSigner(self._edge_key, self._edge_secret)
-                # Use full path including /api/v1/edges/...
-                path = endpoint
+                # CRITICAL: Cloud uses $request->path() which returns path WITHOUT leading slash
+                # Laravel path() returns "api/v1/edges/heartbeat" not "/api/v1/edges/heartbeat"
+                # Remove leading slash to match Cloud's expectation
+                path = endpoint.lstrip('/')
                 sig_headers_raw = signer.generate_signature(method.upper(), path, body_bytes)
                 
                 # CRITICAL: Handle case where generate_signature returns tuple (dict, nonce)
