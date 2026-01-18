@@ -404,7 +404,22 @@ class CloudDatabase:
             payload['license_id'] = lic_id
 
         if system_info:
-            payload['system_info'] = system_info
+            # CRITICAL: Clean system_info to ensure all values are JSON-serializable
+            # Apply the same clean_value function used in _request
+            def clean_value(v):
+                """Recursively clean values to ensure JSON serializability"""
+                if isinstance(v, dict):
+                    return {k: clean_value(val) for k, val in v.items()}
+                elif isinstance(v, tuple):
+                    return [clean_value(item) for item in v]
+                elif isinstance(v, list):
+                    return [clean_value(item) for item in v]
+                elif isinstance(v, (str, int, float, bool)) or v is None:
+                    return v
+                else:
+                    return str(v)  # Convert any other type to string
+            
+            payload['system_info'] = clean_value(system_info)
 
         success, result = await self._request(
             "POST",
