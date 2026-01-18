@@ -245,7 +245,19 @@ class CloudDatabase:
                     if key != 'headers':  # Don't log headers (sensitive)
                         logger.debug(f"Request kwarg '{key}': type={type(value).__name__}, value={str(value)[:100]}")
                 
-                response = await self.client.request(method, endpoint, **request_kwargs)
+                # CRITICAL: Wrap httpx request in try-except to catch dict conversion errors
+                try:
+                    response = await self.client.request(method, endpoint, **request_kwargs)
+                except ValueError as e:
+                    # ValueError with "dictionary update sequence element" is from dict() conversion
+                    if "dictionary update sequence" in str(e):
+                        logger.error(f"CRITICAL: Dict conversion error in httpx.request: {e}")
+                        logger.error(f"Request kwargs types: {[(k, type(v).__name__) for k, v in request_kwargs.items()]}")
+                        logger.error(f"Request kwargs values (first 100 chars): {[(k, str(v)[:100]) for k, v in request_kwargs.items()]}")
+                        # Re-raise with context
+                        raise ValueError(f"Dict conversion error in request: {e}. Check request_kwargs for tuples/lists of length 4.") from e
+                    else:
+                        raise
 
                 if response.status_code in (200, 201):
                     data = response.json() if response.text else None
