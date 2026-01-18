@@ -147,18 +147,21 @@ class CloudDatabase:
             # CRITICAL: Validate and clean payload before JSON encoding
             payload = kwargs['json']
             try:
-                # Check for problematic values (tuples of length 4)
+                # CRITICAL: Recursively clean payload to handle nested dicts and tuples
+                def clean_value(v):
+                    """Recursively clean values in payload"""
+                    if isinstance(v, dict):
+                        return {k: clean_value(val) for k, val in v.items()}
+                    elif isinstance(v, tuple):
+                        # Convert all tuples to lists
+                        return [clean_value(item) for item in v]
+                    elif isinstance(v, list):
+                        return [clean_value(item) for item in v]
+                    else:
+                        return v
+                
                 if isinstance(payload, dict):
-                    cleaned_payload = {}
-                    for key, value in payload.items():
-                        if isinstance(value, tuple) and len(value) == 4:
-                            logger.warning(f"Converting tuple of length 4 to list for key '{key}': {value}")
-                            cleaned_payload[key] = list(value)
-                        elif isinstance(value, tuple):
-                            cleaned_payload[key] = list(value)
-                        else:
-                            cleaned_payload[key] = value
-                    payload = cleaned_payload
+                    payload = clean_value(payload)
                 body_bytes = json.dumps(payload, ensure_ascii=False).encode('utf-8')
             except (TypeError, ValueError) as e:
                 logger.error(f"Error preparing JSON payload: {e}, payload type: {type(payload)}")
