@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Building2, Bell, Shield, Server, Plus, Trash2, RefreshCw, Wifi, WifiOff, Activity, AlertTriangle, MapPin, Key } from 'lucide-react';
+import { Settings as SettingsIcon, Building2, Bell, Shield, Server, Plus, Trash2, RefreshCw, Wifi, WifiOff, Activity, AlertTriangle, MapPin, Key, Info } from 'lucide-react';
 import { edgeServersApi } from '../lib/api/edgeServers';
 import { licensesApi } from '../lib/api/licenses';
 import { edgeServerService, EdgeServerStatus } from '../lib/edgeServer';
@@ -37,7 +37,6 @@ export function Settings() {
 
   const [serverForm, setServerForm] = useState({
     name: '',
-    ip_address: '',
     location: '',
     license_id: '',
   });
@@ -114,7 +113,8 @@ export function Settings() {
         await edgeServersApi.updateEdgeServer(editingServer.id, {
           name: serverForm.name,
           location: serverForm.location || undefined,
-          ip_address: serverForm.ip_address || undefined,
+          // NOTE: IP address removed - Edge Server connects to Cloud via API + License Key
+          // Edge Server registers itself via heartbeat endpoint, Cloud never connects to Edge
         });
         showSuccess('تم التحديث بنجاح', `تم تحديث بيانات السيرفر ${serverForm.name} بنجاح`);
       } else {
@@ -122,7 +122,8 @@ export function Settings() {
           organization_id: orgId,
           name: serverForm.name,
           location: serverForm.location || undefined,
-          ip_address: serverForm.ip_address || undefined,
+          // NOTE: IP address removed - Edge Server connects to Cloud via API + License Key
+          // Edge Server registers itself via heartbeat endpoint with license_id
           license_id: serverForm.license_id || undefined,
         });
         console.log('[Settings] edge server created', newServer);
@@ -149,8 +150,7 @@ export function Settings() {
     setEditingServer(server);
     setServerForm({
       name: server.name,
-      ip_address: server.ip_address || '',
-      location: (server.system_info as Record<string, string>)?.location || '',
+      location: (server.system_info as Record<string, string>)?.location || server.location || '',
       license_id: server.license_id || '',
     });
     setShowServerModal(true);
@@ -170,11 +170,12 @@ export function Settings() {
     }
   };
 
-  const testServerConnection = async (server: EdgeServer) => {
+  const checkServerStatus = async (server: EdgeServer) => {
     setTestingServer(server.id);
     try {
       // Check Edge Server status via Cloud API (NOT direct connection)
       // Edge status is derived from last heartbeat timestamp
+      // NOTE: We don't test direct connection because Edge is behind NAT
       const status = await edgeServersApi.getStatus(server.id);
       setServerStatuses(prev => ({ 
         ...prev, 
@@ -191,22 +192,25 @@ export function Settings() {
       }));
 
       if (status.online) {
-        // Edge is online (reporting heartbeat), trigger a config sync
-        try {
-          await edgeServersApi.syncConfig(server.id);
-          showSuccess('السيرفر متصل', `السيرفر ${server.name} متصل ويعمل بشكل طبيعي. تم طلب مزامنة الإعدادات`);
-        } catch (syncError) {
-          // Edge is online but sync failed - still show success for connection
-          showSuccess('السيرفر متصل', `السيرفر ${server.name} متصل ويعمل بشكل طبيعي`);
-        }
+        // Edge is online (reporting heartbeat)
+        const lastSeen = status.last_seen_at 
+          ? new Date(status.last_seen_at).toLocaleString('ar-EG')
+          : 'غير متوفر';
+        showSuccess(
+          'السيرفر متصل', 
+          `السيرفر ${server.name} متصل ويعمل بشكل طبيعي.\nآخر heartbeat: ${lastSeen}\nالنسخة: ${status.version || 'غير معروف'}\nالكاميرات: ${status.cameras_count}`
+        );
       } else {
-        showError('السيرفر غير متصل', `السيرفر ${server.name} غير متصل. تأكد من تشغيل Edge Server وأنه يرسل heartbeat للـ Cloud`);
+        showError(
+          'السيرفر غير متصل', 
+          `السيرفر ${server.name} غير متصل.\n\nتأكد من:\n1. تشغيل Edge Server\n2. تكوين License Key في Edge Server\n3. أن Edge Server يرسل heartbeat إلى Cloud API`
+        );
       }
 
       fetchData();
     } catch (error) {
-      console.error('Failed to test server connection:', error);
-      const { title, message } = getDetailedErrorMessage(error, 'اختبار الاتصال', 'فشل اختبار الاتصال بالسيرفر. تأكد من أن Edge Server يعمل وأن عنوان IP صحيح');
+      console.error('Failed to check server status:', error);
+      const { title, message } = getDetailedErrorMessage(error, 'فحص الحالة', 'فشل فحص حالة السيرفر. يرجى المحاولة مرة أخرى');
       showError(title, message);
     } finally {
       setTestingServer(null);
@@ -214,10 +218,9 @@ export function Settings() {
   };
 
   const forceSync = async (server: EdgeServer) => {
-    if (!server.ip_address) {
-      showError('خطأ', 'عنوان IP غير محدد لهذا السيرفر');
-      return;
-    }
+    // NOTE: Sync config is queued in Cloud database
+    // Edge Server polls for config changes via heartbeat response
+    // No direct connection needed
     
     setSyncingServer(server.id);
     try {
@@ -288,7 +291,7 @@ export function Settings() {
                     <button
                       onClick={() => {
                         setEditingServer(null);
-                        setServerForm({ name: '', ip_address: '', location: '', license_id: '' });
+                        setServerForm({ name: '', location: '', license_id: '' });
                         setShowServerModal(true);
                       }}
                       className="btn-primary flex items-center gap-2"
@@ -339,9 +342,11 @@ export function Settings() {
                               </div>
                               <div>
                                 <p className="font-semibold text-lg">{server.name}</p>
-                                <p className="text-sm text-white/50 font-mono">
-                                  {server.ip_address || 'لم يتم تحديد IP'}
-                                </p>
+                                {server.edge_id && (
+                                  <p className="text-xs text-white/40 font-mono">
+                                    Edge ID: {server.edge_id.substring(0, 8)}...
+                                  </p>
+                                )}
                                 {location && (
                                   <p className="text-xs text-white/40 flex items-center gap-1 mt-1">
                                     <MapPin className="w-3 h-3" />
@@ -382,21 +387,19 @@ export function Settings() {
 
                           {canManage && (
                             <div className="flex items-center gap-2 pt-4 border-t border-white/10">
-                              {server.ip_address && (
-                                <>
-                                  <button
-                                    onClick={() => testServerConnection(server)}
-                                    disabled={testingServer === server.id}
-                                    className="btn-secondary flex-1 flex items-center justify-center gap-2"
-                                  >
-                                    <RefreshCw
-                                      className={`w-4 h-4 ${
-                                        testingServer === server.id ? 'animate-spin' : ''
-                                      }`}
-                                    />
-                                    <span>اختبار</span>
-                                  </button>
-                                  {server.status === 'online' && (
+                              <button
+                                onClick={() => checkServerStatus(server)}
+                                disabled={testingServer === server.id}
+                                className="btn-secondary flex-1 flex items-center justify-center gap-2"
+                              >
+                                <RefreshCw
+                                  className={`w-4 h-4 ${
+                                    testingServer === server.id ? 'animate-spin' : ''
+                                  }`}
+                                />
+                                <span>فحص الحالة</span>
+                              </button>
+                              {server.status === 'online' && (
                                     <button
                                       onClick={() => forceSync(server)}
                                       disabled={syncingServer === server.id}
@@ -446,7 +449,7 @@ export function Settings() {
         onClose={() => {
           setShowServerModal(false);
           setEditingServer(null);
-          setServerForm({ name: '', ip_address: '', location: '', license_id: '' });
+          setServerForm({ name: '', location: '', license_id: '' });
         }}
         title={editingServer ? 'تعديل السيرفر' : 'اضافة سيرفر جديد'}
       >
@@ -462,16 +465,14 @@ export function Settings() {
               required
             />
           </div>
-          <div>
-            <label className="label">عنوان IP</label>
-            <input
-              type="text"
-              value={serverForm.ip_address}
-              onChange={(e) => setServerForm({ ...serverForm, ip_address: e.target.value })}
-              className="input"
-              dir="ltr"
-              placeholder="192.168.1.100"
-            />
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-4">
+            <p className="text-xs text-blue-300 flex items-start gap-2">
+              <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <span>
+                <strong>ملاحظة:</strong> السيرفر سيتم ربطه تلقائياً عند إرسال Heartbeat من Edge Server باستخدام License Key.
+                لا حاجة لإدخال عنوان IP - Edge Server يتصل بالـ Cloud من تلقاء نفسه.
+              </span>
+            </p>
           </div>
           <div>
             <label className="label">الموقع / الفرع</label>
