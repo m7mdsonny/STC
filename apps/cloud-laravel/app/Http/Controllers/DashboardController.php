@@ -27,16 +27,29 @@ class DashboardController extends Controller
 
     public function admin(Request $request): JsonResponse
     {
-        $this->ensureSuperAdmin($request);
+        try {
+            $this->ensureSuperAdmin($request);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Unauthorized',
+                'message' => $e->getMessage()
+            ], 403);
+        }
         
-        $totalOrganizations = Organization::count();
-        $activeOrganizations = Organization::where('is_active', true)->count();
-        $totalEdgeServers = EdgeServer::count();
-        $onlineServers = EdgeServer::where('online', true)->count();
-        $totalCameras = Camera::count();
-        $alertsToday = Event::whereDate('occurred_at', now()->toDateString())->count();
-        $totalUsers = User::count();
-        $activeLicenses = License::where('status', 'active')->count();
+        try {
+            $totalOrganizations = Organization::count();
+            $activeOrganizations = Organization::where('is_active', true)->count();
+            $totalEdgeServers = EdgeServer::count();
+            
+            // Calculate online servers based on last_seen_at (more accurate than online field)
+            $onlineServers = EdgeServer::whereNotNull('last_seen_at')
+                ->where('last_seen_at', '>=', now()->subMinutes(5))
+                ->count();
+            
+            $totalCameras = Camera::count();
+            $alertsToday = Event::whereDate('occurred_at', now()->toDateString())->count();
+            $totalUsers = User::count();
+            $activeLicenses = License::where('status', 'active')->count();
 
         // Calculate revenue from active licenses
         $revenueThisMonth = License::where('status', 'active')
@@ -58,18 +71,29 @@ class DashboardController extends Controller
                 ];
             });
 
-        return response()->json([
-            'total_organizations' => $totalOrganizations,
-            'active_organizations' => $activeOrganizations,
-            'total_edge_servers' => $totalEdgeServers,
-            'online_edge_servers' => $onlineServers,
-            'total_cameras' => $totalCameras,
-            'alerts_today' => $alertsToday,
-            'revenue_this_month' => $revenueThisMonth,
-            'total_users' => $totalUsers,
-            'active_licenses' => $activeLicenses,
-            'organizations_by_plan' => $organizationsByPlan,
-        ]);
+            return response()->json([
+                'total_organizations' => $totalOrganizations,
+                'active_organizations' => $activeOrganizations,
+                'total_edge_servers' => $totalEdgeServers,
+                'online_edge_servers' => $onlineServers,
+                'total_cameras' => $totalCameras,
+                'alerts_today' => $alertsToday,
+                'revenue_this_month' => $revenueThisMonth,
+                'total_users' => $totalUsers,
+                'active_licenses' => $activeLicenses,
+                'organizations_by_plan' => $organizationsByPlan,
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Admin dashboard error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'error' => 'Server Error',
+                'message' => 'Failed to load dashboard data: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function organization(Request $request): JsonResponse

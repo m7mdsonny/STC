@@ -66,22 +66,38 @@ export function Settings() {
   };
 
   const fetchLicenses = async () => {
-    if (!organization) return;
+    if (!organization) {
+      console.warn('[Settings] Cannot fetch licenses: organization is missing');
+      return;
+    }
     setLoadingLicenses(true);
     try {
       const result = await licensesApi.getLicenses({
         organization_id: organization.id,
         per_page: 100,
       });
+      
+      // Handle paginated response
+      const licensesList = Array.isArray(result.data) 
+        ? result.data 
+        : (result.data?.data || []);
+      
       // Filter to show only active licenses that are not bound to an edge server
-      const unboundLicenses = result.data.filter(
+      const unboundLicenses = licensesList.filter(
         (license) => license.status === 'active' && !license.edge_server_id
       );
+      
       setAvailableLicenses(unboundLicenses);
+      console.log('[Settings] Loaded licenses', { 
+        total: licensesList.length, 
+        unbound: unboundLicenses.length 
+      });
     } catch (error) {
-      console.error('Failed to fetch licenses:', error);
+      console.error('[Settings] Failed to fetch licenses:', error);
+      showError('خطأ في التحميل', 'فشل تحميل قائمة التراخيص');
+    } finally {
+      setLoadingLicenses(false);
     }
-    setLoadingLicenses(false);
   };
 
   const addServer = async (e: React.FormEvent) => {
