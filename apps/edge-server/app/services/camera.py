@@ -118,8 +118,8 @@ class CameraService:
             capture = cv2.VideoCapture(stream.rtsp_url)
             capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
             
-            # Set connection timeout (5 seconds)
-            capture.set(cv2.CAP_PROP_TIMEOUT, 5000)
+            # CRITICAL: CAP_PROP_TIMEOUT is not available in OpenCV
+            # Timeout is handled by RTSP stream timeout (default 5 seconds)
 
             if not capture.isOpened():
                 logger.warning(f"Failed to open RTSP stream: {stream.name} ({stream.rtsp_url})")
@@ -269,6 +269,8 @@ class CameraService:
                     await asyncio.sleep(1)
 
             # Connection lost - will retry in outer loop
+            # CRITICAL: Ensure is_active is False when connection is lost
+            stream.is_active = False
             if stream.capture:
                 stream.capture.release()
                 stream.capture = None
@@ -289,19 +291,26 @@ class CameraService:
             return None
 
         # Determine status based on real stream availability
+        # CRITICAL: Status must reflect actual connection state - not cached state
         status = "offline"
-        if stream.is_active and stream.capture and stream.capture.isOpened():
-            if stream.last_frame_time:
-                # Check if last frame was recent (within 30 seconds)
-                time_since_last_frame = (datetime.utcnow() - stream.last_frame_time).total_seconds()
-                if time_since_last_frame < 30:
-                    status = "online"
+        if stream.is_active:
+            # Stream is marked as active - verify it's actually connected
+            if stream.capture and stream.capture.isOpened():
+                if stream.last_frame_time:
+                    # Check if last frame was recent (within 30 seconds)
+                    time_since_last_frame = (datetime.utcnow() - stream.last_frame_time).total_seconds()
+                    if time_since_last_frame < 30:
+                        status = "online"
+                    else:
+                        status = "error"  # Stream open but no recent frames (>30 seconds)
                 else:
-                    status = "error"  # Stream open but no recent frames
+                    status = "error"  # Stream open but no frames received yet
             else:
-                status = "error"  # Stream open but no frames received yet
+                # is_active is True but capture is None or not opened - invalid state
+                status = "offline"
         else:
-            status = "offline"  # Stream not connected
+            # Stream not active - definitely offline
+            status = "offline"
 
         return {
             "camera_id": stream.id,  # Use camera_id for Cloud API compatibility

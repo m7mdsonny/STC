@@ -26,10 +26,21 @@ class EdgeCommandService
             ];
         }
 
-        if (!$edgeServer->online) {
+        // CRITICAL: Check last_seen_at instead of online flag
+        // The online flag may be stale, but last_seen_at reflects real heartbeat
+        // Consider server online if last_seen_at is within 5 minutes
+        $isOnline = false;
+        if ($edgeServer->last_seen_at) {
+            $lastSeen = \Carbon\Carbon::parse($edgeServer->last_seen_at);
+            $isOnline = $lastSeen->isAfter(\Carbon\Carbon::now()->subMinutes(5));
+        }
+        
+        if (!$isOnline && !$edgeServer->online) {
+            // Only reject if both online flag is false AND last_seen_at is old/missing
+            // This allows sync even if online flag is stale but server is actually connected
             return [
                 'success' => false,
-                'message' => 'Edge Server is offline',
+                'message' => 'Edge Server appears offline (no recent heartbeat)',
                 'error' => 'edge_offline'
             ];
         }
