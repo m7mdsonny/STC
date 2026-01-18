@@ -375,17 +375,26 @@ def main():
 
 
 if __name__ == "__main__":
-    if platform.system() == "Windows" and len(sys.argv) > 1:
-        cmd = sys.argv[1].lower()
-        if cmd in ("install", "remove", "start", "stop"):
-            try:
-                from app.service.windows import handle_service_command
-                handle_service_command(cmd)
-            except ImportError as e:
-                print(f"Error: {e}")
-                print("Install pywin32: pip install pywin32")
-                sys.exit(1)
+    try:
+        if platform.system() == "Windows" and len(sys.argv) > 1:
+            cmd = sys.argv[1].lower()
+            if cmd in ("install", "remove", "start", "stop"):
+                try:
+                    from app.service.windows import handle_service_command
+                    handle_service_command(cmd)
+                except ImportError as e:
+                    print(f"Error: {e}")
+                    print("Install pywin32: pip install pywin32")
+                    sys.exit(1)
+            else:
+                main()
         else:
             main()
-    else:
-        main()
+    except KeyboardInterrupt:
+        print("\nShutting down gracefully...")
+        sys.exit(0)
+    except Exception as e:
+        print(f"Fatal error: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
