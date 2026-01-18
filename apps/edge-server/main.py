@@ -79,6 +79,16 @@ async def initialize_database():
 async def validate_license():
     license_store = LocalLicenseStore()
 
+    # CRITICAL: Check cached license first - avoid repeated online validation
+    # Only validate online if cache is missing or expired
+    if license_store.data and license_store.data.get('license_key') == settings.LICENSE_KEY:
+        # Check if cached license is still valid (within grace or not expired)
+        if license_store.is_within_grace(settings.LICENSE_KEY, state.hardware_id):
+            state.license_data = license_store.data
+            state.is_licensed = True
+            logger.debug("Using cached license - skipping online validation")
+            return True
+
     # Check for free trial if no license key
     if not settings.has_license() or settings.LICENSE_KEY.lower() in ("", "trial", "free"):
         if license_store._check_free_trial_eligibility("TRIAL", state.hardware_id):
@@ -98,6 +108,8 @@ async def validate_license():
             return True
         return False
 
+    # Only validate online if cache check failed or license key changed
+    logger.debug("Cache check failed - validating license online")
     valid, license_data = await state.db.validate_license(settings.LICENSE_KEY, hardware_id=state.hardware_id)
 
     if valid:
