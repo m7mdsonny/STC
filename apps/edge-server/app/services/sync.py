@@ -81,7 +81,11 @@ class SyncService:
                 await self._sync_configuration()
                 await self._poll_commands()
             except Exception as e:
+                # CRITICAL: Log full error details but don't crash
+                import traceback
                 logger.error(f"Sync error: {e}")
+                logger.debug(f"Sync error traceback: {traceback.format_exc()}")
+                # Continue running - don't exit service
 
             await asyncio.sleep(settings.SYNC_INTERVAL)
 

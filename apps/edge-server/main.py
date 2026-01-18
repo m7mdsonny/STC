@@ -236,21 +236,50 @@ async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
     logger.info("=" * 60)
 
-    connected = await initialize_database()
+    try:
+        connected = await initialize_database()
+    except Exception as e:
+        logger.error(f"Database initialization failed: {e}")
+        import traceback
+        logger.debug(traceback.format_exc())
+        connected = False
 
-    licensed = await validate_license()
+    try:
+        licensed = await validate_license()
+    except Exception as e:
+        logger.error(f"License validation failed: {e}")
+        import traceback
+        logger.debug(traceback.format_exc())
+        licensed = False
 
     if licensed and connected:
-        registered = await register_server()
+        try:
+            registered = await register_server()
+        except Exception as e:
+            logger.error(f"Server registration failed: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            registered = False
 
         if registered:
-            await start_services()
-            logger.info("Server is FULLY OPERATIONAL")
+            try:
+                await start_services()
+                logger.info("Server is FULLY OPERATIONAL")
+            except Exception as e:
+                logger.error(f"Failed to start services: {e}")
+                import traceback
+                logger.debug(traceback.format_exc())
+                logger.warning("Server running with limited functionality")
         else:
             logger.warning("Server registration failed")
     elif licensed and not connected:
-        await start_services()
-        logger.warning("Running OFFLINE using cached license - cloud features paused")
+        try:
+            await start_services()
+            logger.warning("Running OFFLINE using cached license - cloud features paused")
+        except Exception as e:
+            logger.error(f"Failed to start services: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
     else:
         logger.warning("Running in SETUP MODE - visit /setup")
 

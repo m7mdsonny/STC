@@ -179,7 +179,10 @@ class CloudDatabase:
         # For non-Edge endpoints, keep Bearer token if available
 
         # Update kwargs with signed headers
-        request_kwargs = dict(kwargs)
+        # CRITICAL: Safely copy kwargs to avoid dict conversion errors
+        request_kwargs = {}
+        for key, value in kwargs.items():
+            request_kwargs[key] = value
         request_kwargs['headers'] = headers
 
         attempts = self._retry_count if retry else 1
