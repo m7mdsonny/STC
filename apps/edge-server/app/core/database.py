@@ -426,10 +426,16 @@ class CloudDatabase:
     async def get_cameras(self, organization_id: str) -> List[Dict]:
         """Get cameras for organization using public Edge endpoint"""
         # Use public endpoint that doesn't require authentication
+        # CRITICAL: Convert organization_id to string to avoid dict conversion errors
+        org_id_str = str(organization_id) if organization_id else None
+        if not org_id_str:
+            logger.warning("get_cameras: organization_id is missing")
+            return []
+        
         success, data = await self._request(
             "GET",
             "/api/v1/edges/cameras",
-            params={"organization_id": organization_id},
+            params={"organization_id": org_id_str},
             retry=False
         )
         

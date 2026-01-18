@@ -166,10 +166,16 @@ class SyncService:
             return
 
         try:
-            self.cached_faces = await self.db.get_registered_faces(org_id)
-            self.cached_vehicles = await self.db.get_registered_vehicles(org_id)
-            self.cached_rules = await self.db.get_automation_rules(org_id)
-            self.cached_cameras = await self.db.get_cameras(org_id)
+            # CRITICAL: Convert organization_id to string to avoid type errors
+            org_id_str = str(org_id) if org_id else None
+            if not org_id_str:
+                logger.warning("_sync_configuration: organization_id is missing")
+                return
+            
+            self.cached_faces = await self.db.get_registered_faces(org_id_str)
+            self.cached_vehicles = await self.db.get_registered_vehicles(org_id_str)
+            self.cached_rules = await self.db.get_automation_rules(org_id_str)
+            self.cached_cameras = await self.db.get_cameras(org_id_str)
 
             self._last_sync = datetime.utcnow()
 
