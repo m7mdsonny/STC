@@ -11,10 +11,8 @@ interface CameraFilters {
 interface CreateCameraData {
   name: string;
   edge_server_id: string;
-  rtsp_url: string;
+  rtsp_url: string; // RTSP URL with credentials inline: rtsp://username:password@ip:port/stream
   location?: string;
-  username?: string;
-  password?: string;
   resolution?: string;
   fps?: number;
   enabled_modules?: string[];
@@ -61,11 +59,10 @@ export const camerasApi = {
     }
   },
 
-  async testConnection(rtspUrl: string, username?: string, password?: string): Promise<{ success: boolean; message: string }> {
+  async testConnection(rtspUrl: string): Promise<{ success: boolean; message: string }> {
+    // RTSP URL should contain credentials inline: rtsp://username:password@ip:port/stream
     const { data, error } = await apiClient.post<{ success: boolean; message: string }>('/cameras/test-connection', {
       rtsp_url: rtspUrl,
-      username,
-      password,
     });
     if (error || !data) {
       throw new Error(error || 'Failed to test connection');

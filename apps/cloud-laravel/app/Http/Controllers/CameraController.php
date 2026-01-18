@@ -189,25 +189,42 @@ class CameraController extends Controller
     public function testConnection(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'rtsp_url' => 'required|string|url',
-            'username' => 'nullable|string',
-            'password' => 'nullable|string',
+            'rtsp_url' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    // Validate RTSP URL format with credentials inline
+                    // Format: rtsp://[username:password@]host[:port]/path
+                    if (!preg_match('/^rtsp:\/\/(?:[^:@]+:[^@]+@)?[^:\/]+(?::\d+)?\/.+$/', $value)) {
+                        $fail('The RTSP URL must be in the format: rtsp://username:password@ip:port/stream');
+                    }
+                },
+            ],
         ]);
 
-        // Basic validation - in production, you might want to actually test the RTSP connection
-        // For now, we'll just validate the URL format
+        // Validate RTSP URL format
         try {
             $parsedUrl = parse_url($data['rtsp_url']);
-            if (!$parsedUrl || !isset($parsedUrl['scheme']) || !in_array($parsedUrl['scheme'], ['rtsp', 'http', 'https'])) {
+            if (!$parsedUrl || !isset($parsedUrl['scheme']) || $parsedUrl['scheme'] !== 'rtsp') {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid RTSP URL format',
+                    'message' => 'Invalid RTSP URL format. Must start with rtsp://',
                 ], 422);
             }
 
+            // Check if URL has host and path
+            if (!isset($parsedUrl['host']) || !isset($parsedUrl['path'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid RTSP URL format. Must include host and path.',
+                ], 422);
+            }
+
+            // Note: Actual RTSP connection test should be done by Edge Server
+            // Cloud only validates URL format
             return response()->json([
                 'success' => true,
-                'message' => 'RTSP URL format is valid',
+                'message' => 'RTSP URL format is valid. Connection will be tested by Edge Server.',
             ]);
         } catch (\Exception $e) {
             return response()->json([

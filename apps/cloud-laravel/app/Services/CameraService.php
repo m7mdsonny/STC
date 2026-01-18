@@ -48,11 +48,15 @@ class CameraService
             'enabled_modules' => $data['enabled_modules'] ?? [],
         ];
 
-        if (isset($data['password']) && $data['password']) {
-            $config['password'] = Crypt::encryptString($data['password']);
-        }
-        if (isset($data['username'])) {
-            $config['username'] = $data['username'];
+        // RTSP URL contains credentials inline: rtsp://username:password@ip:port/stream
+        // No need to store separate username/password in config
+        // For backward compatibility, extract credentials from RTSP URL if needed
+        $rtspUrl = $data['rtsp_url'];
+        $parsedUrl = parse_url($rtspUrl);
+        if (isset($parsedUrl['user']) && isset($parsedUrl['pass'])) {
+            // Store credentials in config for backward compatibility (encrypted)
+            $config['username'] = $parsedUrl['user'];
+            $config['password'] = Crypt::encryptString($parsedUrl['pass']);
         }
 
         try {
@@ -92,11 +96,14 @@ class CameraService
         $config['fps'] = $data['fps'] ?? ($config['fps'] ?? 15);
         $config['enabled_modules'] = $data['enabled_modules'] ?? ($config['enabled_modules'] ?? []);
 
-        if (array_key_exists('password', $data)) {
-            $config['password'] = $data['password'] ? Crypt::encryptString($data['password']) : null;
-        }
-        if (array_key_exists('username', $data)) {
-            $config['username'] = $data['username'];
+        // RTSP URL contains credentials inline: rtsp://username:password@ip:port/stream
+        // Extract credentials from RTSP URL if provided
+        if (isset($data['rtsp_url'])) {
+            $parsedUrl = parse_url($data['rtsp_url']);
+            if (isset($parsedUrl['user']) && isset($parsedUrl['pass'])) {
+                $config['username'] = $parsedUrl['user'];
+                $config['password'] = Crypt::encryptString($parsedUrl['pass']);
+            }
         }
 
         $payload = $data;

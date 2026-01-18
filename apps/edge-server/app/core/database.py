@@ -354,7 +354,8 @@ class CloudDatabase:
         version: Optional[str] = None, 
         system_info: Optional[Dict] = None,
         organization_id: Optional[int] = None,
-        license_id: Optional[int] = None
+        license_id: Optional[int] = None,
+        cameras_status: Optional[List[Dict]] = None
     ) -> bool:
         """
         Send heartbeat to Cloud API
@@ -422,6 +423,10 @@ class CloudDatabase:
                     return str(v)  # Convert any other type to string
             
             payload['system_info'] = clean_value(system_info)
+
+        # Add camera statuses if provided (real-time status from Edge Server)
+        if cameras_status:
+            payload['cameras_status'] = cameras_status
 
         success, result = await self._request(
             "POST",

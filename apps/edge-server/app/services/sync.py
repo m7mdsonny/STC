@@ -109,12 +109,27 @@ class SyncService:
         edge_id = state.edge_id or state.server_id or state.hardware_id
         system_info = self.db._get_system_info() if self.db else None
 
+        # Get real camera statuses from camera service
+        cameras_status = []
+        if state.camera_service:
+            all_statuses = state.camera_service.get_all_status()
+            cameras_status = [
+                {
+                    "camera_id": status.get("camera_id") or status.get("id"),
+                    "status": status.get("status", "offline"),
+                    "last_frame_time": status.get("last_frame_time"),
+                }
+                for status in all_statuses
+                if status  # Filter out None values
+            ]
+
         success = await self.db.heartbeat(
             edge_id=edge_id,
             version=settings.APP_VERSION,
             system_info=system_info,
             organization_id=state.license_data.get('organization_id') if state.license_data else None,
             license_id=state.license_data.get('license_id') if state.license_data else None,
+            cameras_status=cameras_status if cameras_status else None,
         )
 
         if success:
@@ -187,6 +202,51 @@ class SyncService:
                         f"{len(self.cached_vehicles)} vehicles, "
                         f"{len(self.cached_rules)} rules, "
                         f"{len(self.cached_cameras)} cameras")
+
+            # CRITICAL: Add/update cameras in camera_service from cached_cameras
+            # This ensures cameras with RTSP URLs (including credentials inline) are loaded
+            if state.camera_service:
+                for camera in self.cached_cameras:
+                    camera_id = camera.get('camera_id') or camera.get('id')
+                    name = camera.get('name', 'Unknown')
+                    rtsp_url = camera.get('rtsp_url')
+                    
+                    # RTSP URL should contain credentials inline: rtsp://username:password@ip:port/stream
+                    if not rtsp_url or not rtsp_url.startswith('rtsp://'):
+                        logger.warning(f"Camera {camera_id} has invalid RTSP URL: {rtsp_url}")
+                        continue
+                    
+                    # Get enabled modules from config
+                    config = camera.get('config', {})
+                    if isinstance(config, str):
+                        import json
+                        try:
+                            config = json.loads(config)
+                        except:
+                            config = {}
+                    enabled_modules = config.get('enabled_modules', [])
+                    
+                    # Add camera to camera_service if not already present
+                    if camera_id not in state.camera_service.cameras:
+                        await state.camera_service.add_camera(
+                            camera_id=camera_id,
+                            name=name,
+                            rtsp_url=rtsp_url,  # RTSP URL with credentials inline
+                            modules=enabled_modules
+                        )
+                        logger.info(f"Added camera {camera_id} to camera_service from sync")
+                    else:
+                        # Update existing camera RTSP URL if changed
+                        existing = state.camera_service.cameras[camera_id]
+                        if existing.rtsp_url != rtsp_url:
+                            logger.info(f"Camera {camera_id} RTSP URL changed, removing and re-adding")
+                            await state.camera_service.remove_camera(camera_id)
+                            await state.camera_service.add_camera(
+                                camera_id=camera_id,
+                                name=name,
+                                rtsp_url=rtsp_url,
+                                modules=enabled_modules
+                            )
 
         except Exception as e:
             logger.error(f"Configuration sync failed: {e}")

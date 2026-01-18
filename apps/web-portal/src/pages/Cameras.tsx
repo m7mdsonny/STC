@@ -30,9 +30,7 @@ export function Cameras() {
   const [formData, setFormData] = useState({
     name: '',
     location: '',
-    rtsp_url: '',
-    username: '',
-    password: '',
+    rtsp_url: '', // RTSP URL with credentials inline: rtsp://username:password@ip:port/stream
     edge_server_id: '',
     resolution: '1920x1080',
     fps: 15,
@@ -191,9 +189,7 @@ export function Cameras() {
     setFormData({
       name: '',
       location: '',
-      rtsp_url: '',
-      username: '',
-      password: '',
+      rtsp_url: '', // RTSP URL with credentials inline: rtsp://username:password@ip:port/stream
       edge_server_id: '',
       resolution: '1920x1080',
       fps: 15,
@@ -203,15 +199,15 @@ export function Cameras() {
 
   const openEditModal = (camera: CameraType) => {
     setEditingCamera(camera);
+    // RTSP URL should contain credentials inline
+    // For legacy cameras with separate username/password, use existing rtsp_url
     setFormData({
       name: camera.name,
       location: camera.location || '',
-      rtsp_url: camera.rtsp_url,
-      username: camera.username || '',
-      password: '',
+      rtsp_url: camera.rtsp_url || '', // RTSP URL with credentials inline
       edge_server_id: camera.edge_server_id,
-      resolution: camera.resolution,
-      fps: camera.fps,
+      resolution: camera.resolution || '1920x1080',
+      fps: camera.fps || 15,
       enabled_modules: camera.enabled_modules || [],
     });
     setShowModal(true);
@@ -498,40 +494,19 @@ export function Cameras() {
           </div>
 
           <div>
-            <label className="label">رابط RTSP</label>
+            <label className="label">رابط RTSP (مع بيانات الاعتماد)</label>
             <input
               type="text"
               value={formData.rtsp_url}
               onChange={(e) => setFormData({ ...formData, rtsp_url: e.target.value })}
               className="input"
-              placeholder="rtsp://ip:port/stream"
+              placeholder="rtsp://username:password@ip:port/stream"
               dir="ltr"
               required
             />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="label">اسم المستخدم</label>
-              <input
-                type="text"
-                value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                className="input"
-                dir="ltr"
-              />
-            </div>
-            <div>
-              <label className="label">كلمة المرور</label>
-              <input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="input"
-                dir="ltr"
-                placeholder={editingCamera ? '(اتركه فارغا للابقاء على الحالي)' : ''}
-              />
-            </div>
+            <p className="text-xs text-white/60 mt-1">
+              مثال: rtsp://admin:password123@192.168.1.100:554/stream1
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

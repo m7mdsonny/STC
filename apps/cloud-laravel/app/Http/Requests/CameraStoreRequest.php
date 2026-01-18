@@ -33,10 +33,20 @@ class CameraStoreRequest extends FormRequest
             'edge_server_id' => 'required|exists:edge_servers,id',
             'name' => 'required|string|max:255',
             'camera_id' => 'nullable|string|unique:cameras,camera_id',
-            'rtsp_url' => 'required|string|max:500',
+            'rtsp_url' => [
+                'required',
+                'string',
+                'max:500',
+                function ($attribute, $value, $fail) {
+                    // Validate RTSP URL format with optional credentials inline
+                    // Format: rtsp://[username:password@]host[:port]/path
+                    if (!preg_match('/^rtsp:\/\/(?:[^:@]+:[^@]+@)?[^:\/]+(?::\d+)?\/.+$/', $value)) {
+                        $fail('The RTSP URL must be in the format: rtsp://username:password@ip:port/stream');
+                    }
+                },
+            ],
             'location' => 'nullable|string|max:255',
-            'username' => 'nullable|string|max:255',
-            'password' => 'nullable|string|max:255',
+            // Removed username and password - credentials must be in RTSP URL
             'resolution' => 'nullable|string|max:50',
             'fps' => 'nullable|integer|min:1|max:60',
             'enabled_modules' => 'nullable|array',
