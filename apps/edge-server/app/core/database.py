@@ -192,6 +192,16 @@ class CloudDatabase:
                 path = endpoint
                 sig_headers = signer.generate_signature(method.upper(), path, body_bytes)
                 
+                # CRITICAL: Ensure sig_headers is a dict (not tuple or list)
+                if not isinstance(sig_headers, dict):
+                    logger.error(f"HMACSigner.generate_signature returned non-dict: {type(sig_headers)}, value: {sig_headers}")
+                    if isinstance(sig_headers, (tuple, list)):
+                        # If it's a sequence, try to convert (but this shouldn't happen)
+                        logger.warning(f"Converting sig_headers from {type(sig_headers)} to dict")
+                        sig_headers = dict(sig_headers) if len(sig_headers) == 2 else {}
+                    else:
+                        sig_headers = {}
+                
                 # Add HMAC headers and remove Bearer token
                 headers.update(sig_headers)
                 headers.pop('Authorization', None)  # Remove Bearer token for Edge endpoints
