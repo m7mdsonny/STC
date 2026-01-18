@@ -224,6 +224,12 @@ class CloudDatabase:
 
         for attempt in range(attempts):
             try:
+                # CRITICAL: Log request_kwargs to debug dict conversion errors
+                logger.debug(f"Request kwargs keys: {list(request_kwargs.keys())}")
+                for key, value in request_kwargs.items():
+                    if key != 'headers':  # Don't log headers (sensitive)
+                        logger.debug(f"Request kwarg '{key}': type={type(value).__name__}, value={str(value)[:100]}")
+                
                 response = await self.client.request(method, endpoint, **request_kwargs)
 
                 if response.status_code in (200, 201):
