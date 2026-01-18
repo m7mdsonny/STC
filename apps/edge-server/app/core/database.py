@@ -195,17 +195,19 @@ class CloudDatabase:
                 signer = HMACSigner(self._edge_key, self._edge_secret)
                 # Use full path including /api/v1/edges/...
                 path = endpoint
-                sig_headers = signer.generate_signature(method.upper(), path, body_bytes)
+                sig_headers_raw = signer.generate_signature(method.upper(), path, body_bytes)
                 
-                # CRITICAL: Ensure sig_headers is a dict (not tuple or list)
-                if not isinstance(sig_headers, dict):
-                    logger.error(f"HMACSigner.generate_signature returned non-dict: {type(sig_headers)}, value: {sig_headers}")
-                    if isinstance(sig_headers, (tuple, list)):
-                        # If it's a sequence, try to convert (but this shouldn't happen)
-                        logger.warning(f"Converting sig_headers from {type(sig_headers)} to dict")
-                        sig_headers = dict(sig_headers) if len(sig_headers) == 2 else {}
-                    else:
-                        sig_headers = {}
+                # CRITICAL: Handle case where generate_signature returns tuple (dict, nonce)
+                # Extract dict from tuple if needed
+                if isinstance(sig_headers_raw, tuple) and len(sig_headers_raw) == 2:
+                    # Tuple format: (headers_dict, nonce) - extract dict
+                    sig_headers = sig_headers_raw[0] if isinstance(sig_headers_raw[0], dict) else {}
+                    logger.debug(f"Extracted dict from tuple return: nonce={sig_headers_raw[1]}")
+                elif isinstance(sig_headers_raw, dict):
+                    sig_headers = sig_headers_raw
+                else:
+                    logger.error(f"HMACSigner.generate_signature returned unexpected type: {type(sig_headers_raw)}, value: {sig_headers_raw}")
+                    sig_headers = {}
                 
                 # Add HMAC headers and remove Bearer token
                 headers.update(sig_headers)
