@@ -441,6 +441,26 @@ class EdgeController extends Controller
                 ], 404);
             }
 
+            // Ensure organization_id is set (may be missing for newly created Edge Servers)
+            $organizationId = $edge->organization_id ?? $request->input('organization_id');
+            if (!$organizationId) {
+                \Illuminate\Support\Facades\Log::error('Edge heartbeat: organization_id missing', [
+                    'edge_id' => $edge->id,
+                    'edge_server_name' => $edge->name,
+                    'request_organization_id' => $request->input('organization_id'),
+                ]);
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Organization ID is required. Please ensure Edge Server is properly configured.',
+                ], 400);
+            }
+            
+            // If edge doesn't have organization_id, set it from request
+            if (!$edge->organization_id && $organizationId) {
+                $edge->organization_id = $organizationId;
+                $edge->save();
+            }
+
             $request->validate([
                 'version' => 'required|string',
                 'online' => 'required|boolean',
@@ -451,8 +471,6 @@ class EdgeController extends Controller
                 'public_ip' => 'sometimes|nullable|ip',
                 'hostname' => 'sometimes|nullable|string|max:255',
             ]);
-
-            $organizationId = $edge->organization_id;
 
             // Prepare update data (organization_id is already set from authenticated edge)
             $updateData = [
