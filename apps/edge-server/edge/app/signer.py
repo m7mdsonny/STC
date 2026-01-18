@@ -5,6 +5,7 @@ Implements HMAC-SHA256 signing for Cloud API requests
 import hmac
 import hashlib
 import time
+import uuid
 from typing import Dict, Optional
 from loguru import logger
 
@@ -33,15 +34,19 @@ class HMACSigner:
             timestamp: Unix timestamp (defaults to current time)
         
         Returns:
-            Dict with headers: X-EDGE-KEY, X-EDGE-TIMESTAMP, X-EDGE-SIGNATURE
+            Dict with headers: X-EDGE-KEY, X-EDGE-TIMESTAMP, X-EDGE-SIGNATURE, X-EDGE-NONCE
         """
         if timestamp is None:
             timestamp = int(time.time())
+        
+        # Generate nonce for replay protection (required by Cloud)
+        nonce = str(uuid.uuid4())
         
         # Calculate body hash
         body_hash = hashlib.sha256(body).hexdigest()
         
         # Construct message: method|path|timestamp|body_hash
+        # NOTE: Cloud uses request.path() which includes full path without query string
         message = f"{method}|{path}|{timestamp}|{body_hash}"
         
         # Generate HMAC signature
@@ -55,6 +60,7 @@ class HMACSigner:
             "X-EDGE-KEY": self.edge_key,
             "X-EDGE-TIMESTAMP": str(timestamp),
             "X-EDGE-SIGNATURE": signature,
+            "X-EDGE-NONCE": nonce,
         }
     
     def verify_timestamp(self, timestamp: int, window_seconds: int = 300) -> bool:
