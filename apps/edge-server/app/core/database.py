@@ -208,7 +208,15 @@ class CloudDatabase:
         # CRITICAL: Safely copy kwargs to avoid dict conversion errors
         request_kwargs = {}
         for key, value in kwargs.items():
-            request_kwargs[key] = value
+            # CRITICAL: Check for problematic values before adding to request_kwargs
+            if isinstance(value, (tuple, list)) and len(value) == 4:
+                logger.warning(f"Found tuple/list of length 4 in kwargs['{key}']: {value}, converting to list")
+                request_kwargs[key] = list(value) if isinstance(value, tuple) else value
+            elif isinstance(value, dict):
+                # Recursively clean dict values
+                request_kwargs[key] = clean_value(value) if 'clean_value' in globals() else value
+            else:
+                request_kwargs[key] = value
         request_kwargs['headers'] = headers
 
         attempts = self._retry_count if retry else 1
