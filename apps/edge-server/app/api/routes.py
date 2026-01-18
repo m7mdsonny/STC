@@ -355,7 +355,7 @@ async def get_snapshot(camera_id: str, request: Request):
     )
 
 
-# Stream endpoint
+# Stream endpoint - Returns MJPEG stream URL (temporary until HLS is implemented)
 @router.get("/cameras/{camera_id}/stream", dependencies=[Depends(verify_hmac_signature)])
 async def get_stream(camera_id: str, request: Request):
     """Get camera stream URL"""
@@ -371,16 +371,69 @@ async def get_stream(camera_id: str, request: Request):
     if camera_id not in camera_service.cameras:
         raise HTTPException(status_code=404, detail=f"Camera {camera_id} not found")
     
-    # Return HLS stream URL
+    # Return MJPEG stream URL (temporary solution until HLS streaming is implemented)
+    # MJPEG streams can be used directly in <img> or <video> tags
     # CRITICAL: Edge-only streaming - video traffic NEVER touches cloud
-    # In production, implement actual HLS streaming
-    stream_url = f"http://{settings.SERVER_HOST}:{settings.SERVER_PORT}/streams/{camera_id}/playlist.m3u8"
+    display_host = "localhost" if settings.SERVER_HOST == "0.0.0.0" else settings.SERVER_HOST
+    stream_url = f"http://{display_host}:{settings.SERVER_PORT}/api/v1/cameras/{camera_id}/mjpeg"
     
     return {
         "stream_url": stream_url,
-        "stream_type": "hls",
+        "stream_type": "mjpeg",  # MJPEG for now (can be upgraded to HLS later)
         "camera_id": camera_id
     }
+
+
+# MJPEG stream endpoint - Serves live camera feed as MJPEG stream
+@router.get("/cameras/{camera_id}/mjpeg")
+async def get_mjpeg_stream(camera_id: str, request: Request):
+    """
+    Serve live camera feed as MJPEG stream
+    This endpoint streams JPEG frames continuously for live viewing
+    """
+    from main import state
+    from app.services.camera import CameraService
+    import asyncio
+    
+    camera_service = getattr(state, 'camera_service', None)
+    if not camera_service:
+        camera_service = CameraService()
+        state.camera_service = camera_service
+    
+    if camera_id not in camera_service.cameras:
+        raise HTTPException(status_code=404, detail=f"Camera {camera_id} not found")
+    
+    async def generate_frames():
+        """Generate MJPEG frames from camera"""
+        frame_interval = 1.0 / 10  # 10 FPS for MJPEG stream
+        while True:
+            try:
+                frame_jpeg = camera_service.get_frame_jpeg(camera_id, quality=80)
+                if frame_jpeg:
+                    # MJPEG format: --boundary\r\nContent-Type: image/jpeg\r\n\r\n[data]\r\n
+                    yield b'--frame\r\n'
+                    yield b'Content-Type: image/jpeg\r\n\r\n'
+                    yield frame_jpeg
+                    yield b'\r\n'
+                else:
+                    # Send placeholder if no frame available
+                    pass
+                
+                await asyncio.sleep(frame_interval)
+            except Exception as e:
+                from loguru import logger
+                logger.error(f"MJPEG stream error for camera {camera_id}: {e}")
+                await asyncio.sleep(1)
+    
+    return StreamingResponse(
+        generate_frames(),
+        media_type="multipart/x-mixed-replace; boundary=frame",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+    )
 
 
 # Health endpoint

@@ -272,21 +272,35 @@ async def start_services():
                     await state.db.submit_analytics(analytics_data)
             elif detections:
                 # Fallback: If no module_activity but we have detections, send aggregate analytics
+                # CRITICAL: Extract module from first detection if available, otherwise use enabled_modules[0]
+                first_module = None
+                if detections:
+                    first_module = detections[0].get('module')
+                if not first_module and enabled_modules:
+                    first_module = enabled_modules[0]
+                
                 analytics_data = {
                     'camera_id': camera_id,
                     'type': 'analytics',
                     'severity': 'info',
+                    'module': first_module,  # CRITICAL: Set module on top level for EventController extraction
                     'metadata': {
                         'detections': detections,
                         'enabled_modules': enabled_modules,
                         'detection_count': len(detections),
+                        'module': first_module,  # Also in metadata for consistency
                     },
                 }
                 await state.db.submit_analytics(analytics_data)
             
             # Log AI processing for debugging
             if detections or modules_processed:
-                logger.debug(f"AI processing: Camera {camera_id} - {len(detections)} detections, {len(modules_processed)} modules: {modules_processed}")
+                logger.info(f"AI processing: Camera {camera_id} - {len(detections)} detections, {len(modules_processed)} modules: {modules_processed}")
+            
+            # CRITICAL: Log if analytics were sent (for debugging analytics tracking)
+            analytics_sent = len(modules_processed) if modules_processed else (1 if detections else 0)
+            if analytics_sent > 0:
+                logger.info(f"Analytics sent: Camera {camera_id} - {analytics_sent} analytics event(s) sent to Cloud")
 
     camera_service.register_processor(ai_processor)
 

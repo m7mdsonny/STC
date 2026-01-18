@@ -129,12 +129,10 @@ export function LiveView() {
               style={{ aspectRatio: '16/9' }}
             >
               {streamUrls[camera.id] ? (
-                <video
-                  ref={(el) => { videoRefs.current[camera.id] = el; }}
+                // Use <img> for MJPEG streams (better browser compatibility than <video>)
+                <img
                   src={streamUrls[camera.id]}
-                  autoPlay
-                  muted={mutedCameras.has(camera.id)}
-                  playsInline
+                  alt={camera.name}
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     console.error(`Stream error for camera ${camera.id}:`, e);
@@ -222,12 +220,10 @@ export function LiveView() {
           <div className="w-full max-w-6xl" onClick={(e) => e.stopPropagation()}>
             <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '16/9' }}>
               {selectedCamera && streamUrls[selectedCamera.id] ? (
-                <video
+                // Use <img> for MJPEG streams (better browser compatibility)
+                <img
                   src={streamUrls[selectedCamera.id]}
-                  autoPlay
-                  muted={mutedCameras.has(selectedCamera.id)}
-                  playsInline
-                  controls
+                  alt={selectedCamera.name}
                   className="w-full h-full object-contain"
                   onError={(e) => {
                     console.error(`Stream error for camera ${selectedCamera.id}:`, e);

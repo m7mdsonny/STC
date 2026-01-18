@@ -20,7 +20,8 @@ class CameraController extends Controller
 {
     public function __construct(
         private CameraService $cameraService,
-        private PlanEnforcementService $planEnforcementService
+        private PlanEnforcementService $planEnforcementService,
+        private EdgeServerService $edgeServerService
     ) {
     }
     public function index(Request $request): JsonResponse

@@ -205,6 +205,7 @@ class EdgeController extends Controller
 
         // Log the request
         EdgeServerLog::create([
+            'organization_id' => $edgeServer->organization_id, // CRITICAL: organization_id is required
             'edge_server_id' => $edgeServer->id,
             'level' => 'info',
             'message' => 'Configuration sync requested',

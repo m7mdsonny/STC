@@ -467,7 +467,8 @@ class EdgeServerService
 
         // CRITICAL: Return edge-direct URL only - video traffic NEVER touches cloud
         // Cloud only constructs the URL from metadata (edge IP), does not proxy streams
-        return "{$edgeUrl}/streams/{$camera->camera_id}/playlist.m3u8";
+        // Using MJPEG stream endpoint (temporary until HLS streaming is fully implemented)
+        return "{$edgeUrl}/api/v1/cameras/{$camera->camera_id}/mjpeg";
     }
 
     /**

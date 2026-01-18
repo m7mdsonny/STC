@@ -18,6 +18,7 @@ class AIModuleManager:
     
     def __init__(self):
         self.modules: Dict[str, BaseAIModule] = {}
+        self._warned_missing_modules: set = set()  # Track which missing modules we've warned about
         self._load_modules()
 
     def _load_modules(self):
@@ -118,10 +119,19 @@ class AIModuleManager:
 
         logger.debug(f"AI processing: Camera {camera_id} - Enabled modules: {enabled_modules}")
 
-        for module_id in enabled_modules:
-            if module_id not in self.modules:
-                logger.warning(f"AI module '{module_id}' not found - available modules: {list(self.modules.keys())}")
-                continue
+        # CRITICAL: Filter out missing modules silently to avoid log spam
+        # Cloud may send module IDs that don't exist in Edge Server yet (e.g., 'warehouse', 'productivity', 'audience')
+        valid_modules = [m for m in enabled_modules if m in self.modules]
+        missing_modules = set(enabled_modules) - set(valid_modules)
+        
+        # Log missing modules once per module (not per frame) to reduce log spam
+        for module_id in missing_modules:
+            if module_id not in self._warned_missing_modules:
+                logger.debug(f"AI module '{module_id}' not available in Edge Server - skipping (available: {list(self.modules.keys())})")
+                self._warned_missing_modules.add(module_id)
+        
+        # Process only valid modules
+        for module_id in valid_modules:
 
             module = self.modules[module_id]
             if not module.is_enabled():

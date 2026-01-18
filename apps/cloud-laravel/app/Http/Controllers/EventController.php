@@ -113,6 +113,16 @@ class EventController extends Controller
             ],
         ]);
 
+        // CRITICAL: Log event creation for debugging analytics
+        if ($request->event_type === 'analytics') {
+            Log::info('Analytics event created', [
+                'event_id' => $event->id,
+                'ai_module' => $aiModule,
+                'camera_id' => $request->input('camera_id'),
+                'organization_id' => $edge->organization_id,
+            ]);
+        }
+
         // Send notifications for standard AI events based on severity
         // Critical and warning events should trigger mobile notifications
         if (in_array($request->severity, ['critical', 'warning'])) {
