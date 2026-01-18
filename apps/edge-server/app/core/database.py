@@ -134,7 +134,12 @@ class CloudDatabase:
         is_edge_endpoint = endpoint.startswith('/api/v1/edges/')
         
         # Prepare headers (start with base headers)
-        headers = dict(self._headers)
+        # CRITICAL: Safely copy headers - ensure it's a dict
+        if isinstance(self._headers, dict):
+            headers = dict(self._headers)
+        else:
+            logger.warning(f"Unexpected _headers type: {type(self._headers)}, resetting to empty dict")
+            headers = {}
         
         # Prepare body for signing
         body_bytes = b""
