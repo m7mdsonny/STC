@@ -180,7 +180,7 @@ export function Settings() {
       }
 
       setShowServerModal(false);
-      setServerForm({ name: '', ip_address: '', location: '', license_id: '' });
+      setServerForm({ name: '', location: '', license_id: '' });
       setEditingServer(null);
       // CRITICAL FIX: Force refresh immediately after creation
       await fetchData();

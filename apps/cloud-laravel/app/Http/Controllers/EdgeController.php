@@ -332,16 +332,15 @@ class EdgeController extends Controller
                 }
                 
                 // If not found by edge_id, try to find by license_id and organization_id
+                // CRITICAL: Match by license_id regardless of last_seen_at status
+                // This allows re-registration even if edge was offline before
                 if (!$edge && $licenseId && $organizationId) {
-                    // Match by license_id - allow servers that haven't registered yet (no last_seen_at or no edge_secret yet)
+                    // Find edge server by license_id - prioritize servers without credentials
+                    // But also allow servers that have credentials (for re-registration)
                     $edge = EdgeServer::where('license_id', $licenseId)
                         ->where('organization_id', $organizationId)
-                        ->where(function($query) {
-                            // Match servers that haven't been seen yet, OR servers that don't have credentials yet
-                            $query->whereNull('last_seen_at')
-                                  ->orWhereNull('edge_secret')
-                                  ->orWhere('edge_secret', '');
-                        })
+                        ->orderByRaw('CASE WHEN edge_secret IS NULL OR edge_secret = "" THEN 0 ELSE 1 END')
+                        ->orderBy('created_at', 'desc')
                         ->first();
                     
                     // If found, update edge_id to match what Edge Server sent
@@ -351,19 +350,13 @@ class EdgeController extends Controller
                     }
                 }
                 
-                // If still not found, try to find any unregistered edge server for this organization
+                // If still not found, try to find any edge server for this organization
+                // Match by organization_id and license_id (if provided) or without license_id
                 if (!$edge && $organizationId) {
-                    // Find any edge server for this organization that hasn't registered yet
                     $edge = EdgeServer::where('organization_id', $organizationId)
-                        ->where(function($query) {
-                            // Match servers that haven't been seen yet, OR servers that don't have credentials yet
-                            $query->whereNull('last_seen_at')
-                                  ->orWhereNull('edge_secret')
-                                  ->orWhere('edge_secret', '');
-                        })
                         ->where(function($query) use ($licenseId) {
                             if ($licenseId) {
-                                // Prefer servers with matching license_id, or servers without license_id yet
+                                // Match servers with same license_id, or servers without license_id
                                 $query->where('license_id', $licenseId)
                                       ->orWhereNull('license_id');
                             } else {
@@ -371,6 +364,7 @@ class EdgeController extends Controller
                                 $query->whereNull('license_id');
                             }
                         })
+                        ->orderByRaw('CASE WHEN edge_secret IS NULL OR edge_secret = "" THEN 0 ELSE 1 END')
                         ->orderBy('created_at', 'desc') // Get most recently created
                         ->first();
                     
@@ -420,13 +414,24 @@ class EdgeController extends Controller
                     ], 404);
                 }
                 
-                // If edge already has credentials and was registered before, require HMAC
-                if ($edge->edge_key && $edge->edge_secret && $edge->last_seen_at) {
+                // If edge already has credentials and was registered AND is currently online (within 5 min), require HMAC
+                // But allow re-registration if edge has been offline for more than 5 minutes
+                $isCurrentlyOnline = false;
+                if ($edge->last_seen_at) {
+                    $minutesSinceLastSeen = now()->diffInMinutes($edge->last_seen_at);
+                    $isCurrentlyOnline = $minutesSinceLastSeen < 5;
+                }
+                
+                if ($edge->edge_key && $edge->edge_secret && $isCurrentlyOnline) {
+                    // Edge is currently online - require HMAC for security
                     return response()->json([
                         'ok' => false,
-                        'message' => 'HMAC authentication required. This edge server is already registered.',
+                        'message' => 'HMAC authentication required. This edge server is already registered and online.',
                     ], 401);
                 }
+                
+                // If edge has credentials but is offline, allow re-registration (will update edge_id if needed)
+                // This handles cases where edge server was offline and is coming back online
             }
             
             if (!$edge) {
