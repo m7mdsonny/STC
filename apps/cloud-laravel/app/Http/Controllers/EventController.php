@@ -118,9 +118,23 @@ class EventController extends Controller
             Log::info('Analytics event created', [
                 'event_id' => $event->id,
                 'ai_module' => $aiModule,
+                'ai_module_source' => 'meta.module',
+                'meta_has_module' => isset($meta['module']),
+                'meta_module_value' => $meta['module'] ?? null,
                 'camera_id' => $request->input('camera_id'),
                 'organization_id' => $edge->organization_id,
+                'event_type' => $request->event_type,
             ]);
+            
+            // CRITICAL: Log warning if ai_module is null for analytics events
+            if (!$aiModule) {
+                Log::warning('Analytics event created without ai_module', [
+                    'event_id' => $event->id,
+                    'meta' => $meta,
+                    'camera_id' => $request->input('camera_id'),
+                    'organization_id' => $edge->organization_id,
+                ]);
+            }
         }
 
         // Send notifications for standard AI events based on severity

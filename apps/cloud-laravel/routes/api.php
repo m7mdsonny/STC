@@ -274,6 +274,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/analytics/top-cameras', [AnalyticsController::class, 'topCameras']);
         Route::get('/analytics/module-activity', [AnalyticsController::class, 'moduleActivity']);
         Route::get('/analytics/weekly-trend', [AnalyticsController::class, 'weeklyTrend']);
+        // Debug endpoints
+        Route::get('/analytics/debug/pipeline-status', [\App\Http\Controllers\AnalyticsDebugController::class, 'pipelineStatus']);
+        Route::get('/analytics/debug/test-query', [\App\Http\Controllers\AnalyticsDebugController::class, 'testQuery']);
         Route::get('/analytics/today-alerts', [AnalyticsController::class, 'todayAlerts']);
         Route::get('/analytics/response-times', [AnalyticsController::class, 'responseTimes']);
         Route::get('/analytics/compare', [AnalyticsController::class, 'compare']);
