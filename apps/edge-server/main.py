@@ -377,13 +377,28 @@ async def health():
 
 def main():
     import uvicorn
-    uvicorn.run(
-        "main:app",
-        host=settings.SERVER_HOST,
-        port=settings.SERVER_PORT,
-        reload=settings.DEBUG,
-        log_level="warning"
-    )
+    try:
+        uvicorn.run(
+            "main:app",
+            host=settings.SERVER_HOST,
+            port=settings.SERVER_PORT,
+            reload=settings.DEBUG,
+            log_level="warning"
+        )
+    except KeyboardInterrupt:
+        print("\nServer stopped by user")
+    except Exception as e:
+        print(f"\n{'='*60}")
+        print(f"Server error: {e}")
+        print(f"{'='*60}")
+        import traceback
+        traceback.print_exc()
+        print(f"\n{'='*60}")
+        print("Press Enter to exit...")
+        try:
+            input()
+        except (EOFError, KeyboardInterrupt):
+            pass
 
 
 if __name__ == "__main__":
