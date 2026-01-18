@@ -317,11 +317,14 @@ class LicenseController extends Controller
 
             return response()->json([
                 'valid' => true,
+                'license_id' => $license->id, // CRITICAL: Edge Server needs license_id for heartbeat
                 'edge_id' => $request->edge_id,
                 'organization_id' => $license->organization_id,
                 'expires_at' => $license->expires_at?->toIso8601String(),
                 'grace_days' => $graceDays,
                 'modules' => $modules,
+                'plan' => $license->plan ?? null,
+                'max_cameras' => $license->max_cameras ?? null,
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([

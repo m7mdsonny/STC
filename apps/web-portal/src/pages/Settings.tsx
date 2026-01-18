@@ -68,58 +68,57 @@ export function Settings() {
   const fetchLicenses = async () => {
     if (!organization) {
       console.warn('[Settings] Cannot fetch licenses: organization is missing');
+      setAvailableLicenses([]);
       return;
     }
     setLoadingLicenses(true);
     try {
-      const result = await licensesApi.getLicenses({
-        organization_id: String(organization.id), // Ensure string format
+      // CRITICAL: licensesApi.getLicenses returns PaginatedResponse<License>
+      // which has structure: { data: License[], total: number, ... }
+      const paginatedResponse = await licensesApi.getLicenses({
         per_page: 100,
+        // Note: organization_id filter is handled by backend based on user's organization_id
+        // We don't need to pass it explicitly - backend will filter automatically
       });
       
-      // Handle paginated response - Laravel pagination returns { data: [...], total: N, ... }
-      let licensesList: License[] = [];
-      
-      if (Array.isArray(result)) {
-        // Direct array response
-        licensesList = result;
-      } else if (result && typeof result === 'object') {
-        // Paginated response object
-        if (Array.isArray(result.data)) {
-          licensesList = result.data;
-        } else if (result.data && Array.isArray(result.data.data)) {
-          licensesList = result.data.data;
-        } else if (result.data && typeof result.data === 'object') {
-          // Try to find array in result.data
-          const possibleArrays = Object.values(result.data).filter(Array.isArray);
-          if (possibleArrays.length > 0) {
-            licensesList = possibleArrays[0] as License[];
-          }
-        }
-      }
+      // Extract licenses array from paginated response
+      // paginatedResponse structure: { data: License[], total: number, ... }
+      const licensesList: License[] = paginatedResponse.data || [];
       
       console.log('[Settings] License fetch response', { 
-        resultType: typeof result,
-        hasData: !!(result && typeof result === 'object' && result.data),
-        dataType: result?.data ? typeof result.data : 'none',
+        totalFromApi: paginatedResponse.total,
         licensesCount: licensesList.length,
-        rawResult: result
+        organizationId: organization.id,
+        sampleLicense: licensesList[0] || null
       });
       
       // Filter to show only active licenses that are not bound to an edge server
       const unboundLicenses = licensesList.filter(
-        (license) => license.status === 'active' && !license.edge_server_id
+        (license) => {
+          const isActive = license.status === 'active';
+          const isUnbound = !license.edge_server_id;
+          const belongsToOrg = license.organization_id === organization.id;
+          
+          return isActive && isUnbound && belongsToOrg;
+        }
       );
       
       setAvailableLicenses(unboundLicenses);
       console.log('[Settings] Loaded licenses', { 
         total: licensesList.length, 
         unbound: unboundLicenses.length,
-        organizationId: organization.id
+        organizationId: organization.id,
+        unboundLicenseIds: unboundLicenses.map(l => l.id)
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('[Settings] Failed to fetch licenses:', error);
-      showError('خطأ في التحميل', 'فشل تحميل قائمة التراخيص');
+      console.error('[Settings] Error details:', {
+        message: error?.message,
+        stack: error?.stack,
+        response: error?.response
+      });
+      showError('خطأ في التحميل', 'فشل تحميل قائمة التراخيص. تأكد من وجود تراخيص نشطة للمؤسسة.');
+      setAvailableLicenses([]); // Set empty array on error
     } finally {
       setLoadingLicenses(false);
     }
