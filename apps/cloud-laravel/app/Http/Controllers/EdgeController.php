@@ -333,12 +333,18 @@ class EdgeController extends Controller
                 
                 // If not found by edge_id, try to find by license_id and organization_id
                 if (!$edge && $licenseId && $organizationId) {
+                    // Match by license_id - allow servers that haven't registered yet (no last_seen_at or no edge_secret yet)
                     $edge = EdgeServer::where('license_id', $licenseId)
                         ->where('organization_id', $organizationId)
-                        ->whereNull('last_seen_at') // Only match unregistered servers
+                        ->where(function($query) {
+                            // Match servers that haven't been seen yet, OR servers that don't have credentials yet
+                            $query->whereNull('last_seen_at')
+                                  ->orWhereNull('edge_secret')
+                                  ->orWhere('edge_secret', '');
+                        })
                         ->first();
                     
-                    // If found, update edge_id to match what Edge Server sent (or will send)
+                    // If found, update edge_id to match what Edge Server sent
                     if ($edge && $edgeId) {
                         $edge->edge_id = $edgeId;
                         $edge->save();
@@ -347,16 +353,25 @@ class EdgeController extends Controller
                 
                 // If still not found, try to find any unregistered edge server for this organization
                 if (!$edge && $organizationId) {
+                    // Find any edge server for this organization that hasn't registered yet
                     $edge = EdgeServer::where('organization_id', $organizationId)
-                        ->whereNull('last_seen_at')
+                        ->where(function($query) {
+                            // Match servers that haven't been seen yet, OR servers that don't have credentials yet
+                            $query->whereNull('last_seen_at')
+                                  ->orWhereNull('edge_secret')
+                                  ->orWhere('edge_secret', '');
+                        })
                         ->where(function($query) use ($licenseId) {
                             if ($licenseId) {
+                                // Prefer servers with matching license_id, or servers without license_id yet
                                 $query->where('license_id', $licenseId)
                                       ->orWhereNull('license_id');
                             } else {
+                                // If no license_id provided, match servers without license_id
                                 $query->whereNull('license_id');
                             }
                         })
+                        ->orderBy('created_at', 'desc') // Get most recently created
                         ->first();
                     
                     // If found, update edge_id and license_id
@@ -372,9 +387,36 @@ class EdgeController extends Controller
                 }
                 
                 if (!$edge) {
+                    // Log available edge servers for debugging
+                    $availableEdges = EdgeServer::where('organization_id', $organizationId)
+                        ->with('license')
+                        ->get(['id', 'name', 'edge_id', 'license_id', 'last_seen_at', 'organization_id'])
+                        ->map(function($e) {
+                            return [
+                                'id' => $e->id,
+                                'name' => $e->name,
+                                'edge_id' => $e->edge_id,
+                                'license_id' => $e->license_id,
+                                'has_last_seen' => !is_null($e->last_seen_at),
+                            ];
+                        });
+                    
+                    \Illuminate\Support\Facades\Log::warning('Edge server not found for heartbeat', [
+                        'request_edge_id' => $edgeId,
+                        'request_license_id' => $licenseId,
+                        'request_organization_id' => $organizationId,
+                        'available_edges' => $availableEdges->toArray(),
+                    ]);
+                    
                     return response()->json([
                         'ok' => false,
                         'message' => 'Edge server not found. Please create the Edge Server in the web portal first, or ensure you provide the correct license_id and organization_id.',
+                        'debug' => [
+                            'requested_edge_id' => $edgeId,
+                            'requested_license_id' => $licenseId,
+                            'requested_organization_id' => $organizationId,
+                            'available_edges_count' => $availableEdges->count(),
+                        ],
                     ], 404);
                 }
                 
