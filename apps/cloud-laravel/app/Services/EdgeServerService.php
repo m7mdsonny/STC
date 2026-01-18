@@ -439,16 +439,16 @@ class EdgeServerService
     /**
      * Get HLS stream URL from Edge Server
      * 
-     * ⚠️ ARCHITECTURAL ISSUE: This returns Edge IP-based URLs which won't work
-     * if Edge is behind NAT or has no public IP.
+     * CRITICAL RULE: Live streaming MUST be edge-only
+     * - Video traffic NEVER passes through cloud
+     * - Cloud ONLY provides metadata (URL construction)
+     * - Live video streams directly from edge server to client
      * 
-     * TODO: Refactor to Edge-initiated flow:
-     * - Edge should use WebRTC/TURN for NAT traversal
-     * - Or Edge should stream through Cloud proxy/CDN
-     * - Or return null and let frontend handle via Edge's local connection
+     * ⚠️ ARCHITECTURAL NOTE: Edge IP-based URLs require edge to have public IP or NAT traversal.
+     * For NAT'd edges, use WebRTC/TURN or Edge-initiated streaming.
      * 
      * @param Camera $camera
-     * @return string|null
+     * @return string|null Edge server URL for HLS stream (NEVER cloud-proxied)
      */
     public function getHlsStreamUrl(Camera $camera): ?string
     {
@@ -465,7 +465,8 @@ class EdgeServerService
 
         $this->enforceHttps($edgeUrl);
 
-        // Edge Server should provide HLS stream at this endpoint
+        // CRITICAL: Return edge-direct URL only - video traffic NEVER touches cloud
+        // Cloud only constructs the URL from metadata (edge IP), does not proxy streams
         return "{$edgeUrl}/streams/{$camera->camera_id}/playlist.m3u8";
     }
 

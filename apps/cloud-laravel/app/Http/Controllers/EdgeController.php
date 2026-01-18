@@ -474,9 +474,11 @@ class EdgeController extends Controller
             ]);
 
             // Prepare update data (organization_id is already set from authenticated edge)
+            // CRITICAL: Calculate 'online' from last_seen_at (real heartbeat), not from request
+            // Server status = real heartbeat + active connection (heartbeat received = active connection)
             $updateData = [
                 'version' => $request->version,
-                'online' => $request->boolean('online'),
+                'online' => true, // Set to true because we received a heartbeat (real connection)
                 'last_seen_at' => now(),
             ];
 

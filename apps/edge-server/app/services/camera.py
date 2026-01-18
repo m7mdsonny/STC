@@ -173,16 +173,18 @@ class CameraService:
         
         Features:
         - Real RTSP connection validation
-        - Automatic reconnection on failure
-        - Exponential backoff for retries
+        - Automatic reconnection on failure (INFINITE RETRY - no manual intervention)
+        - Exponential backoff for retries (capped at 60 seconds)
+        - Zero human intervention required
         """
         stream = self.cameras.get(camera_id)
         if not stream:
             return
 
         retry_count = 0
-        max_retries = 5
+        # CRITICAL: No max_retries - infinite retry for auto-recovery
         base_retry_delay = 5  # seconds
+        max_retry_delay = 60  # Cap exponential backoff at 60 seconds
 
         while self._running:
             # Attempt connection
@@ -194,18 +196,16 @@ class CameraService:
 
             if not connected:
                 retry_count += 1
-                if retry_count > max_retries:
-                    logger.error(f"Max retries reached for camera {camera_id}. Stopping.")
-                    stream.is_active = False
-                    break
-                
-                # Exponential backoff
-                retry_delay = base_retry_delay * (2 ** (retry_count - 1))
-                logger.warning(f"Camera {camera_id} connection failed. Retrying in {retry_delay}s (attempt {retry_count}/{max_retries})")
+                # CRITICAL: Infinite retry - never stop trying
+                # Exponential backoff capped at max_retry_delay
+                retry_delay = min(base_retry_delay * (2 ** (retry_count - 1)), max_retry_delay)
+                logger.warning(f"Camera {camera_id} connection failed. Auto-recovering in {retry_delay}s (attempt {retry_count}, infinite retry enabled)")
                 await asyncio.sleep(retry_delay)
                 continue
 
             # Connection successful - reset retry count
+            if retry_count > 0:
+                logger.info(f"Camera {camera_id} reconnected successfully after {retry_count} attempts (auto-recovery)")
             retry_count = 0
 
             # Process frames

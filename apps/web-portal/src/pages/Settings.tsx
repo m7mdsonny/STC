@@ -362,12 +362,23 @@ export function Settings() {
                     {servers.map((server) => {
                       const status = serverStatuses[server.id];
                       const location = (server.system_info as Record<string, string>)?.location;
+                      
+                      // CRITICAL: Calculate real status from heartbeat (not cached status)
+                      const isOnline = server.last_heartbeat ? (() => {
+                        try {
+                          const heartbeatDate = new Date(server.last_heartbeat);
+                          const diff = (new Date().getTime() - heartbeatDate.getTime()) / 60000;
+                          return diff < 5; // Online if heartbeat within 5 minutes
+                        } catch {
+                          return false;
+                        }
+                      })() : false;
 
                       return (
                         <div
                           key={server.id}
                           className={`p-5 rounded-xl border transition-all ${
-                            server.status === 'online'
+                            isOnline
                               ? 'bg-emerald-500/5 border-emerald-500/30'
                               : 'bg-white/5 border-white/10'
                           }`}
@@ -376,10 +387,10 @@ export function Settings() {
                             <div className="flex items-center gap-4">
                               <div
                                 className={`p-3 rounded-xl ${
-                                  server.status === 'online' ? 'bg-emerald-500/20' : 'bg-red-500/20'
+                                  isOnline ? 'bg-emerald-500/20' : 'bg-red-500/20'
                                 }`}
                               >
-                                {server.status === 'online' ? (
+                                {isOnline ? (
                                   <Wifi className="w-6 h-6 text-emerald-400" />
                                 ) : (
                                   <WifiOff className="w-6 h-6 text-red-400" />
@@ -402,10 +413,10 @@ export function Settings() {
                             </div>
                             <span
                               className={`badge ${
-                                server.status === 'online' ? 'badge-success' : 'badge-danger'
+                                isOnline ? 'badge-success' : 'badge-danger'
                               }`}
                             >
-                              {server.status === 'online' ? 'متصل' : 'غير متصل'}
+                              {isOnline ? 'متصل' : 'غير متصل'}
                             </span>
                           </div>
 
@@ -444,7 +455,7 @@ export function Settings() {
                                 />
                                 <span>فحص الحالة</span>
                               </button>
-                              {server.status === 'online' && (
+                              {isOnline && (
                                 <button
                                   onClick={() => forceSync(server)}
                                   disabled={syncingServer === server.id}

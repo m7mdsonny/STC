@@ -68,6 +68,9 @@ class CameraController extends Controller
             $camera->resolution = $config['resolution'] ?? '1920x1080';
             $camera->fps = $config['fps'] ?? 15;
             $camera->enabled_modules = $config['enabled_modules'] ?? [];
+            // CRITICAL: Map status to is_online for mobile app compatibility
+            // Real status from database (updated via heartbeat from edge server)
+            $camera->is_online = $camera->status === 'online';
             return $camera;
         });
 
@@ -80,6 +83,11 @@ class CameraController extends Controller
         $this->authorize('view', $camera);
 
         $camera->load(['organization', 'edgeServer']);
+        
+        // CRITICAL: Map status to is_online for mobile app compatibility
+        // Real status from database (updated via heartbeat from edge server)
+        $camera->is_online = $camera->status === 'online';
+        
         return response()->json($camera);
     }
 

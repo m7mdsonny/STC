@@ -115,8 +115,23 @@ export function Dashboard() {
     }
   };
 
+  // CRITICAL: Calculate online status from real heartbeat data (not cached status)
+  // Server status = real heartbeat + active connection
+  const now = new Date();
+  const onlineServers = servers.filter(s => {
+    if (!s.last_heartbeat) return false;
+    try {
+      const heartbeatDate = new Date(s.last_heartbeat);
+      const diff = (now.getTime() - heartbeatDate.getTime()) / 60000;
+      return diff < 5; // Online if heartbeat within 5 minutes
+    } catch {
+      return false;
+    }
+  }).length;
+  
+  // Camera status comes from database (updated via heartbeat from edge server)
+  // Real status based on RTSP stream availability
   const onlineCameras = cameras.filter(c => c.status === 'online').length;
-  const onlineServers = servers.filter(s => s.status === 'online').length;
   const newAlerts = alerts.filter(a => a.status === 'new').length;
 
   const getSeverityColor = (severity: string) => {
@@ -293,20 +308,33 @@ export function Dashboard() {
             {servers.length === 0 ? (
               <p className="text-center text-white/50 py-6 text-sm">لا توجد سيرفرات</p>
             ) : (
-              servers.map((server) => (
-                <div key={server.id} className="flex items-center justify-between p-2.5 bg-white/5 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Server className={`w-4 h-4 ${server.status === 'online' ? 'text-emerald-500' : 'text-red-500'}`} />
-                    <div>
-                      <p className="font-medium text-sm">{server.name}</p>
-                      <p className="text-[10px] text-white/50">{server.ip_address || 'غير محدد'}</p>
+              servers.map((server) => {
+                // CRITICAL: Calculate real status from heartbeat (not cached status)
+                const isOnline = server.last_heartbeat ? (() => {
+                  try {
+                    const heartbeatDate = new Date(server.last_heartbeat);
+                    const diff = (new Date().getTime() - heartbeatDate.getTime()) / 60000;
+                    return diff < 5; // Online if heartbeat within 5 minutes
+                  } catch {
+                    return false;
+                  }
+                })() : false;
+                
+                return (
+                  <div key={server.id} className="flex items-center justify-between p-2.5 bg-white/5 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Server className={`w-4 h-4 ${isOnline ? 'text-emerald-500' : 'text-red-500'}`} />
+                      <div>
+                        <p className="font-medium text-sm">{server.name}</p>
+                        <p className="text-[10px] text-white/50">{server.ip_address || 'غير محدد'}</p>
+                      </div>
                     </div>
+                    <span className={`badge text-[10px] px-2 py-0.5 ${isOnline ? 'badge-success' : 'badge-danger'}`}>
+                      {isOnline ? 'متصل' : 'غير متصل'}
+                    </span>
                   </div>
-                  <span className={`badge text-[10px] px-2 py-0.5 ${server.status === 'online' ? 'badge-success' : 'badge-danger'}`}>
-                    {server.status === 'online' ? 'متصل' : 'غير متصل'}
-                  </span>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
