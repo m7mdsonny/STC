@@ -747,6 +747,22 @@ class CloudDatabase:
     def _get_system_info(self) -> Dict:
         """Get system information - returns clean dict with no tuples"""
         import platform
+        import socket
+        
+        # Get internal IP address
+        def _get_internal_ip() -> Optional[str]:
+            """Get internal IP address"""
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                s.connect(("8.8.8.8", 80))
+                ip = s.getsockname()[0]
+                s.close()
+                return ip
+            except Exception:
+                return None
+        
+        internal_ip = _get_internal_ip()
+        
         try:
             import psutil
             # CRITICAL: Ensure all values are JSON-serializable (no tuples)
@@ -759,6 +775,11 @@ class CloudDatabase:
                 "memory_total_gb": float(round(psutil.virtual_memory().total / (1024**3), 2)),
                 "memory_used_percent": float(psutil.virtual_memory().percent),
             }
+            
+            # Add internal IP if available
+            if internal_ip:
+                info["internal_ip"] = internal_ip
+            
             # Get disk usage safely (may fail on Windows with '/')
             try:
                 disk_usage = psutil.disk_usage('/')
@@ -769,8 +790,12 @@ class CloudDatabase:
                 pass
             return info
         except ImportError:
-            return {
+            info = {
                 "platform": str(platform.system()),
                 "platform_version": str(platform.version()),
                 "processor": str(platform.processor()),
             }
+            # Add internal IP if available even without psutil
+            if internal_ip:
+                info["internal_ip"] = internal_ip
+            return info

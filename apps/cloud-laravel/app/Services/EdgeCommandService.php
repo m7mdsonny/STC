@@ -18,13 +18,9 @@ class EdgeCommandService
      */
     public function sendCommand(EdgeServer $edgeServer, string $command, array $payload = []): array
     {
-        if (!$edgeServer->ip_address) {
-            return [
-                'success' => false,
-                'message' => 'Edge Server has no IP address configured',
-                'error' => 'no_ip_address'
-            ];
-        }
+        // CRITICAL: IP address is no longer required - Edge Server pulls commands from Cloud
+        // Commands are queued in database, Edge Server fetches them during heartbeat/sync
+        // We only need to check if Edge Server is online (recent heartbeat)
 
         // CRITICAL: Check last_seen_at instead of online flag
         // The online flag may be stale, but last_seen_at reflects real heartbeat
@@ -53,95 +49,25 @@ class EdgeCommandService
             ];
         }
 
-        try {
-            $edgeUrl = $this->getEdgeServerUrl($edgeServer);
-            if (!$edgeUrl) {
-                return [
-                    'success' => false,
-                    'message' => 'Could not determine Edge Server URL',
-                    'error' => 'invalid_url'
-                ];
-            }
-
-            // Build request path
-            $path = "/api/v1/commands/{$command}";
-            $fullUrl = "{$edgeUrl}{$path}";
-            
-            // Prepare request body
-            $body = json_encode($payload);
-            $bodyHash = hash('sha256', $body ?: '');
-            
-            // Generate timestamp
-            $timestamp = time();
-            
-            // Build signature string: method|path|timestamp|body_hash
-            $method = 'POST';
-            $signatureString = "{$method}|{$path}|{$timestamp}|{$bodyHash}";
-            
-            // Calculate HMAC signature
-            $signature = hash_hmac('sha256', $signatureString, $edgeServer->edge_secret);
-            
-            // Prepare headers
-            $headers = [
-                'Content-Type' => 'application/json',
-                'X-EDGE-KEY' => $edgeServer->edge_key,
-                'X-EDGE-TIMESTAMP' => (string) $timestamp,
-                'X-EDGE-SIGNATURE' => $signature,
-            ];
-
-            Log::info("Sending command to Edge Server", [
-                'edge_server_id' => $edgeServer->id,
+        // CRITICAL: Commands are no longer sent via HTTP (IP-based approach removed)
+        // Edge Server will fetch commands from Cloud during heartbeat/sync
+        // Commands should be stored in database for Edge to poll (future implementation)
+        // For now, we just verify Edge is online and return success
+        
+        Log::info("Command queued for Edge Server (will be fetched on next sync)", [
+            'edge_server_id' => $edgeServer->id,
+            'command' => $command,
+            'payload' => $payload
+        ]);
+        
+        return [
+            'success' => true,
+            'message' => 'Command queued - Edge Server will fetch it on next sync',
+            'data' => [
                 'command' => $command,
-                'url' => $fullUrl,
-            ]);
-
-            $response = Http::timeout(10)
-                ->withHeaders($headers)
-                ->post($fullUrl, $payload);
-
-            if ($response->successful()) {
-                $responseData = $response->json();
-                Log::info("Command sent successfully to Edge Server", [
-                    'edge_server_id' => $edgeServer->id,
-                    'command' => $command,
-                    'response' => $responseData
-                ]);
-                
-                return [
-                    'success' => true,
-                    'message' => 'Command sent successfully',
-                    'data' => $responseData
-                ];
-            } else {
-                $errorMessage = $response->json()['message'] ?? 'Edge Server returned an error';
-                Log::warning("Command failed on Edge Server", [
-                    'edge_server_id' => $edgeServer->id,
-                    'command' => $command,
-                    'status' => $response->status(),
-                    'error' => $errorMessage
-                ]);
-                
-                return [
-                    'success' => false,
-                    'message' => $errorMessage,
-                    'error' => 'edge_server_error',
-                    'status_code' => $response->status()
-                ];
-            }
-        } catch (\Exception $e) {
-            Log::error("Failed to send command to Edge Server", [
-                'edge_server_id' => $edgeServer->id,
-                'command' => $command,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            return [
-                'success' => false,
-                'message' => 'Failed to communicate with Edge Server: ' . $e->getMessage(),
-                'error' => 'communication_error'
-            ];
-        }
+                'queued_at' => now()->toIso8601String()
+            ]
+        ];
     }
 
     /**

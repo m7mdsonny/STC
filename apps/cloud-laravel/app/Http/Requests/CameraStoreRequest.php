@@ -38,10 +38,10 @@ class CameraStoreRequest extends FormRequest
                 'string',
                 'max:500',
                 function ($attribute, $value, $fail) {
-                    // Validate RTSP URL format with optional credentials inline
+                    // Validate RTSP URL format (credentials can be included in URL if needed)
                     // Format: rtsp://[username:password@]host[:port]/path
                     if (!preg_match('/^rtsp:\/\/(?:[^:@]+:[^@]+@)?[^:\/]+(?::\d+)?\/.+$/', $value)) {
-                        $fail('The RTSP URL must be in the format: rtsp://username:password@ip:port/stream');
+                        $fail('The RTSP URL must be in the format: rtsp://ip:port/stream');
                     }
                 },
             ],

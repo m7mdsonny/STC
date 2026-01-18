@@ -7,6 +7,7 @@ use App\Http\Requests\EdgeServerStoreRequest;
 use App\Http\Requests\EdgeServerUpdateRequest;
 use App\Exceptions\DomainActionException;
 use App\Services\EdgeServerService;
+use App\Services\EdgeCommandService;
 use App\Services\PlanEnforcementService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -253,14 +254,19 @@ class EdgeController extends Controller
      */
     private function getEdgeServerUrl(EdgeServer $edgeServer): ?string
     {
-        if (!$edgeServer->ip_address) {
+        // CRITICAL: Use internal_ip (from system_info in heartbeat) if available
+        // Fallback to ip_address if internal_ip not available
+        // Edge Server sends internal_ip in system_info during heartbeat
+        $ip = $edgeServer->internal_ip ?? $edgeServer->ip_address;
+        
+        if (!$ip) {
             return null;
         }
 
         $port = $edgeServer->port ?? 8080;
         $protocol = ($edgeServer->use_https ?? false) ? 'https' : 'http';
         
-        return "{$protocol}://{$edgeServer->ip_address}:{$port}";
+        return "{$protocol}://{$ip}:{$port}";
     }
 
     public function config(EdgeServer $edgeServer): JsonResponse

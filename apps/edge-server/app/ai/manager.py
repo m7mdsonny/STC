@@ -35,6 +35,9 @@ class AIModuleManager:
             from app.ai.modules.crowd_detection import CrowdDetectionModule
             from app.ai.modules.object_detection import ObjectDetectionModule
             from app.ai.modules.market import MarketModule
+            from app.ai.modules.warehouse import WarehouseModule
+            from app.ai.modules.audience import AudienceModule
+            from app.ai.modules.productivity import ProductivityModule
 
             # Register modules
             self.modules['face'] = FaceRecognitionModule(
@@ -65,6 +68,15 @@ class AIModuleManager:
                 confidence_threshold=settings.OBJECT_CONFIDENCE
             )
             self.modules['market'] = MarketModule(
+                confidence_threshold=settings.OBJECT_CONFIDENCE
+            )
+            self.modules['warehouse'] = WarehouseModule(
+                confidence_threshold=settings.OBJECT_CONFIDENCE
+            )
+            self.modules['audience'] = AudienceModule(
+                confidence_threshold=settings.OBJECT_CONFIDENCE
+            )
+            self.modules['productivity'] = ProductivityModule(
                 confidence_threshold=settings.OBJECT_CONFIDENCE
             )
 

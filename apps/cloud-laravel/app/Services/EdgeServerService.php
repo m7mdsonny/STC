@@ -400,7 +400,9 @@ class EdgeServerService
     {
         $edgeServer = $camera->edgeServer;
         
-        if (!$edgeServer || !$edgeServer->ip_address) {
+        // CRITICAL: Use internal_ip if available (from system_info in heartbeat)
+        // Fallback to ip_address if internal_ip not available
+        if (!$edgeServer) {
             return null;
         }
 
@@ -454,12 +456,19 @@ class EdgeServerService
     {
         $edgeServer = $camera->edgeServer;
         
-        if (!$edgeServer || !$edgeServer->ip_address) {
+        // CRITICAL: IP address is no longer required for command sync, but still needed for live streaming
+        // If Edge Server has no IP, streaming cannot work without Cloud proxy (future implementation)
+        if (!$edgeServer) {
             return null;
         }
 
+        // Try to get Edge Server URL (may fail if no IP configured)
         $edgeUrl = $this->getEdgeServerUrl($edgeServer);
         if (!$edgeUrl) {
+            // Edge Server has no IP - live streaming requires IP or Cloud proxy
+            // For now, return null (frontend will show "loading")
+            // TODO: Implement Cloud proxy for MJPEG streaming when Edge has no public IP
+            Log::debug("Cannot generate stream URL: Edge Server {$edgeServer->id} has no IP address");
             return null;
         }
 
@@ -508,8 +517,13 @@ class EdgeServerService
      */
     private function getEdgeServerUrl(EdgeServer $edgeServer): ?string
     {
-        if (!$edgeServer->ip_address) {
-            Log::warning("Edge Server {$edgeServer->id} has no IP address");
+        // CRITICAL: Use internal_ip (from system_info in heartbeat) if available
+        // Fallback to ip_address if internal_ip not available
+        // Edge Server sends internal_ip in system_info during heartbeat
+        $ip = $edgeServer->internal_ip ?? $edgeServer->ip_address;
+        
+        if (!$ip) {
+            Log::debug("Edge Server {$edgeServer->id} has no IP address (internal_ip or ip_address)");
             return null;
         }
 
@@ -517,8 +531,8 @@ class EdgeServerService
         $port = $edgeServer->port ?? 8080;
         $protocol = ($edgeServer->use_https ?? false) ? 'https' : 'http';
         
-        $url = "{$protocol}://{$edgeServer->ip_address}:{$port}";
-        Log::debug("Edge Server URL: {$url}");
+        $url = "{$protocol}://{$ip}:{$port}";
+        Log::debug("Edge Server URL: {$url} (using " . ($edgeServer->internal_ip ? 'internal_ip' : 'ip_address') . ")");
         return $url;
     }
 

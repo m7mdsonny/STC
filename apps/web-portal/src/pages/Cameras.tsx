@@ -30,7 +30,7 @@ export function Cameras() {
   const [formData, setFormData] = useState({
     name: '',
     location: '',
-    rtsp_url: '', // RTSP URL with credentials inline: rtsp://username:password@ip:port/stream
+    rtsp_url: '', // RTSP URL: rtsp://ip:port/stream (credentials can be included in URL if needed)
     edge_server_id: '',
     resolution: '1920x1080',
     fps: 15,
@@ -189,7 +189,7 @@ export function Cameras() {
     setFormData({
       name: '',
       location: '',
-      rtsp_url: '', // RTSP URL with credentials inline: rtsp://username:password@ip:port/stream
+      rtsp_url: '', // RTSP URL: rtsp://ip:port/stream (credentials can be included in URL if needed)
       edge_server_id: '',
       resolution: '1920x1080',
       fps: 15,
@@ -199,8 +199,7 @@ export function Cameras() {
 
   const openEditModal = (camera: CameraType) => {
     setEditingCamera(camera);
-    // RTSP URL should contain credentials inline
-    // For legacy cameras with separate username/password, use existing rtsp_url
+    // RTSP URL (credentials can be included in URL if needed)
     setFormData({
       name: camera.name,
       location: camera.location || '',
@@ -494,18 +493,18 @@ export function Cameras() {
           </div>
 
           <div>
-            <label className="label">رابط RTSP (مع بيانات الاعتماد)</label>
+            <label className="label">رابط RTSP</label>
             <input
               type="text"
               value={formData.rtsp_url}
               onChange={(e) => setFormData({ ...formData, rtsp_url: e.target.value })}
               className="input"
-              placeholder="rtsp://username:password@ip:port/stream"
+              placeholder="rtsp://ip:port/stream"
               dir="ltr"
               required
             />
             <p className="text-xs text-white/60 mt-1">
-              مثال: rtsp://admin:password123@192.168.1.100:554/stream1
+              مثال: rtsp://192.168.1.100:554/stream1
             </p>
           </div>
 
