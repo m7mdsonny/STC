@@ -737,6 +737,56 @@ class CloudDatabase:
             **analytics_data,
             "type": "analytics"
         })
+    
+    async def submit_analytics_batch(self, analytics_events: List[Dict]) -> bool:
+        """
+        Submit multiple analytics events in a single batch request
+        This uses only one nonce for all events, eliminating nonce collisions
+        """
+        if not analytics_events:
+            return True
+        
+        from main import state
+        
+        # Prepare batch payload
+        events_payload = []
+        for event_data in analytics_events:
+            # Map to Cloud API format
+            payload = {
+                "edge_id": state.edge_id or state.hardware_id,
+                "event_type": event_data.get('type') or event_data.get('event_type') or 'analytics',
+                "severity": event_data.get('severity', 'info'),
+                "occurred_at": event_data.get('occurred_at') or datetime.utcnow().isoformat(),
+            }
+            
+            if 'camera_id' in event_data:
+                payload['camera_id'] = event_data['camera_id']
+            
+            # Convert metadata to meta
+            meta = {}
+            if 'metadata' in event_data:
+                meta.update(event_data['metadata'])
+            if 'module' in event_data:
+                meta['module'] = event_data['module']
+            
+            if meta:
+                payload['meta'] = meta
+            
+            events_payload.append(payload)
+        
+        # Send batch request (single nonce for all events!)
+        success, result = await self._request(
+            "POST",
+            "/api/v1/edges/events/batch",
+            json={"events": events_payload}
+        )
+        
+        if success:
+            logger.info(f"Batch analytics sent: {len(events_payload)} events")
+            return True
+        else:
+            logger.warning(f"Failed to send batch analytics: {result}")
+            return False
 
     async def check_module_entitlement(self, license_id: str, module: str) -> bool:
         """Check if module is enabled for license"""

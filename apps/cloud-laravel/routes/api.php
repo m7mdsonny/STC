@@ -65,6 +65,7 @@ Route::prefix('v1')->group(function () {
     // Edge Server endpoints (HMAC-secured ONLY - NO public access)
     Route::middleware(['verify.edge.signature', 'throttle:100,1'])->group(function () {
         Route::post('/edges/events', [EventController::class, 'ingest']);
+        Route::post('/edges/events/batch', [EventController::class, 'batchIngest']); // Batch endpoint - single nonce for multiple events
         Route::get('/edges/cameras', [EdgeController::class, 'getCamerasForEdge']);
         Route::get('/edges/commands', [EdgeController::class, 'getCommandsForEdge']); // Edge polls for pending commands
     });

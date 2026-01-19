@@ -292,11 +292,10 @@ async def start_services():
                         },
                     })
             
-            # CRITICAL: Send all analytics events in batch (single request = single nonce = no collisions!)
+            # CRITICAL: Send all analytics events in TRUE batch (single request = single nonce = zero collisions!)
             if analytics_events:
-                # Send events one by one but sequentially (no delay needed as each has unique nonce)
-                for event_data in analytics_events:
-                    await state.db.submit_analytics(event_data)
+                # Use batch endpoint - all events in one request = one nonce = no race conditions!
+                await state.db.submit_analytics_batch(analytics_events)
             elif detections:
                 # Fallback: If no module_activity but we have detections, send aggregate analytics
                 # CRITICAL: Extract module from first detection if available, otherwise use enabled_modules[0]
