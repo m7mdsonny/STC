@@ -29,10 +29,11 @@ class VerifyEdgeSignature
      */
     public function handle(Request $request, Closure $next)
     {
-        $edgeKey = $request->header('X-EDGE-KEY');
-        $timestamp = $request->header('X-EDGE-TIMESTAMP');
-        $signature = $request->header('X-EDGE-SIGNATURE');
-        $nonce = $request->header('X-EDGE-NONCE'); // Replay protection
+        try {
+            $edgeKey = $request->header('X-EDGE-KEY');
+            $timestamp = $request->header('X-EDGE-TIMESTAMP');
+            $signature = $request->header('X-EDGE-SIGNATURE');
+            $nonce = $request->header('X-EDGE-NONCE'); // Replay protection
 
         // Check required headers - ALL must be present for HMAC authentication
         if (!$edgeKey || !$timestamp || !$signature) {
@@ -63,7 +64,18 @@ class VerifyEdgeSignature
         }
 
         // Find edge server by edge_key
-        $edgeServer = EdgeServer::where('edge_key', $edgeKey)->first();
+        try {
+            $edgeServer = EdgeServer::where('edge_key', $edgeKey)->first();
+        } catch (\Exception $e) {
+            Log::error('Database error finding edge server', [
+                'error' => $e->getMessage(),
+                'edge_key' => $edgeKey,
+            ]);
+            return response()->json([
+                'message' => 'Internal server error',
+                'error' => 'database_error'
+            ], 500);
+        }
 
         if (!$edgeServer) {
             Log::warning('Edge signature verification failed: edge server not found', [
@@ -227,5 +239,18 @@ class VerifyEdgeSignature
         ]);
 
         return $next($request);
+        } catch (\Exception $e) {
+            // Catch any unexpected errors in middleware
+            Log::error('Unexpected error in VerifyEdgeSignature middleware', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'path' => $request->path(),
+                'method' => $request->method(),
+            ]);
+            return response()->json([
+                'message' => 'Internal server error during authentication',
+                'error' => 'authentication_error'
+            ], 500);
+        }
     }
 }

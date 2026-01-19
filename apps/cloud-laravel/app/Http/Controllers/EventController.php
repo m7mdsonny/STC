@@ -259,10 +259,25 @@ class EventController extends Controller
                             }
                         }
                         
+                        // CRITICAL: Ensure edge_id is always present (required by database)
+                        $edgeId = $edge->edge_id ?? $edge->edge_key ?? (string) $edge->id;
+                        if (empty($edgeId)) {
+                            throw new \Exception('Edge ID is required but not available');
+                        }
+                        
+                        // CRITICAL: Ensure organization_id is present
+                        if (empty($edge->organization_id)) {
+                            Log::error('Edge server missing organization_id', [
+                                'edge_id' => $edge->id,
+                                'edge_key' => $edge->edge_key ?? null,
+                            ]);
+                            throw new \Exception('Edge server organization_id is required');
+                        }
+                        
                         $eventDataForCreate = [
                             'organization_id' => $edge->organization_id,
                             'edge_server_id' => $edge->id,
-                            'edge_id' => $edge->edge_id ?? $edge->edge_key,
+                            'edge_id' => $edgeId,
                             'event_type' => $eventData['event_type'],
                             'ai_module' => $aiModule,
                             'severity' => $eventData['severity'],
@@ -274,35 +289,58 @@ class EventController extends Controller
                             ]),
                         ];
                         
+                        // Log before creation for debugging
+                        Log::debug('Creating event', [
+                            'edge_id' => $edgeId,
+                            'organization_id' => $edge->organization_id,
+                            'event_type' => $eventData['event_type'],
+                            'ai_module' => $aiModule,
+                        ]);
+                        
                         $event = Event::create($eventDataForCreate);
+                        
+                        Log::debug('Event created successfully', [
+                            'event_id' => $event->id,
+                            'event_type' => $event->event_type,
+                        ]);
+
+                        $created[] = [
+                            'event_id' => $event->id,
+                            'event_type' => $event->event_type,
+                            'ai_module' => $aiModule,
+                        ];
                     } catch (\Illuminate\Database\QueryException $e) {
-                        // Database constraint errors
+                        // Database constraint errors - don't re-throw, handle gracefully
                         Log::error('Database error creating event', [
                             'error' => $e->getMessage(),
                             'sql_state' => $e->getSqlState() ?? null,
+                            'error_code' => $e->getCode(),
+                            'sql' => $e->getSql() ?? null,
+                            'bindings' => $e->getBindings() ?? null,
                             'event_data' => $eventData,
+                            'edge_id' => $edge->id ?? null,
+                            'edge_organization_id' => $edge->organization_id ?? null,
                         ]);
-                        throw $e; // Re-throw to be caught by outer catch
+                        $failed[] = [
+                            'index' => count($created) + count($failed),
+                            'error' => 'database_error',
+                            'message' => 'Database constraint error: ' . $e->getMessage(),
+                        ];
+                    } catch (\Exception $e) {
+                        Log::error('Error processing batch event', [
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString(),
+                            'event_data' => $eventData,
+                            'edge_id' => $edge->id ?? null,
+                            'edge_organization_id' => $edge->organization_id ?? null,
+                        ]);
+                        $failed[] = [
+                            'index' => count($created) + count($failed),
+                            'error' => 'processing_failed',
+                            'message' => $e->getMessage(),
+                        ];
                     }
-
-                    $created[] = [
-                        'event_id' => $event->id,
-                        'event_type' => $event->event_type,
-                        'ai_module' => $aiModule,
-                    ];
                 }
-            } catch (\Exception $e) {
-                Log::error('Error processing batch event', [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                    'event_data' => $eventData,
-                    'edge_id' => $edge->id ?? null,
-                ]);
-                $failed[] = [
-                    'index' => count($created) + count($failed),
-                    'error' => 'processing_failed',
-                    'message' => $e->getMessage(),
-                ];
             }
         }
 
