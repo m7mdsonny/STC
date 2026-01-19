@@ -152,45 +152,70 @@ class EventController extends Controller
      */
     public function batchIngest(Request $request): JsonResponse
     {
-        // Edge server is attached by VerifyEdgeSignature middleware
-        $edge = $request->get('edge_server');
-        
-        if (!$edge) {
-            return response()->json(['message' => 'Edge server not authenticated'], 401);
-        }
+        try {
+            // Edge server is attached by VerifyEdgeSignature middleware
+            $edge = $request->get('edge_server');
+            
+            if (!$edge) {
+                Log::error('Batch ingest: Edge server not authenticated', [
+                    'headers' => $request->headers->all(),
+                ]);
+                return response()->json(['message' => 'Edge server not authenticated'], 401);
+            }
 
-        $request->validate([
-            'events' => 'required|array|min:1|max:100', // Limit to 100 events per batch
-            'events.*.event_type' => 'required|string',
-            'events.*.severity' => 'required|string|in:info,warning,critical',
-            'events.*.occurred_at' => 'required|date',
-            'events.*.camera_id' => 'nullable|string',
-            'events.*.meta' => 'array',
-        ]);
-
-        $events = $request->input('events', []);
-        $created = [];
-        $failed = [];
-
-        foreach ($events as $eventData) {
+            // Validate request with better error handling
             try {
-                // Extract ai_module from meta
-                $meta = $eventData['meta'] ?? [];
-                $aiModule = $meta['module'] ?? null;
-                $riskScore = isset($meta['risk_score']) ? (int) $meta['risk_score'] : null;
+                $request->validate([
+                    'events' => 'required|array|min:1|max:100', // Limit to 100 events per batch
+                    'events.*.event_type' => 'required|string',
+                    'events.*.severity' => 'required|string|in:info,warning,critical',
+                    'events.*.occurred_at' => 'required|date',
+                    'events.*.camera_id' => 'nullable|string',
+                    'events.*.meta' => 'nullable|array',
+                ]);
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                Log::error('Batch ingest validation failed', [
+                    'errors' => $e->errors(),
+                    'edge_id' => $edge->id ?? null,
+                ]);
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors()
+                ], 422);
+            }
 
-                // Check if module is enabled
-                if ($aiModule) {
-                    $organization = $edge->organization;
-                    if ($organization && !$this->subscriptionService->isModuleEnabled($organization, $aiModule)) {
-                        $failed[] = [
-                            'index' => count($created) + count($failed),
-                            'error' => 'module_disabled',
-                            'module' => $aiModule,
-                        ];
-                        continue;
+            $events = $request->input('events', []);
+            $created = [];
+            $failed = [];
+
+            foreach ($events as $eventData) {
+                try {
+                    // Extract ai_module from meta - ensure meta is always an array
+                    $meta = is_array($eventData['meta'] ?? []) ? ($eventData['meta'] ?? []) : [];
+                    $aiModule = $meta['module'] ?? null;
+                    $riskScore = isset($meta['risk_score']) ? (int) $meta['risk_score'] : null;
+
+                    // Check if module is enabled
+                    if ($aiModule) {
+                        try {
+                            $organization = $edge->organization;
+                            if ($organization && !$this->subscriptionService->isModuleEnabled($organization, $aiModule)) {
+                                $failed[] = [
+                                    'index' => count($created) + count($failed),
+                                    'error' => 'module_disabled',
+                                    'module' => $aiModule,
+                                ];
+                                continue;
+                            }
+                        } catch (\Exception $e) {
+                            Log::warning('Error checking module enabled status', [
+                                'error' => $e->getMessage(),
+                                'ai_module' => $aiModule,
+                                'edge_id' => $edge->id,
+                            ]);
+                            // Continue processing - don't fail entire batch
+                        }
                     }
-                }
 
                 // Check if this is an enterprise monitoring event
                 $isEnterpriseEvent = in_array($aiModule, ['market', 'factory']) && 
@@ -218,20 +243,47 @@ class EventController extends Controller
                     }
                 } else {
                     // Standard event creation
-                    $event = Event::create([
-                        'organization_id' => $edge->organization_id,
-                        'edge_server_id' => $edge->id,
-                        'edge_id' => $edge->edge_id,
-                        'event_type' => $eventData['event_type'],
-                        'ai_module' => $aiModule,
-                        'severity' => $eventData['severity'],
-                        'risk_score' => $riskScore,
-                        'occurred_at' => $eventData['occurred_at'],
-                        'camera_id' => $eventData['camera_id'] ?? null,
-                        'meta' => array_merge($meta, [
+                    // CRITICAL: Ensure all required fields are present and valid
+                    try {
+                        // Parse occurred_at to ensure it's a valid datetime
+                        $occurredAt = $eventData['occurred_at'];
+                        if (is_string($occurredAt)) {
+                            try {
+                                $occurredAt = \Carbon\Carbon::parse($occurredAt);
+                            } catch (\Exception $e) {
+                                Log::warning('Invalid occurred_at format', [
+                                    'occurred_at' => $occurredAt,
+                                    'error' => $e->getMessage(),
+                                ]);
+                                $occurredAt = now(); // Fallback to current time
+                            }
+                        }
+                        
+                        $eventDataForCreate = [
+                            'organization_id' => $edge->organization_id,
+                            'edge_server_id' => $edge->id,
+                            'edge_id' => $edge->edge_id ?? $edge->edge_key,
+                            'event_type' => $eventData['event_type'],
+                            'ai_module' => $aiModule,
+                            'severity' => $eventData['severity'],
+                            'risk_score' => $riskScore,
+                            'occurred_at' => $occurredAt,
                             'camera_id' => $eventData['camera_id'] ?? null,
-                        ]),
-                    ]);
+                            'meta' => array_merge($meta, [
+                                'camera_id' => $eventData['camera_id'] ?? null,
+                            ]),
+                        ];
+                        
+                        $event = Event::create($eventDataForCreate);
+                    } catch (\Illuminate\Database\QueryException $e) {
+                        // Database constraint errors
+                        Log::error('Database error creating event', [
+                            'error' => $e->getMessage(),
+                            'sql_state' => $e->getSqlState() ?? null,
+                            'event_data' => $eventData,
+                        ]);
+                        throw $e; // Re-throw to be caught by outer catch
+                    }
 
                     $created[] = [
                         'event_id' => $event->id,
@@ -242,7 +294,9 @@ class EventController extends Controller
             } catch (\Exception $e) {
                 Log::error('Error processing batch event', [
                     'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
                     'event_data' => $eventData,
+                    'edge_id' => $edge->id ?? null,
                 ]);
                 $failed[] = [
                     'index' => count($created) + count($failed),
@@ -259,6 +313,19 @@ class EventController extends Controller
             'events' => $created,
             'errors' => $failed,
         ]);
+        } catch (\Exception $e) {
+            // Catch any top-level exceptions (validation, database, etc.)
+            Log::error('Batch ingest failed with exception', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+            ]);
+            return response()->json([
+                'ok' => false,
+                'message' => 'Server error processing batch request',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
