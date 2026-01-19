@@ -247,12 +247,35 @@ async def start_services():
             detections = results.get('detections', [])
             module_activity = results.get('modules', {})
             
-            # CRITICAL: Send separate analytics events for each module for proper module activity tracking
+            # CRITICAL: Send separate analytics events for each enabled module for proper module activity tracking
             # Each module gets its own event with ai_module set correctly for AnalyticsService
-            modules_processed = list(module_activity.keys())
+            # This ensures analytics appear even if no detections (module is processing but no detections yet)
+            modules_processed = list(module_activity.keys()) if module_activity else []
             
-            if modules_processed:
-                # Send analytics event for each module to enable module activity tracking
+            # CRITICAL: If no modules_processed but we have enabled_modules, send analytics for enabled modules anyway
+            # This ensures module activity tracking works even if modules dict is empty (no detections yet)
+            if not modules_processed and enabled_modules:
+                # Send analytics for each enabled module even if no detections
+                # This ensures module activity appears in dashboard
+                for module_id in enabled_modules:
+                    module_detections = [d for d in detections if d.get('module') == module_id]
+                    
+                    analytics_data = {
+                        'camera_id': camera_id,
+                        'type': 'analytics',
+                        'severity': 'info',
+                        'module': module_id,  # CRITICAL: Set module in top-level so EventController extracts it to ai_module
+                        'metadata': {
+                            'detections': module_detections,
+                            'module_activity': {},
+                            'detection_count': len(module_detections),
+                            'module': module_id,
+                        },
+                    }
+                    await state.db.submit_analytics(analytics_data)
+            
+            elif modules_processed:
+                # Send analytics event for each processed module to enable module activity tracking
                 for module_id in modules_processed:
                     module_detections = [d for d in detections if d.get('module') == module_id]
                     module_data = module_activity.get(module_id, {})
@@ -261,7 +284,7 @@ async def start_services():
                         'camera_id': camera_id,
                         'type': 'analytics',
                         'severity': 'info',
-                        'module': module_id,  # CRITICAL: Set module in metadata so EventController extracts it to ai_module
+                        'module': module_id,  # CRITICAL: Set module in top-level so EventController extracts it to ai_module
                         'metadata': {
                             'detections': module_detections,
                             'module_activity': module_data,
@@ -279,19 +302,20 @@ async def start_services():
                 if not first_module and enabled_modules:
                     first_module = enabled_modules[0]
                 
-                analytics_data = {
-                    'camera_id': camera_id,
-                    'type': 'analytics',
-                    'severity': 'info',
-                    'module': first_module,  # CRITICAL: Set module on top level for EventController extraction
-                    'metadata': {
-                        'detections': detections,
-                        'enabled_modules': enabled_modules,
-                        'detection_count': len(detections),
-                        'module': first_module,  # Also in metadata for consistency
-                    },
-                }
-                await state.db.submit_analytics(analytics_data)
+                if first_module:  # Only send if we have a module
+                    analytics_data = {
+                        'camera_id': camera_id,
+                        'type': 'analytics',
+                        'severity': 'info',
+                        'module': first_module,  # CRITICAL: Set module on top level for EventController extraction
+                        'metadata': {
+                            'detections': detections,
+                            'enabled_modules': enabled_modules,
+                            'detection_count': len(detections),
+                            'module': first_module,  # Also in metadata for consistency
+                        },
+                    }
+                    await state.db.submit_analytics(analytics_data)
             
             # Log AI processing for debugging
             if detections or modules_processed:
