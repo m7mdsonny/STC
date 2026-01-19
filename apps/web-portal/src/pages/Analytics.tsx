@@ -133,6 +133,7 @@ export function Analytics() {
     try {
       const { start, end } = getDateRange();
 
+      // CRITICAL: Fetch module activity with better error handling and logging
       const [audienceRes, alertsRes, vehiclesRes, moduleActivityRes] = await Promise.all([
         analyticsApi.getAudienceStats({
           start_date: start.toISOString().split('T')[0],
@@ -157,7 +158,10 @@ export function Analytics() {
           organization_id: organization.id.toString(),
           start_date: start.toISOString().split('T')[0],
           end_date: end.toISOString().split('T')[0],
-        }).catch(() => []),
+        }).catch((error) => {
+          console.error('Failed to fetch module activity:', error);
+          return []; // Return empty array on error
+        }),
       ]);
 
       const audienceData = audienceRes.data || [];
@@ -235,14 +239,27 @@ export function Analytics() {
       // This ensures we get accurate data from the analytics pipeline
       const moduleActivityData = moduleActivityRes || [];
       
+      // DEBUG: Log module activity data for diagnosis
+      if (moduleActivityData.length === 0) {
+        console.warn('Module activity data is empty. Check:', {
+          organizationId: organization.id,
+          startDate: start.toISOString().split('T')[0],
+          endDate: end.toISOString().split('T')[0],
+          moduleActivityRes,
+        });
+      } else {
+        console.log('Module activity data received:', moduleActivityData);
+      }
+      
       // Map module IDs to Arabic names using AI_MODULES
-      const alertsByModule = moduleActivityData.map((item) => {
+      const alertsByModule = (Array.isArray(moduleActivityData) ? moduleActivityData : []).map((item) => {
         const moduleInfo = AI_MODULES.find(m => m.id === item.module);
         return {
           module: moduleInfo?.nameAr || item.module,
-          count: item.count,
+          count: item.count || 0,
         };
-      }).sort((a, b) => b.count - a.count); // Sort by count descending
+      }).filter(item => item.count > 0) // Filter out zero counts
+        .sort((a, b) => b.count - a.count); // Sort by count descending
 
       const totalVisitors = audienceData.reduce((sum, r) => sum + (r.total_count || 0), 0);
       const totalAlerts = alertsData.length;

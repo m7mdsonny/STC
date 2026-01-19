@@ -139,11 +139,24 @@ export const analyticsApi = {
   },
 
   async getModuleActivity(filters: AnalyticsFilters = {}): Promise<{ module: string; count: number }[]> {
-    const { data, error } = await apiClient.get('/analytics/module-activity', filters as Record<string, string>);
-    if (error || !data) {
-      throw new Error(error || 'Failed to fetch module activity');
+    try {
+      const { data, error } = await apiClient.get('/analytics/module-activity', filters as Record<string, string>);
+      if (error) {
+        console.error('Module activity API error:', error, 'filters:', filters);
+        return []; // Return empty array instead of throwing
+      }
+      if (!data) {
+        console.warn('Module activity API returned no data', 'filters:', filters);
+        return [];
+      }
+      // Ensure data is an array
+      const result = Array.isArray(data) ? data : [];
+      console.log('Module activity data fetched:', result.length, 'modules', result);
+      return result;
+    } catch (err) {
+      console.error('Exception fetching module activity:', err, 'filters:', filters);
+      return []; // Return empty array on exception
     }
-    return data;
   },
 
   async getWeeklyTrend(filters: AnalyticsFilters = {}): Promise<{ period: string; count: number }[]> {
