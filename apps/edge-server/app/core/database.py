@@ -314,11 +314,22 @@ class CloudDatabase:
                         if response.text:
                             error_data = response.json()
                     except:
-                        pass
+                        # If not JSON, log raw text
+                        if response.text:
+                            logger.error(f"Server error {response.status_code} raw response: {response.text[:500]}")
+                            error_data = {'raw_response': response.text[:500]}
+                    
                     error_msg = error_data.get('message', f'Server Error {response.status_code}')
                     logger.error(f"Server error {response.status_code} for {endpoint}: {error_msg}")
-                    if error_data.get('error') or error_data.get('trace'):
-                        logger.debug(f"Server error details: {error_data}")
+                    
+                    # Log all error details
+                    if error_data:
+                        logger.error(f"Server error details: {error_data}")
+                    if error_data.get('error'):
+                        logger.error(f"Server error type: {error_data.get('error')}")
+                    if error_data.get('trace'):
+                        logger.debug(f"Server error trace: {error_data.get('trace')[:500]}")
+                    
                     last_error = f"Error {response.status_code}: {error_msg}"
                 else:
                     last_error = f"Error {response.status_code}: {response.text[:200]}"

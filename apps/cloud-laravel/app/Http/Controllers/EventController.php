@@ -327,7 +327,7 @@ class EventController extends Controller
                             'message' => 'Database constraint error: ' . $e->getMessage(),
                         ];
                     } catch (\Exception $e) {
-                        Log::error('Error processing batch event', [
+                        Log::error('Error creating event', [
                             'error' => $e->getMessage(),
                             'trace' => $e->getTraceAsString(),
                             'event_data' => $eventData,
@@ -341,6 +341,19 @@ class EventController extends Controller
                         ];
                     }
                 }
+                } catch (\Exception $e) {
+                Log::error('Error processing batch event', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'event_data' => $eventData,
+                    'edge_id' => $edge->id ?? null,
+                    'edge_organization_id' => $edge->organization_id ?? null,
+                ]);
+                $failed[] = [
+                    'index' => count($created) + count($failed),
+                    'error' => 'processing_failed',
+                    'message' => $e->getMessage(),
+                ];
             }
         }
 
