@@ -186,6 +186,10 @@ class VerifyEdgeSignature
 
         // Use hash_equals for timing-safe comparison
         if (!hash_equals($expectedSignature, $signature)) {
+            // CRITICAL: If signature verification fails, remove nonce from DB (was stored above)
+            // This allows retry with same nonce if signature generation was incorrect
+            EdgeNonce::where('nonce', $nonce)->delete();
+            
             Log::warning('Edge signature verification failed: signature mismatch', [
                 'edge_key' => $edgeKey,
                 'edge_server_id' => $edgeServer->id,
@@ -200,6 +204,7 @@ class VerifyEdgeSignature
         }
 
         // Nonce already stored above (atomic insert before signature verification)
+        // Signature verification passed, so nonce remains in DB to prevent replay
 
         // Cleanup old nonces (older than 10 minutes) - prevent table bloat
         EdgeNonce::where('used_at', '<', Carbon::now()->subMinutes(10))->delete();
