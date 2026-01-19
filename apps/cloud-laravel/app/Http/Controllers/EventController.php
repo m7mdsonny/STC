@@ -11,6 +11,7 @@ use App\Services\SubscriptionService;
 use App\Services\EnterpriseMonitoringService;
 use App\Services\FcmService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class EventController extends Controller
 {
@@ -163,6 +164,18 @@ class EventController extends Controller
                 return response()->json(['message' => 'Edge server not authenticated'], 401);
             }
 
+            // CRITICAL: Validate edge server has required fields
+            if (empty($edge->organization_id)) {
+                Log::error('Batch ingest: Edge server missing organization_id', [
+                    'edge_id' => $edge->id ?? null,
+                    'edge_key' => $edge->edge_key ?? null,
+                ]);
+                return response()->json([
+                    'message' => 'Edge server configuration error: missing organization_id',
+                    'error' => 'configuration_error'
+                ], 500);
+            }
+
             // Validate request with better error handling
             try {
                 $request->validate([
@@ -187,6 +200,9 @@ class EventController extends Controller
             $events = $request->input('events', []);
             $created = [];
             $failed = [];
+            
+            // CRITICAL: Use database transaction for atomicity
+            DB::beginTransaction();
 
             foreach ($events as $eventData) {
                 try {
@@ -274,20 +290,53 @@ class EventController extends Controller
                             throw new \Exception('Edge server organization_id is required');
                         }
                         
-                        $eventDataForCreate = [
-                            'organization_id' => $edge->organization_id,
-                            'edge_server_id' => $edge->id,
-                            'edge_id' => $edgeId,
-                            'event_type' => $eventData['event_type'],
-                            'ai_module' => $aiModule,
-                            'severity' => $eventData['severity'],
-                            'risk_score' => $riskScore,
-                            'occurred_at' => $occurredAt,
+                        // CRITICAL: Validate all required fields before creating
+                        // Ensure all values are properly typed and not null for required fields
+                        $eventDataForCreate = [];
+                        
+                        // Required fields - must not be null
+                        $eventDataForCreate['organization_id'] = (int) $edge->organization_id;
+                        $eventDataForCreate['edge_server_id'] = (int) $edge->id;
+                        $eventDataForCreate['edge_id'] = (string) $edgeId;
+                        $eventDataForCreate['event_type'] = (string) ($eventData['event_type'] ?? 'analytics');
+                        $eventDataForCreate['severity'] = (string) ($eventData['severity'] ?? 'info');
+                        
+                        // Optional fields - can be null
+                        $eventDataForCreate['ai_module'] = $aiModule ? (string) $aiModule : null;
+                        $eventDataForCreate['risk_score'] = $riskScore !== null ? (int) $riskScore : null;
+                        $eventDataForCreate['camera_id'] = $eventData['camera_id'] ? (string) $eventData['camera_id'] : null;
+                        
+                        // Handle occurred_at - must be valid datetime
+                        if ($occurredAt instanceof \Carbon\Carbon) {
+                            $eventDataForCreate['occurred_at'] = $occurredAt;
+                        } else {
+                            try {
+                                $eventDataForCreate['occurred_at'] = \Carbon\Carbon::parse($occurredAt);
+                            } catch (\Exception $e) {
+                                $eventDataForCreate['occurred_at'] = now();
+                            }
+                        }
+                        
+                        // Handle meta - must be array
+                        $eventDataForCreate['meta'] = is_array($meta) ? array_merge($meta, [
                             'camera_id' => $eventData['camera_id'] ?? null,
-                            'meta' => array_merge($meta, [
-                                'camera_id' => $eventData['camera_id'] ?? null,
-                            ]),
-                        ];
+                        ]) : [];
+                        
+                        // CRITICAL: Final validation - ensure no null/empty values for required fields
+                        $requiredFields = ['organization_id', 'edge_server_id', 'edge_id', 'event_type', 'severity', 'occurred_at'];
+                        foreach ($requiredFields as $field) {
+                            if (!isset($eventDataForCreate[$field]) || $eventDataForCreate[$field] === null || $eventDataForCreate[$field] === '') {
+                                throw new \Exception("Required field '{$field}' is missing or empty");
+                            }
+                        }
+                        
+                        // Additional validation
+                        if ($eventDataForCreate['organization_id'] <= 0) {
+                            throw new \Exception('organization_id must be a positive integer');
+                        }
+                        if ($eventDataForCreate['edge_server_id'] <= 0) {
+                            throw new \Exception('edge_server_id must be a positive integer');
+                        }
                         
                         // Log before creation for debugging
                         Log::debug('Creating event', [
@@ -297,6 +346,7 @@ class EventController extends Controller
                             'ai_module' => $aiModule,
                         ]);
                         
+                        // CRITICAL: Use DB transaction and handle all exceptions
                         $event = Event::create($eventDataForCreate);
                         
                         Log::debug('Event created successfully', [
@@ -355,26 +405,59 @@ class EventController extends Controller
                     'message' => $e->getMessage(),
                 ];
             }
-        }
-
-        return response()->json([
-            'ok' => true,
-            'created' => count($created),
-            'failed' => count($failed),
-            'events' => $created,
-            'errors' => $failed,
-        ]);
+            
+            // CRITICAL: Commit transaction only if we processed all events
+            DB::commit();
+            
+            return response()->json([
+                'ok' => true,
+                'created' => count($created),
+                'failed' => count($failed),
+                'events' => $created,
+                'errors' => $failed,
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            Log::error('Batch ingest validation exception', [
+                'error' => $e->getMessage(),
+                'errors' => $e->errors(),
+            ]);
+            return response()->json([
+                'ok' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
+            Log::error('Batch ingest database exception', [
+                'error' => $e->getMessage(),
+                'sql_state' => $e->getSqlState() ?? null,
+                'error_code' => $e->getCode(),
+                'sql' => $e->getSql() ?? null,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'ok' => false,
+                'message' => 'Database error processing batch request',
+                'error' => $e->getMessage(),
+                'sql_state' => $e->getSqlState() ?? null,
+            ], 500);
         } catch (\Exception $e) {
+            DB::rollBack();
             // Catch any top-level exceptions (validation, database, etc.)
             Log::error('Batch ingest failed with exception', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
                 'request_data' => $request->all(),
             ]);
             return response()->json([
                 'ok' => false,
                 'message' => 'Server error processing batch request',
                 'error' => $e->getMessage(),
+                'file' => basename($e->getFile()),
+                'line' => $e->getLine(),
             ], 500);
         }
     }

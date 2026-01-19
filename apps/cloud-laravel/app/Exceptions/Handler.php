@@ -47,6 +47,38 @@ class Handler extends ExceptionHandler
 
             return response($payload['message'], $e->getStatus());
         });
+        
+        // CRITICAL: Add detailed error handling for API endpoints
+        $this->renderable(function (Throwable $e, Request $request) {
+            // Only for API endpoints and JSON requests
+            if (($request->expectsJson() || $request->is('api/*')) && config('app.debug')) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                    'error' => get_class($e),
+                    'file' => basename($e->getFile()),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTraceAsString(),
+                ], 500);
+            }
+            
+            // For production, return generic error but log details
+            if ($request->expectsJson() || $request->is('api/*')) {
+                \Illuminate\Support\Facades\Log::error('API Error', [
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTraceAsString(),
+                    'url' => $request->fullUrl(),
+                ]);
+                
+                return response()->json([
+                    'message' => 'Server Error',
+                    'error' => get_class($e),
+                ], 500);
+            }
+            
+            return null; // Let Laravel handle it
+        });
     }
 
     /**
