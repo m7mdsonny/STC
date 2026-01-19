@@ -147,6 +147,121 @@ class EventController extends Controller
     }
 
     /**
+     * Batch ingest multiple events in a single request
+     * This reduces nonce collisions by using only one nonce for multiple events
+     */
+    public function batchIngest(Request $request): JsonResponse
+    {
+        // Edge server is attached by VerifyEdgeSignature middleware
+        $edge = $request->get('edge_server');
+        
+        if (!$edge) {
+            return response()->json(['message' => 'Edge server not authenticated'], 401);
+        }
+
+        $request->validate([
+            'events' => 'required|array|min:1|max:100', // Limit to 100 events per batch
+            'events.*.event_type' => 'required|string',
+            'events.*.severity' => 'required|string|in:info,warning,critical',
+            'events.*.occurred_at' => 'required|date',
+            'events.*.camera_id' => 'nullable|string',
+            'events.*.meta' => 'array',
+        ]);
+
+        $events = $request->input('events', []);
+        $created = [];
+        $failed = [];
+
+        foreach ($events as $eventData) {
+            try {
+                // Extract ai_module from meta
+                $meta = $eventData['meta'] ?? [];
+                $aiModule = $meta['module'] ?? null;
+                $riskScore = isset($meta['risk_score']) ? (int) $meta['risk_score'] : null;
+
+                // Check if module is enabled
+                if ($aiModule) {
+                    $organization = $edge->organization;
+                    if ($organization && !$this->subscriptionService->isModuleEnabled($organization, $aiModule)) {
+                        $failed[] = [
+                            'index' => count($created) + count($failed),
+                            'error' => 'module_disabled',
+                            'module' => $aiModule,
+                        ];
+                        continue;
+                    }
+                }
+
+                // Check if this is an enterprise monitoring event
+                $isEnterpriseEvent = in_array($aiModule, ['market', 'factory']) && 
+                                     isset($meta['scenario']) && 
+                                     isset($meta['risk_signals']);
+
+                if ($isEnterpriseEvent) {
+                    $eventDataForEval = [
+                        'module' => $aiModule,
+                        'scenario' => $meta['scenario'],
+                        'camera_id' => $eventData['camera_id'] ?? null,
+                        'risk_signals' => $meta['risk_signals'] ?? [],
+                        'confidence' => $meta['confidence'] ?? 0.0,
+                        'timestamp' => $eventData['occurred_at'],
+                    ];
+
+                    $alertData = $this->enterpriseMonitoringService->evaluateEvent(
+                        $eventDataForEval,
+                        $edge->organization_id,
+                        $edge->id
+                    );
+
+                    if ($alertData) {
+                        $this->sendEnterpriseNotifications($alertData, $edge->organization_id);
+                    }
+                } else {
+                    // Standard event creation
+                    $event = Event::create([
+                        'organization_id' => $edge->organization_id,
+                        'edge_server_id' => $edge->id,
+                        'edge_id' => $edge->edge_id,
+                        'event_type' => $eventData['event_type'],
+                        'ai_module' => $aiModule,
+                        'severity' => $eventData['severity'],
+                        'risk_score' => $riskScore,
+                        'occurred_at' => $eventData['occurred_at'],
+                        'camera_id' => $eventData['camera_id'] ?? null,
+                        'meta' => array_merge($meta, [
+                            'camera_id' => $eventData['camera_id'] ?? null,
+                        ]),
+                    ]);
+
+                    $created[] = [
+                        'event_id' => $event->id,
+                        'event_type' => $event->event_type,
+                        'ai_module' => $aiModule,
+                    ];
+                }
+            } catch (\Exception $e) {
+                Log::error('Error processing batch event', [
+                    'error' => $e->getMessage(),
+                    'event_data' => $eventData,
+                ]);
+                $failed[] = [
+                    'index' => count($created) + count($failed),
+                    'error' => 'processing_failed',
+                    'message' => $e->getMessage(),
+                ];
+            }
+        }
+
+        return response()->json([
+            'ok' => true,
+            'created' => count($created),
+            'failed' => count($failed),
+            'events' => $created,
+            'errors' => $failed,
+        ]);
+    }
+
+    /**
      * Send notifications for enterprise monitoring alerts
      */
     private function sendEnterpriseNotifications(array $alertData, int $organizationId): void
