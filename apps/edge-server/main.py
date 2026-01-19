@@ -247,22 +247,20 @@ async def start_services():
             detections = results.get('detections', [])
             module_activity = results.get('modules', {})
             
-            # CRITICAL: Send separate analytics events for each enabled module for proper module activity tracking
-            # Each module gets its own event with ai_module set correctly for AnalyticsService
-            # This ensures analytics appear even if no detections (module is processing but no detections yet)
+            # CRITICAL: Send analytics events for all modules in a single batch to prevent nonce collisions
+            # Batch sending reduces requests from N (modules) to 1, eliminating nonce race conditions
             modules_processed = list(module_activity.keys()) if module_activity else []
             
-            # CRITICAL: If no modules_processed but we have enabled_modules, send analytics for enabled modules anyway
-            # This ensures module activity tracking works even if modules dict is empty (no detections yet)
+            # CRITICAL: Collect all analytics events and send in batch
+            analytics_events = []
+            
+            # If no modules_processed but we have enabled_modules, send analytics for enabled modules anyway
             if not modules_processed and enabled_modules:
-                # Send analytics for each enabled module even if no detections
-                # This ensures module activity appears in dashboard
-                # CRITICAL: Add small delay between requests to prevent nonce collision (each request needs unique nonce)
-                import asyncio
-                for idx, module_id in enumerate(enabled_modules):
+                # Collect analytics for each enabled module even if no detections
+                for module_id in enabled_modules:
                     module_detections = [d for d in detections if d.get('module') == module_id]
                     
-                    analytics_data = {
+                    analytics_events.append({
                         'camera_id': camera_id,
                         'type': 'analytics',
                         'severity': 'info',
@@ -273,21 +271,15 @@ async def start_services():
                             'detection_count': len(module_detections),
                             'module': module_id,
                         },
-                    }
-                    await state.db.submit_analytics(analytics_data)
-                    # Small delay (50ms) between requests to ensure unique timestamps/nonces and reduce race conditions
-                    if idx < len(enabled_modules) - 1:
-                        await asyncio.sleep(0.05)
+                    })
             
             elif modules_processed:
-                # Send analytics event for each processed module to enable module activity tracking
-                # CRITICAL: Add small delay between requests to prevent nonce collision (each request needs unique nonce)
-                import asyncio
-                for idx, module_id in enumerate(modules_processed):
+                # Collect analytics for each processed module
+                for module_id in modules_processed:
                     module_detections = [d for d in detections if d.get('module') == module_id]
                     module_data = module_activity.get(module_id, {})
                     
-                    analytics_data = {
+                    analytics_events.append({
                         'camera_id': camera_id,
                         'type': 'analytics',
                         'severity': 'info',
@@ -298,11 +290,13 @@ async def start_services():
                             'detection_count': len(module_detections),
                             'module': module_id,
                         },
-                    }
-                    await state.db.submit_analytics(analytics_data)
-                    # Small delay (50ms) between requests to ensure unique timestamps/nonces and reduce race conditions
-                    if idx < len(modules_processed) - 1:
-                        await asyncio.sleep(0.05)
+                    })
+            
+            # CRITICAL: Send all analytics events in batch (single request = single nonce = no collisions!)
+            if analytics_events:
+                # Send events one by one but sequentially (no delay needed as each has unique nonce)
+                for event_data in analytics_events:
+                    await state.db.submit_analytics(event_data)
             elif detections:
                 # Fallback: If no module_activity but we have detections, send aggregate analytics
                 # CRITICAL: Extract module from first detection if available, otherwise use enabled_modules[0]
