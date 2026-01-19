@@ -257,7 +257,9 @@ async def start_services():
             if not modules_processed and enabled_modules:
                 # Send analytics for each enabled module even if no detections
                 # This ensures module activity appears in dashboard
-                for module_id in enabled_modules:
+                # CRITICAL: Add small delay between requests to prevent nonce collision (each request needs unique nonce)
+                import asyncio
+                for idx, module_id in enumerate(enabled_modules):
                     module_detections = [d for d in detections if d.get('module') == module_id]
                     
                     analytics_data = {
@@ -273,10 +275,15 @@ async def start_services():
                         },
                     }
                     await state.db.submit_analytics(analytics_data)
+                    # Small delay (10ms) between requests to ensure unique timestamps/nonces
+                    if idx < len(enabled_modules) - 1:
+                        await asyncio.sleep(0.01)
             
             elif modules_processed:
                 # Send analytics event for each processed module to enable module activity tracking
-                for module_id in modules_processed:
+                # CRITICAL: Add small delay between requests to prevent nonce collision (each request needs unique nonce)
+                import asyncio
+                for idx, module_id in enumerate(modules_processed):
                     module_detections = [d for d in detections if d.get('module') == module_id]
                     module_data = module_activity.get(module_id, {})
                     
@@ -293,6 +300,9 @@ async def start_services():
                         },
                     }
                     await state.db.submit_analytics(analytics_data)
+                    # Small delay (10ms) between requests to ensure unique timestamps/nonces
+                    if idx < len(modules_processed) - 1:
+                        await asyncio.sleep(0.01)
             elif detections:
                 # Fallback: If no module_activity but we have detections, send aggregate analytics
                 # CRITICAL: Extract module from first detection if available, otherwise use enabled_modules[0]
