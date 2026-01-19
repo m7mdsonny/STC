@@ -106,31 +106,51 @@ class VerifyEdgeSignature
             ], 401);
         }
 
-        // REPLAY PROTECTION: Check if nonce was already used (use database transaction to prevent race condition)
-        // CRITICAL: Use DB::transaction with lockForUpdate() to prevent race conditions in concurrent requests
+        // REPLAY PROTECTION: Check and reserve nonce atomically to prevent race condition
+        // CRITICAL: Use atomic insert with try-catch to prevent race conditions in concurrent requests
+        // Try to insert nonce first - if duplicate, it means nonce was already used
         try {
-            $existingNonce = DB::transaction(function () use ($nonce) {
-                // Lock the row if it exists to prevent race conditions
-                return EdgeNonce::where('nonce', $nonce)->lockForUpdate()->first();
-            });
-            
-            if ($existingNonce) {
-                Log::warning('Edge signature verification failed: nonce already used (replay attack)', [
+            EdgeNonce::create([
+                'nonce' => $nonce,
+                'edge_server_id' => $edgeServer->id,
+                'ip_address' => $request->ip(),
+                'used_at' => Carbon::now(),
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Handle duplicate key error (nonce already used or race condition)
+            if ($e->getCode() == 23000 || str_contains($e->getMessage(), 'Duplicate entry')) {
+                // Check if nonce was actually used (or just race condition)
+                $existingNonce = EdgeNonce::where('nonce', $nonce)->first();
+                if ($existingNonce) {
+                    Log::warning('Edge signature verification failed: nonce already used (replay attack)', [
+                        'edge_key' => $edgeKey,
+                        'edge_server_id' => $edgeServer->id ?? null,
+                        'nonce' => substr($nonce, 0, 16) . '...',
+                        'used_at' => $existingNonce->used_at,
+                        'ip' => $request->ip(),
+                        'path' => $request->path(),
+                    ]);
+                    return response()->json([
+                        'message' => 'Request nonce already used (replay attack detected)',
+                        'error' => 'nonce_reused'
+                    ], 401);
+                }
+                // If nonce doesn't exist (shouldn't happen), log error and reject
+                Log::error('Duplicate key error but nonce not found - database inconsistency', [
                     'edge_key' => $edgeKey,
-                    'edge_server_id' => $edgeServer->id ?? null,
                     'nonce' => substr($nonce, 0, 16) . '...',
-                    'used_at' => $existingNonce->used_at,
-                    'ip' => $request->ip(),
-                    'path' => $request->path(),
+                    'error' => $e->getMessage(),
                 ]);
                 return response()->json([
-                    'message' => 'Request nonce already used (replay attack detected)',
-                    'error' => 'nonce_reused'
-                ], 401);
+                    'message' => 'Internal server error during nonce verification',
+                    'error' => 'nonce_check_failed'
+                ], 500);
             }
+            // Re-throw if it's a different database error
+            throw $e;
         } catch (\Exception $e) {
-            // If transaction fails, log and reject request to be safe
-            Log::error('Error checking nonce in transaction', [
+            // If any other error occurs, log and reject request to be safe
+            Log::error('Error storing nonce', [
                 'error' => $e->getMessage(),
                 'edge_key' => $edgeKey,
                 'nonce' => substr($nonce, 0, 16) . '...',
@@ -179,33 +199,7 @@ class VerifyEdgeSignature
             ], 401);
         }
 
-        // REPLAY PROTECTION: Store nonce to prevent reuse (atomic insert with error handling)
-        // CRITICAL: Use try-catch to handle duplicate key errors from race conditions
-        try {
-            EdgeNonce::create([
-                'nonce' => $nonce,
-                'edge_server_id' => $edgeServer->id,
-                'ip_address' => $request->ip(),
-                'used_at' => Carbon::now(),
-            ]);
-        } catch (\Illuminate\Database\QueryException $e) {
-            // Handle duplicate key error (race condition: another request inserted same nonce)
-            if ($e->getCode() == 23000 || str_contains($e->getMessage(), 'Duplicate entry')) {
-                Log::warning('Edge signature verification failed: nonce duplicate key (race condition)', [
-                    'edge_key' => $edgeKey,
-                    'edge_server_id' => $edgeServer->id ?? null,
-                    'nonce' => substr($nonce, 0, 16) . '...',
-                    'ip' => $request->ip(),
-                    'path' => $request->path(),
-                ]);
-                return response()->json([
-                    'message' => 'Request nonce already used (replay attack detected)',
-                    'error' => 'nonce_reused'
-                ], 401);
-            }
-            // Re-throw if it's a different database error
-            throw $e;
-        }
+        // Nonce already stored above (atomic insert before signature verification)
 
         // Cleanup old nonces (older than 10 minutes) - prevent table bloat
         EdgeNonce::where('used_at', '<', Carbon::now()->subMinutes(10))->delete();
