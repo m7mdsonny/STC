@@ -66,6 +66,7 @@ Route::prefix('v1')->group(function () {
     Route::middleware(['verify.edge.signature', 'throttle:100,1'])->group(function () {
         Route::post('/edges/events', [EventController::class, 'ingest']);
         Route::get('/edges/cameras', [EdgeController::class, 'getCamerasForEdge']);
+        Route::get('/edges/commands', [EdgeController::class, 'getCommandsForEdge']); // Edge polls for pending commands
     });
 
     Route::middleware('auth:sanctum')->group(function () {

@@ -51,10 +51,22 @@ class EdgeCommandService
 
         // CRITICAL: Commands are no longer sent via HTTP (IP-based approach removed)
         // Edge Server will fetch commands from Cloud during heartbeat/sync
-        // Commands should be stored in database for Edge to poll (future implementation)
-        // For now, we just verify Edge is online and return success
+        // Store command in database for Edge to poll via GET /api/v1/edges/commands
         
-        Log::info("Command queued for Edge Server (will be fetched on next sync)", [
+        // Create AiCommand record in database
+        $commandRecord = \App\Models\AiCommand::create([
+            'organization_id' => $edgeServer->organization_id,
+            'title' => "Edge Command: {$command}",
+            'status' => 'queued',
+            'payload' => [
+                'command' => $command,
+                'edge_server_id' => $edgeServer->id,
+                ...$payload
+            ],
+        ]);
+        
+        Log::info("Command queued in database for Edge Server (will be fetched on next sync)", [
+            'command_id' => $commandRecord->id,
             'edge_server_id' => $edgeServer->id,
             'command' => $command,
             'payload' => $payload
@@ -64,8 +76,9 @@ class EdgeCommandService
             'success' => true,
             'message' => 'Command queued - Edge Server will fetch it on next sync',
             'data' => [
+                'command_id' => $commandRecord->id,
                 'command' => $command,
-                'queued_at' => now()->toIso8601String()
+                'queued_at' => $commandRecord->created_at->toIso8601String()
             ]
         ];
     }

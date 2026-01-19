@@ -755,6 +755,89 @@ class EdgeController extends Controller
     }
 
     /**
+     * Get pending commands for Edge Server (HMAC authenticated)
+     * Edge server polls this endpoint to fetch queued commands
+     * 
+     * Endpoint: GET /api/v1/edges/commands?status=pending
+     */
+    public function getCommandsForEdge(Request $request): JsonResponse
+    {
+        try {
+            // Edge server is authenticated by VerifyEdgeSignature middleware
+            $edge = $request->get('edge_server');
+            
+            if (!$edge) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Edge server not authenticated',
+                ], 401);
+            }
+
+            if (!$edge->organization_id) {
+                \Illuminate\Support\Facades\Log::error('Edge commands fetch: organization_id missing', [
+                    'edge_id' => $edge->id,
+                    'edge_key' => substr($edge->edge_key ?? 'unknown', 0, 8) . '...',
+                ]);
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Edge server is not associated with an organization',
+                    'error' => 'missing_organization_id'
+                ], 400);
+            }
+
+            // Get status filter (default: pending)
+            $status = $request->query('status', 'queued');
+            
+            // Query pending/queued commands for this organization
+            $commands = \App\Models\AiCommand::where('organization_id', $edge->organization_id)
+                ->where('status', $status)
+                ->whereNull('acknowledged_at') // Only unacknowledged commands
+                ->orderBy('created_at', 'asc') // Oldest first
+                ->limit(10) // Limit to prevent large responses
+                ->get()
+                ->map(function ($command) {
+                    // Extract command type from payload or title
+                    $payload = $command->payload ?? [];
+                    $commandType = $payload['command'] ?? $payload['command_type'] ?? null;
+                    
+                    // Try to infer from title
+                    if (!$commandType) {
+                        $title = strtolower($command->title ?? '');
+                        if (strpos($title, 'restart') !== false) {
+                            $commandType = 'restart';
+                        } elseif (strpos($title, 'sync') !== false || strpos($title, 'config') !== false) {
+                            $commandType = 'sync_config';
+                        }
+                    }
+                    
+                    return [
+                        'id' => $command->id,
+                        'command_type' => $commandType ?? 'unknown',
+                        'title' => $command->title,
+                        'payload' => $payload,
+                        'created_at' => $command->created_at->toIso8601String(),
+                    ];
+                });
+
+            return response()->json([
+                'ok' => true,
+                'commands' => $commands,
+                'count' => $commands->count(),
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Edge commands fetch error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'ok' => false,
+                'error' => 'An error occurred fetching commands'
+            ], 500);
+        }
+    }
+
+    /**
      * Get edge server statistics
      * Mobile app endpoint: GET /edge-servers/stats
      */

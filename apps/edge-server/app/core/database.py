@@ -670,13 +670,26 @@ class CloudDatabase:
         """
         Fetch pending AI commands from Cloud
         
-        Expected Cloud API endpoint: GET /api/v1/ai-commands?edge_server_id=X&status=pending
+        Cloud API endpoint: GET /api/v1/edges/commands?status=queued
+        Returns list of pending commands for Edge Server to execute
         """
-        from main import state
+        success, data = await self._request(
+            "GET",
+            "/api/v1/edges/commands",
+            params={"status": "queued"},
+            retry=False
+        )
         
-        # Get edge server ID from Cloud
-        # For now, we'll use a different approach - Cloud will push commands
-        # But we can poll if needed
+        if not success:
+            logger.warning(f"Failed to fetch pending commands: {data}")
+            return []
+        
+        if success and isinstance(data, dict):
+            commands = data.get('commands', [])
+            if isinstance(commands, list):
+                return commands
+            return []
+        
         return []
 
     async def acknowledge_command(
