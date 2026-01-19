@@ -9,6 +9,7 @@ use App\Models\EdgeServer;
 use App\Models\EdgeNonce;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class VerifyEdgeSignature
@@ -108,7 +109,7 @@ class VerifyEdgeSignature
         // REPLAY PROTECTION: Check if nonce was already used (use database transaction to prevent race condition)
         // CRITICAL: Use DB::transaction with lockForUpdate() to prevent race conditions in concurrent requests
         try {
-            $existingNonce = \DB::transaction(function () use ($nonce) {
+            $existingNonce = DB::transaction(function () use ($nonce) {
                 // Lock the row if it exists to prevent race conditions
                 return EdgeNonce::where('nonce', $nonce)->lockForUpdate()->first();
             });
