@@ -77,7 +77,9 @@ class CameraService
         }
 
         $camera->load(['organization', 'edgeServer']);
-        $this->edgeServerService->syncCameraToEdge($camera);
+        // ⚠️ ARCHITECTURAL FIX: Cloud must never push to Edge.
+        // Camera sync happens via Edge-initiated heartbeat sync, not Cloud push.
+        // $this->edgeServerService->syncCameraToEdge($camera); // DEPRECATED - Camera config provided via heartbeat response
 
         return $camera;
     }
@@ -114,7 +116,9 @@ class CameraService
         });
 
         $camera->load(['organization', 'edgeServer']);
-        $this->edgeServerService->syncCameraToEdge($camera);
+        // ⚠️ ARCHITECTURAL FIX: Cloud must never push to Edge.
+        // Camera sync happens via Edge-initiated heartbeat sync, not Cloud push.
+        // $this->edgeServerService->syncCameraToEdge($camera); // DEPRECATED - Camera config provided via heartbeat response
 
         return $camera;
     }

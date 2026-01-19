@@ -166,308 +166,153 @@ class EdgeServerService
      * @param Camera $camera
      * @return bool
      */
+    /**
+     * ⚠️ DEPRECATED - ARCHITECTURAL VIOLATION
+     * 
+     * This method attempts Cloud→Edge HTTP calls which are architecturally invalid.
+     * Edge servers are behind NAT with no public IP/inbound access.
+     * 
+     * ARCHITECTURAL RULE: Cloud MUST NEVER initiate connections to Edge servers.
+     * 
+     * CORRECT APPROACH:
+     * - Camera configuration is provided to Edge via heartbeat response
+     * - Edge polls Cloud for camera updates during sync
+     * - Edge syncs cameras automatically when processing heartbeat response
+     * 
+     * @param Camera $camera
+     * @return bool Always returns false - sync happens via Edge pull, not Cloud push
+     * @deprecated Camera sync now happens via Edge-initiated heartbeat sync. This method is disabled.
+     */
     public function syncCameraToEdge(Camera $camera): bool
     {
-        $edgeServer = $camera->edgeServer;
+        // ⚠️ ARCHITECTURAL FIX: Cloud must never initiate HTTP connections to Edge servers.
+        // Camera sync happens via Edge-initiated heartbeat sync, not Cloud push.
+        // Edge Server polls Cloud for camera configuration during heartbeat sync.
         
-        if (!$edgeServer) {
-            Log::warning("Camera {$camera->id} has no associated Edge Server");
-            return false;
-        }
+        Log::debug("syncCameraToEdge called but disabled - Camera sync happens via Edge heartbeat sync", [
+            'camera_id' => $camera->id,
+            'note' => 'Camera configuration is synced to Edge via heartbeat response, not direct HTTP calls'
+        ]);
         
-        // Check if Edge Server is online (using last_seen_at for accurate status)
-        $isOnline = false;
-        if ($edgeServer->last_seen_at) {
-            $lastSeen = \Carbon\Carbon::parse($edgeServer->last_seen_at);
-            $isOnline = $lastSeen->isAfter(\Carbon\Carbon::now()->subMinutes(5));
-        }
-        
-        if (!$isOnline && !$edgeServer->online) {
-            // Don't log warning - Edge Server will sync when it comes online
-            return false;
-        }
-
-        try {
-            // Get Edge Server URL (uses internal_ip if available, falls back to ip_address)
-            $edgeUrl = $this->getEdgeServerUrl($edgeServer);
-            if (!$edgeUrl) {
-                // Don't log warning - internal_ip will be available after first heartbeat
-                // Camera sync will happen automatically when Edge Server syncs configuration
-                return false;
-            }
-
-            $config = $camera->config ?? [];
-            $password = null;
-            
-            // Decrypt password if exists
-            if (isset($config['password'])) {
-                try {
-                    $password = Crypt::decryptString($config['password']);
-                } catch (\Exception $e) {
-                    Log::warning("Failed to decrypt camera password: {$e->getMessage()}");
-                }
-            }
-
-            // Map module IDs to Edge Server module names if needed
-            $enabledModules = $config['enabled_modules'] ?? [];
-            $moduleMapping = [
-                'fire_detection' => 'fire',
-                'face_recognition' => 'face',
-                'vehicle_detection' => 'vehicle',
-                'crowd_analysis' => 'crowd',
-                'intrusion_detection' => 'intrusion',
-                'loitering_detection' => 'loitering',
-                'abandoned_object' => 'object',
-                'people_counting' => 'counter',
-                'license_plate' => 'vehicle',
-            ];
-            
-            // Convert module IDs to Edge Server module names
-            $edgeModules = array_map(function($moduleId) use ($moduleMapping) {
-                return $moduleMapping[$moduleId] ?? $moduleId;
-            }, $enabledModules);
-            
-            $payload = [
-                'id' => $camera->camera_id,
-                'name' => $camera->name,
-                'rtsp_url' => $camera->rtsp_url,
-                'location' => $camera->location,
-                'username' => $config['username'] ?? null,
-                'password' => $password,
-                'resolution' => $config['resolution'] ?? '1920x1080',
-                'fps' => $config['fps'] ?? 15,
-                'enabled_modules' => $edgeModules, // Send mapped module names
-            ];
-
-            $this->enforceHttps($edgeUrl);
-
-            // ⚠️ ARCHITECTURAL NOTE: This Cloud→Edge POST will FAIL if Edge is behind NAT.
-            // Better approach: Edge should poll Cloud for camera config changes via heartbeat response,
-            // or Cloud should send config via HMAC-protected command endpoint that Edge queries.
-            
-            Log::info("Syncing camera to Edge Server", [
-                'camera_id' => $camera->camera_id,
-                'edge_url' => $edgeUrl,
-                'modules' => $edgeModules,
-                'warning' => 'Direct Cloud→Edge sync may fail if Edge has no public IP'
-            ]);
-
-            $response = Http::timeout(10)
-                ->retry(2, 100)
-                ->post("{$edgeUrl}/api/v1/cameras", $payload);
-
-            if ($response->successful()) {
-                $responseData = $response->json();
-                Log::info("Camera {$camera->id} synced to Edge Server {$edgeServer->id}", [
-                    'camera_id' => $camera->camera_id,
-                    'edge_response' => $responseData
-                ]);
-                
-                // Update camera status to online if sync successful
-                $camera->update(['status' => 'online']);
-                return true;
-            } else {
-                $errorBody = $response->body();
-                Log::warning("Failed to sync camera to Edge: {$response->status()} - {$errorBody}", [
-                    'camera_id' => $camera->camera_id,
-                    'edge_url' => $edgeUrl,
-                    'payload' => $payload
-                ]);
-                
-                // Update camera status to error if sync failed
-                $camera->update(['status' => 'error']);
-                return false;
-            }
-        } catch (\Exception $e) {
-            Log::error("Error syncing camera to Edge: {$e->getMessage()}", [
-                'camera_id' => $camera->id,
-                'edge_server_id' => $edgeServer->id,
-                'exception' => $e->getTraceAsString()
-            ]);
-            $camera->update(['status' => 'error']);
-            return false;
-        }
+        // Return false to indicate sync is not handled here
+        // Actual sync happens when Edge Server syncs during heartbeat
+        return false;
     }
 
     /**
-     * Remove camera from Edge Server
+     * ⚠️ DEPRECATED - ARCHITECTURAL VIOLATION
      * 
-     * ⚠️ ARCHITECTURAL NOTE: This Cloud→Edge DELETE will FAIL if Edge is behind NAT.
-     * Better approach: Edge should poll Cloud for camera deletions via heartbeat response.
+     * This method attempts Cloud→Edge HTTP calls which are architecturally invalid.
+     * Edge servers are behind NAT with no public IP/inbound access.
+     * 
+     * ARCHITECTURAL RULE: Cloud MUST NEVER initiate connections to Edge servers.
+     * 
+     * CORRECT APPROACH:
+     * - Camera deletion is communicated to Edge via heartbeat response
+     * - Edge polls Cloud for camera updates during sync
+     * - Edge removes cameras automatically when processing heartbeat response
      * 
      * @param Camera $camera
-     * @return bool
+     * @return bool Always returns false - camera removal happens via Edge pull, not Cloud push
+     * @deprecated Camera removal now happens via Edge-initiated heartbeat sync. This method is disabled.
      */
     public function removeCameraFromEdge(Camera $camera): bool
     {
-        $edgeServer = $camera->edgeServer;
+        // ⚠️ ARCHITECTURAL FIX: Cloud must never initiate HTTP connections to Edge servers.
+        // Camera removal happens via Edge-initiated heartbeat sync, not Cloud push.
+        // Edge Server polls Cloud for camera configuration during heartbeat sync.
         
-        if (!$edgeServer || !$edgeServer->ip_address) {
-            return false;
-        }
-
-        try {
-            $edgeUrl = $this->getEdgeServerUrl($edgeServer);
-            if (!$edgeUrl) {
-                return false;
-            }
-
-            $this->enforceHttps($edgeUrl);
-
-            // ⚠️ WARNING: Direct Cloud→Edge DELETE may fail if Edge has no public IP
-            Log::debug("Attempting to remove camera from Edge (may fail for NAT'd Edge)", [
-                'camera_id' => $camera->camera_id,
-                'edge_url' => $edgeUrl
-            ]);
-
-            $response = Http::timeout(5)
-                ->delete("{$edgeUrl}/api/v1/cameras/{$camera->camera_id}");
-
-            if ($response->successful()) {
-                Log::info("Camera {$camera->id} removed from Edge Server {$edgeServer->id}");
-                return true;
-            } else {
-                Log::warning("Failed to remove camera from Edge: {$response->status()}");
-                return false;
-            }
-        } catch (\Exception $e) {
-            Log::error("Error removing camera from Edge: {$e->getMessage()}");
-            return false;
-        }
+        Log::debug("removeCameraFromEdge called but disabled - Camera removal happens via Edge heartbeat sync", [
+            'camera_id' => $camera->id,
+            'note' => 'Camera removal is communicated to Edge via heartbeat response, not direct HTTP calls'
+        ]);
+        
+        return false;
     }
 
     /**
-     * Send AI command to Edge Server
+     * ⚠️ DEPRECATED - ARCHITECTURAL VIOLATION
      * 
-     * ⚠️ ARCHITECTURAL NOTE: This Cloud→Edge POST will FAIL if Edge is behind NAT.
-     * Better approach: Commands should be queued in Cloud database, Edge polls for them
-     * via GET /api/v1/ai-commands?edge_server_id=X&status=pending endpoint.
+     * This method attempts Cloud→Edge HTTP calls which are architecturally invalid.
+     * Edge servers are behind NAT with no public IP/inbound access.
+     * 
+     * ARCHITECTURAL RULE: Cloud MUST NEVER initiate connections to Edge servers.
+     * 
+     * CORRECT APPROACH:
+     * - Commands are stored in edge_commands table with status='pending'
+     * - Edge Server polls Cloud for pending commands via GET /edge/commands during heartbeat
+     * - Edge executes commands locally and acknowledges via POST /edge/commands/{id}/ack
      * 
      * @param EdgeServer $edgeServer
      * @param array $commandData
-     * @return array|null
+     * @return array|null Always returns null - commands are queued, not pushed
+     * @deprecated Use EdgeCommandService::sendCommand() which queues commands in database for Edge to poll.
      */
     public function sendAiCommand(EdgeServer $edgeServer, array $commandData): ?array
     {
-        if (!$edgeServer->ip_address) {
-            return null;
-        }
-
-        try {
-            $edgeUrl = $this->getEdgeServerUrl($edgeServer);
-            if (!$edgeUrl) {
-                return null;
-            }
-
-            $this->enforceHttps($edgeUrl);
-
-            // Only send command metadata, NOT images
-            $payload = [
-                'command_type' => $commandData['command_type'] ?? 'ai_inference',
-                'command_id' => $commandData['command_id'] ?? null,
-                'camera_id' => $commandData['camera_id'] ?? null,
-                'module' => $commandData['module'] ?? null,
-                'parameters' => $commandData['parameters'] ?? [],
-                'image_reference' => $commandData['image_reference'] ?? null, // Reference to image stored on Edge
-            ];
-
-            $response = Http::timeout(30)
-                ->post("{$edgeUrl}/api/v1/commands", $payload);
-
-            if ($response->successful()) {
-                return $response->json();
-            } else {
-                Log::warning("Failed to send AI command to Edge: {$response->status()} - {$response->body()}");
-                return null;
-            }
-        } catch (\Exception $e) {
-            Log::error("Error sending AI command to Edge: {$e->getMessage()}");
-            return null;
-        }
+        // ⚠️ ARCHITECTURAL FIX: Cloud must never initiate HTTP connections to Edge servers.
+        // Commands are queued in database, Edge polls for them.
+        
+        Log::debug("sendAiCommand called but disabled - Commands must be queued for Edge to poll", [
+            'edge_server_id' => $edgeServer->id,
+            'note' => 'Use EdgeCommandService::sendCommand() to queue commands for Edge polling'
+        ]);
+        
+        return null;
     }
 
     /**
-     * Get camera snapshot from Edge Server
+     * ⚠️ DEPRECATED - ARCHITECTURAL VIOLATION
      * 
-     * ⚠️ ARCHITECTURAL ISSUE: This method attempts direct Cloud→Edge connection.
-     * This will FAIL if Edge is behind NAT or has no public IP.
+     * This method attempts Cloud→Edge HTTP calls which are architecturally invalid.
+     * Edge servers are behind NAT with no public IP/inbound access.
      * 
-     * TODO: Refactor to Edge-initiated flow:
-     * - Edge should upload snapshots to Cloud Storage (S3, etc.)
-     * - Edge should send snapshot URLs via heartbeat
-     * - Cloud should retrieve from storage, not from Edge directly
+     * ARCHITECTURAL RULE: Cloud MUST NEVER initiate connections to Edge servers.
+     * 
+     * CORRECT APPROACH (TODO):
+     * - Edge should upload snapshots to Cloud Storage (S3, etc.) periodically
+     * - Edge should send snapshot URLs via heartbeat or events
+     * - Cloud should serve snapshots from storage, not fetch from Edge directly
+     * 
+     * TEMPORARY WORKAROUND:
+     * - Frontend can connect directly to Edge for snapshots (same network)
+     * - Or Edge can push snapshots via heartbeat response
      * 
      * @param Camera $camera
-     * @return array|null
+     * @return array|null Always returns null - snapshots must come from Edge-initiated flow
+     * @deprecated Snapshots must be pushed by Edge or retrieved from Cloud Storage, not pulled by Cloud.
      */
     public function getCameraSnapshot(Camera $camera): ?array
     {
-        $edgeServer = $camera->edgeServer;
+        // ⚠️ ARCHITECTURAL FIX: Cloud must never initiate HTTP connections to Edge servers.
+        // Snapshots should be pushed by Edge or stored in Cloud Storage.
         
-        // CRITICAL: Use internal_ip if available (from system_info in heartbeat)
-        // Fallback to ip_address if internal_ip not available
-        if (!$edgeServer) {
-            return null;
-        }
-
-        try {
-            $edgeUrl = $this->getEdgeServerUrl($edgeServer);
-            if (!$edgeUrl) {
-                return null;
-            }
-
-            $this->enforceHttps($edgeUrl);
-
-            $response = Http::timeout(5)
-                ->get("{$edgeUrl}/api/v1/cameras/{$camera->camera_id}/snapshot");
-
-            if ($response->successful()) {
-                // If response is an image, return base64 encoded
-                $contentType = $response->header('Content-Type');
-                if (str_contains($contentType, 'image')) {
-                    $imageData = base64_encode($response->body());
-                    return [
-                        'image' => "data:{$contentType};base64,{$imageData}",
-                        'timestamp' => now()->toIso8601String(),
-                        'camera_id' => $camera->camera_id,
-                    ];
-                }
-                return $response->json();
-            } else {
-                return null;
-            }
-        } catch (\Exception $e) {
-            // Connection timeout or unreachable Edge Server - don't log as error
-            // This is expected when Edge Server is offline or unreachable
-            $errorMessage = $e->getMessage();
-            $isTimeout = str_contains($errorMessage, 'Connection timed out') || 
-                        str_contains($errorMessage, 'cURL error 28') ||
-                        str_contains($errorMessage, 'timed out');
-            
-            if ($isTimeout) {
-                // Don't log timeout errors - Edge Server may be offline or unreachable
-                Log::debug("Camera snapshot unavailable: Edge Server unreachable or timeout ({$camera->camera_id})");
-            } else {
-                // Log actual errors (not timeouts)
-                Log::warning("Error getting camera snapshot: {$errorMessage}");
-            }
-            return null;
-        }
+        Log::debug("getCameraSnapshot called but disabled - Snapshots must come from Edge-initiated flow", [
+            'camera_id' => $camera->id,
+            'note' => 'Snapshots should be uploaded by Edge to Cloud Storage or sent via heartbeat'
+        ]);
+        
+        // Return null - Frontend should connect directly to Edge or use stored snapshots
+        return null;
     }
 
     /**
      * Get HLS stream URL from Edge Server
      * 
+     * ⚠️ METADATA ONLY - NO HTTP CALLS
+     * This method only constructs URL strings for frontend use.
+     * Cloud does NOT initiate HTTP connections to Edge servers.
+     * 
      * CRITICAL RULE: Live streaming MUST be edge-only
      * - Video traffic NEVER passes through cloud
      * - Cloud ONLY provides metadata (URL construction)
-     * - Live video streams directly from edge server to client
+     * - Live video streams directly from edge server to client (browser connects directly)
      * 
      * ⚠️ ARCHITECTURAL NOTE: Edge IP-based URLs require edge to have public IP or NAT traversal.
      * For NAT'd edges, use WebRTC/TURN or Edge-initiated streaming.
      * 
      * @param Camera $camera
-     * @return string|null Edge server URL for HLS stream (NEVER cloud-proxied)
+     * @return string|null Edge server URL for HLS stream (NEVER cloud-proxied, frontend connects directly)
      */
     public function getHlsStreamUrl(Camera $camera): ?string
     {
@@ -500,13 +345,17 @@ class EdgeServerService
     /**
      * Get WebRTC signaling endpoint from Edge Server
      * 
-     * ⚠️ ARCHITECTURAL ISSUE: This returns Edge IP-based URLs which won't work
+     * ⚠️ METADATA ONLY - NO HTTP CALLS
+     * This method only constructs URL strings for frontend use.
+     * Cloud does NOT initiate HTTP connections to Edge servers.
+     * 
+     * ⚠️ ARCHITECTURAL NOTE: This returns Edge IP-based URLs which won't work
      * if Edge is behind NAT or has no public IP.
      * 
      * TODO: Refactor to use TURN server or Edge-initiated WebRTC signaling.
      * 
      * @param Camera $camera
-     * @return string|null
+     * @return string|null WebRTC endpoint URL (frontend connects directly, Cloud only provides metadata)
      */
     public function getWebRtcEndpoint(Camera $camera): ?string
     {
@@ -529,8 +378,16 @@ class EdgeServerService
     /**
      * Get Edge Server base URL
      * 
+     * ⚠️ METADATA ONLY - NOT FOR HTTP CALLS
+     * This method only constructs URL strings for metadata/URL generation.
+     * MUST NOT be used to initiate Cloud→Edge HTTP connections.
+     * 
+     * Used only for:
+     * - Constructing stream URLs for frontend (getHlsStreamUrl, getWebRtcEndpoint)
+     * - NOT for direct HTTP calls (use Edge-initiated polling instead)
+     * 
      * @param EdgeServer $edgeServer
-     * @return string|null
+     * @return string|null Edge Server base URL (for metadata only, not HTTP calls)
      */
     private function getEdgeServerUrl(EdgeServer $edgeServer): ?string
     {

@@ -213,29 +213,20 @@ class EdgeController extends Controller
             'meta' => ['requested_at' => now()->toIso8601String(), 'requested_by' => $user->id],
         ]);
 
-        // Send sync command using EdgeCommandService with HMAC authentication
+        // Send sync command using EdgeCommandService - command queued in database for Edge to poll
         $commandService = app(EdgeCommandService::class);
         $result = $commandService->syncConfig($edgeServer);
 
-        if ($result['success']) {
-            // Also sync all cameras for this edge server
-            $cameras = \App\Models\Camera::where('edge_server_id', $edgeServer->id)
-                ->where('status', '!=', 'deleted')
-                ->get();
-            
-            $edgeServerService = app(\App\Services\EdgeServerService::class);
-            $syncedCount = 0;
-            foreach ($cameras as $camera) {
-                if ($edgeServerService->syncCameraToEdge($camera)) {
-                    $syncedCount++;
-                }
-            }
+        // ⚠️ ARCHITECTURAL FIX: Cloud must never push camera configs to Edge.
+        // Camera configuration is provided to Edge via heartbeat response during sync.
+        // Edge Server automatically syncs all cameras when processing heartbeat response.
+        // No direct Cloud→Edge HTTP calls needed.
 
+        if ($result['success']) {
             return response()->json([
                 'success' => true,
                 'message' => $result['message'],
-                'cameras_synced' => $syncedCount,
-                'total_cameras' => $cameras->count(),
+                'note' => 'Configuration will be synced when Edge Server processes next heartbeat',
                 'data' => $result['data'] ?? null
             ]);
         } else {
