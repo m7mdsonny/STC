@@ -156,16 +156,6 @@ class AiCommandController extends Controller
 
         // Note: Edge Server will update command status when it polls and executes
         // For now, command remains in 'queued' status until Edge processes it
-                    $command->update(['status' => 'executing']);
-                    return response()->json([
-                        'command' => $command->load('logs'),
-                        'edge_response' => $edgeResponse,
-                    ], 201);
-                }
-            }
-        } catch (\Exception $e) {
-            \Log::error("Error executing AI command: {$e->getMessage()}");
-        }
 
         return response()->json(['command' => $command->load('logs')], 201);
     }
