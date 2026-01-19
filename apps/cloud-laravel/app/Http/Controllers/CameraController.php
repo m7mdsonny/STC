@@ -144,28 +144,23 @@ class CameraController extends Controller
             $this->ensureOrganizationAccess(request(), $camera->organization_id);
         }
 
-        // Get snapshot from Edge Server
-        try {
-            $snapshot = $this->edgeServerService->getCameraSnapshot($camera);
-            
-            if ($snapshot) {
-                // Ensure snapshot_url is present for frontend compatibility
-                $response = $snapshot;
-                if (isset($snapshot['image']) && !isset($snapshot['snapshot_url'])) {
-                    $response['snapshot_url'] = $snapshot['image'];
-                }
-                return response()->json($response);
-            }
-        } catch (\Exception $e) {
-            \Log::warning("Failed to get camera snapshot: {$e->getMessage()}");
-        }
-
-        // Return placeholder if Edge Server unavailable
+        // ⚠️ ARCHITECTURAL FIX: Cloud cannot initiate connections to Edge Server
+        // getCameraSnapshot() is deprecated and disabled
+        // Snapshots must be:
+        // 1. Pushed by Edge Server to Cloud Storage periodically, OR
+        // 2. Retrieved by frontend directly from Edge Server (same network)
+        
+        // Return metadata only - frontend should connect directly to Edge or use stored snapshots
+        $edgeUrl = $this->edgeServerService->getEdgeServerUrl($camera->edgeServer);
+        $snapshotUrl = $edgeUrl ? "{$edgeUrl}/api/v1/cameras/{$camera->camera_id}/snapshot" : null;
+        
         return response()->json([
             'image' => null,
+            'snapshot_url' => $snapshotUrl, // URL for frontend to fetch directly
             'timestamp' => now()->toIso8601String(),
             'camera_id' => $camera->camera_id,
-            'error' => 'Edge Server unavailable',
+            'note' => 'Frontend should connect directly to Edge Server or use stored snapshots',
+            'edge_server_url' => $edgeUrl,
         ]);
     }
 

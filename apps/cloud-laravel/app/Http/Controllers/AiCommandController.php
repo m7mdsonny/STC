@@ -86,48 +86,18 @@ class AiCommandController extends Controller
             'message' => 'Command created and queued for execution',
         ]);
 
-        // Send command to Edge Server if payload contains camera_id
-        try {
-            $payload = $data['payload'] ?? [];
-            if (isset($payload['camera_id'])) {
-                $camera = Camera::where('camera_id', $payload['camera_id'])
-                    ->where('organization_id', $organizationId)
-                    ->first();
-                
-                if ($camera && $camera->edgeServer) {
-                    $edgeService = new EdgeServerService();
-                    $edgeResponse = $edgeService->sendAiCommand($camera->edgeServer, [
-                        'command_id' => $command->id,
-                        ...$payload,
-                    ]);
-
-                    if ($edgeResponse) {
-                        $command->update(['status' => 'executing']);
-                        AiCommandLog::create([
-                            'ai_command_id' => $command->id,
-                            'status' => 'executing',
-                            'message' => 'Command sent to Edge Server',
-                            'meta' => $edgeResponse,
-                        ]);
-                    } else {
-                        $command->update(['status' => 'failed']);
-                        AiCommandLog::create([
-                            'ai_command_id' => $command->id,
-                            'status' => 'failed',
-                            'message' => 'Failed to send command to Edge Server',
-                        ]);
-                    }
-                }
-            }
-        } catch (\Exception $e) {
-            \Log::error("Error sending AI command to Edge: {$e->getMessage()}");
-            $command->update(['status' => 'failed']);
-            AiCommandLog::create([
-                'ai_command_id' => $command->id,
-                'status' => 'failed',
-                'message' => 'Error: ' . $e->getMessage(),
-            ]);
-        }
+        // ⚠️ ARCHITECTURAL FIX: Cloud cannot initiate connections to Edge Server
+        // sendAiCommand() is deprecated and disabled
+        // Commands are queued in database - Edge Server will poll for them via heartbeat/sync
+        
+        // Command is queued in database (ai_commands table)
+        // Edge Server will fetch commands during next heartbeat/sync cycle
+        // Status will be updated when Edge acknowledges command execution
+        
+        \Log::info("AI command queued - Edge Server will fetch on next sync", [
+            'command_id' => $command->id,
+            'camera_id' => $data['payload']['camera_id'] ?? null,
+        ]);
 
         return response()->json($command->load('logs'), 201);
     }
@@ -172,21 +142,20 @@ class AiCommandController extends Controller
             'status' => 'queued',
         ]);
 
-        // Send to Edge Server
-        try {
-            $edgeServer = $camera->edgeServer;
-            if ($edgeServer) {
-                $edgeService = new EdgeServerService();
-                $edgeResponse = $edgeService->sendAiCommand($edgeServer, [
-                    'command_id' => $command->id,
-                    'command_type' => $data['command_type'],
-                    'camera_id' => $camera->camera_id,
-                    'module' => $data['module'],
-                    'parameters' => $data['parameters'] ?? [],
-                    'image_reference' => $data['image_reference'] ?? null,
-                ]);
+        // ⚠️ ARCHITECTURAL FIX: Cloud cannot initiate connections to Edge Server
+        // sendAiCommand() is deprecated and disabled
+        // Commands are queued in database - Edge Server will poll for them via heartbeat/sync
+        
+        // Command is queued in database (ai_commands table)
+        // Edge Server will fetch commands during next heartbeat/sync cycle
+        
+        \Log::info("AI command queued - Edge Server will fetch on next sync", [
+            'command_id' => $command->id,
+            'camera_id' => $camera->camera_id,
+        ]);
 
-                if ($edgeResponse) {
+        // Note: Edge Server will update command status when it polls and executes
+        // For now, command remains in 'queued' status until Edge processes it
                     $command->update(['status' => 'executing']);
                     return response()->json([
                         'command' => $command->load('logs'),
