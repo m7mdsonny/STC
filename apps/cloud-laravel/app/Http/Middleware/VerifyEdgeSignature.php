@@ -105,21 +105,39 @@ class VerifyEdgeSignature
             ], 401);
         }
 
-        // REPLAY PROTECTION: Check if nonce was already used
-        $existingNonce = EdgeNonce::where('nonce', $nonce)->first();
-        if ($existingNonce) {
-            Log::warning('Edge signature verification failed: nonce already used (replay attack)', [
+        // REPLAY PROTECTION: Check if nonce was already used (use database transaction to prevent race condition)
+        // CRITICAL: Use DB::transaction with lockForUpdate() to prevent race conditions in concurrent requests
+        try {
+            $existingNonce = \DB::transaction(function () use ($nonce) {
+                // Lock the row if it exists to prevent race conditions
+                return EdgeNonce::where('nonce', $nonce)->lockForUpdate()->first();
+            });
+            
+            if ($existingNonce) {
+                Log::warning('Edge signature verification failed: nonce already used (replay attack)', [
+                    'edge_key' => $edgeKey,
+                    'edge_server_id' => $edgeServer->id ?? null,
+                    'nonce' => substr($nonce, 0, 16) . '...',
+                    'used_at' => $existingNonce->used_at,
+                    'ip' => $request->ip(),
+                    'path' => $request->path(),
+                ]);
+                return response()->json([
+                    'message' => 'Request nonce already used (replay attack detected)',
+                    'error' => 'nonce_reused'
+                ], 401);
+            }
+        } catch (\Exception $e) {
+            // If transaction fails, log and reject request to be safe
+            Log::error('Error checking nonce in transaction', [
+                'error' => $e->getMessage(),
                 'edge_key' => $edgeKey,
-                'edge_server_id' => $edgeServer->id ?? null,
                 'nonce' => substr($nonce, 0, 16) . '...',
-                'used_at' => $existingNonce->used_at,
-                'ip' => $request->ip(),
-                'path' => $request->path(),
             ]);
             return response()->json([
-                'message' => 'Request nonce already used (replay attack detected)',
-                'error' => 'nonce_reused'
-            ], 401);
+                'message' => 'Internal server error during nonce verification',
+                'error' => 'nonce_check_failed'
+            ], 500);
         }
 
         // Build signature string: method|path|timestamp|body_hash
@@ -160,13 +178,33 @@ class VerifyEdgeSignature
             ], 401);
         }
 
-        // REPLAY PROTECTION: Store nonce to prevent reuse
-        EdgeNonce::create([
-            'nonce' => $nonce,
-            'edge_server_id' => $edgeServer->id,
-            'ip_address' => $request->ip(),
-            'used_at' => Carbon::now(),
-        ]);
+        // REPLAY PROTECTION: Store nonce to prevent reuse (atomic insert with error handling)
+        // CRITICAL: Use try-catch to handle duplicate key errors from race conditions
+        try {
+            EdgeNonce::create([
+                'nonce' => $nonce,
+                'edge_server_id' => $edgeServer->id,
+                'ip_address' => $request->ip(),
+                'used_at' => Carbon::now(),
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Handle duplicate key error (race condition: another request inserted same nonce)
+            if ($e->getCode() == 23000 || str_contains($e->getMessage(), 'Duplicate entry')) {
+                Log::warning('Edge signature verification failed: nonce duplicate key (race condition)', [
+                    'edge_key' => $edgeKey,
+                    'edge_server_id' => $edgeServer->id ?? null,
+                    'nonce' => substr($nonce, 0, 16) . '...',
+                    'ip' => $request->ip(),
+                    'path' => $request->path(),
+                ]);
+                return response()->json([
+                    'message' => 'Request nonce already used (replay attack detected)',
+                    'error' => 'nonce_reused'
+                ], 401);
+            }
+            // Re-throw if it's a different database error
+            throw $e;
+        }
 
         // Cleanup old nonces (older than 10 minutes) - prevent table bloat
         EdgeNonce::where('used_at', '<', Carbon::now()->subMinutes(10))->delete();

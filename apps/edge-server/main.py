@@ -275,9 +275,9 @@ async def start_services():
                         },
                     }
                     await state.db.submit_analytics(analytics_data)
-                    # Small delay (10ms) between requests to ensure unique timestamps/nonces
+                    # Small delay (50ms) between requests to ensure unique timestamps/nonces and reduce race conditions
                     if idx < len(enabled_modules) - 1:
-                        await asyncio.sleep(0.01)
+                        await asyncio.sleep(0.05)
             
             elif modules_processed:
                 # Send analytics event for each processed module to enable module activity tracking
@@ -300,9 +300,9 @@ async def start_services():
                         },
                     }
                     await state.db.submit_analytics(analytics_data)
-                    # Small delay (10ms) between requests to ensure unique timestamps/nonces
+                    # Small delay (50ms) between requests to ensure unique timestamps/nonces and reduce race conditions
                     if idx < len(modules_processed) - 1:
-                        await asyncio.sleep(0.01)
+                        await asyncio.sleep(0.05)
             elif detections:
                 # Fallback: If no module_activity but we have detections, send aggregate analytics
                 # CRITICAL: Extract module from first detection if available, otherwise use enabled_modules[0]
