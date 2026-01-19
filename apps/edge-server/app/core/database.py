@@ -179,6 +179,10 @@ class CloudDatabase:
         
         # Use HMAC signing for Edge endpoints (if credentials are available)
         # CRITICAL: Allow initial heartbeat without HMAC during first-time registration
+        # CRITICAL: HMAC signature must be regenerated on each retry to get a new nonce
+        use_hmac = False
+        signer = None
+        path = None
         if is_edge_endpoint:
             # Load credentials if not already loaded
             if not self._edge_key or not self._edge_secret:
@@ -191,30 +195,13 @@ class CloudDatabase:
                     logger.error("HMACSigner not available - cannot authenticate Edge requests")
                     return False, "HMAC authentication not available"
                 
-                # Generate HMAC signature
+                # Create signer instance (will be reused for retries)
                 signer = HMACSigner(self._edge_key, self._edge_secret)
                 # CRITICAL: Cloud uses $request->path() which returns path WITHOUT leading slash
                 # Laravel path() returns "api/v1/edges/heartbeat" not "/api/v1/edges/heartbeat"
                 # Remove leading slash to match Cloud's expectation
                 path = endpoint.lstrip('/')
-                sig_headers_raw = signer.generate_signature(method.upper(), path, body_bytes)
-                
-                # CRITICAL: Handle case where generate_signature returns tuple (dict, nonce)
-                # Extract dict from tuple if needed
-                if isinstance(sig_headers_raw, tuple) and len(sig_headers_raw) == 2:
-                    # Tuple format: (headers_dict, nonce) - extract dict
-                    sig_headers = sig_headers_raw[0] if isinstance(sig_headers_raw[0], dict) else {}
-                    logger.debug(f"Extracted dict from tuple return: nonce={sig_headers_raw[1]}")
-                elif isinstance(sig_headers_raw, dict):
-                    sig_headers = sig_headers_raw
-                else:
-                    logger.error(f"HMACSigner.generate_signature returned unexpected type: {type(sig_headers_raw)}, value: {sig_headers_raw}")
-                    sig_headers = {}
-                
-                # Add HMAC headers and remove Bearer token
-                headers.update(sig_headers)
-                headers.pop('Authorization', None)  # Remove Bearer token for Edge endpoints
-                
+                use_hmac = True
                 logger.debug(f"Using HMAC authentication for {endpoint}")
             else:
                 # Initial registration - send without HMAC
@@ -236,12 +223,35 @@ class CloudDatabase:
                 request_kwargs[key] = clean_value(value) if 'clean_value' in globals() else value
             else:
                 request_kwargs[key] = value
-        request_kwargs['headers'] = headers
 
         attempts = self._retry_count if retry else 1
         last_error = None
 
         for attempt in range(attempts):
+            # CRITICAL: Regenerate HMAC signature (and nonce) on each retry attempt
+            # This ensures each retry uses a unique nonce, preventing "nonce already used" errors
+            if use_hmac and signer and path:
+                sig_headers_raw = signer.generate_signature(method.upper(), path, body_bytes)
+                
+                # CRITICAL: Handle case where generate_signature returns tuple (dict, nonce)
+                # Extract dict from tuple if needed
+                if isinstance(sig_headers_raw, tuple) and len(sig_headers_raw) == 2:
+                    # Tuple format: (headers_dict, nonce) - extract dict
+                    sig_headers = sig_headers_raw[0] if isinstance(sig_headers_raw[0], dict) else {}
+                    logger.debug(f"Extracted dict from tuple return: nonce={sig_headers_raw[1]}")
+                elif isinstance(sig_headers_raw, dict):
+                    sig_headers = sig_headers_raw
+                else:
+                    logger.error(f"HMACSigner.generate_signature returned unexpected type: {type(sig_headers_raw)}, value: {sig_headers_raw}")
+                    sig_headers = {}
+                
+                # Update headers with fresh HMAC signature (new nonce on each retry)
+                current_headers = {k: v for k, v in headers.items()}
+                current_headers.update(sig_headers)
+                current_headers.pop('Authorization', None)  # Remove Bearer token for Edge endpoints
+                request_kwargs['headers'] = current_headers
+            else:
+                request_kwargs['headers'] = headers
             try:
                 # CRITICAL: Log request_kwargs to debug dict conversion errors
                 logger.debug(f"Request kwargs keys: {list(request_kwargs.keys())}")

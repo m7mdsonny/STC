@@ -6,12 +6,18 @@ import hmac
 import hashlib
 import time
 import uuid
+import threading
 from typing import Dict, Optional
 from loguru import logger
 
 
 class HMACSigner:
     """Handles HMAC signature generation for Edge Server requests"""
+    
+    # Class-level nonce counter and lock for thread-safe unique nonce generation
+    _nonce_counter = 0
+    _nonce_lock = threading.Lock()
+    _last_timestamp = 0
     
     def __init__(self, edge_key: str, edge_secret: str):
         self.edge_key = edge_key
@@ -39,8 +45,21 @@ class HMACSigner:
         if timestamp is None:
             timestamp = int(time.time())
         
-        # Generate nonce for replay protection (required by Cloud)
-        nonce = str(uuid.uuid4())
+        # Generate unique nonce for replay protection (required by Cloud)
+        # CRITICAL: Use timestamp + counter + UUID to ensure absolute uniqueness
+        # even under high concurrency or retry scenarios
+        with HMACSigner._nonce_lock:
+            current_timestamp = time.time_ns()  # Nanosecond precision
+            
+            # Reset counter if timestamp changed (new second)
+            if current_timestamp // 1_000_000_000 != HMACSigner._last_timestamp // 1_000_000_000:
+                HMACSigner._nonce_counter = 0
+            
+            HMACSigner._nonce_counter += 1
+            HMACSigner._last_timestamp = current_timestamp
+            
+            # Combine timestamp (ns), counter, and UUID for absolute uniqueness
+            nonce = f"{current_timestamp}-{HMACSigner._nonce_counter}-{uuid.uuid4().hex[:16]}"
         
         # Calculate body hash
         body_hash = hashlib.sha256(body).hexdigest()
