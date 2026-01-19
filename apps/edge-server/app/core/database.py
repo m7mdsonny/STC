@@ -300,7 +300,26 @@ class CloudDatabase:
                     return False, "Forbidden"
                 elif response.status_code == 422:
                     error_data = response.json() if response.text else {}
-                    return False, error_data.get('message', 'Validation error')
+                    error_msg = error_data.get('message', 'Validation error')
+                    # Log validation errors with more detail
+                    if is_edge_endpoint:
+                        logger.error(f"Validation error for {endpoint}: {error_msg}")
+                        if 'errors' in error_data:
+                            logger.error(f"Validation details: {error_data['errors']}")
+                    return False, error_msg
+                elif response.status_code >= 500:
+                    # Server errors - log full response for debugging
+                    error_data = {}
+                    try:
+                        if response.text:
+                            error_data = response.json()
+                    except:
+                        pass
+                    error_msg = error_data.get('message', f'Server Error {response.status_code}')
+                    logger.error(f"Server error {response.status_code} for {endpoint}: {error_msg}")
+                    if error_data.get('error') or error_data.get('trace'):
+                        logger.debug(f"Server error details: {error_data}")
+                    last_error = f"Error {response.status_code}: {error_msg}"
                 else:
                     last_error = f"Error {response.status_code}: {response.text[:200]}"
 
@@ -762,8 +781,8 @@ class CloudDatabase:
         events_payload = []
         for event_data in analytics_events:
             # Map to Cloud API format
+            # CRITICAL: Do NOT include edge_id in payload - server extracts it from HMAC auth middleware
             payload = {
-                "edge_id": state.edge_id or state.hardware_id,
                 "event_type": event_data.get('type') or event_data.get('event_type') or 'analytics',
                 "severity": event_data.get('severity', 'info'),
                 "occurred_at": event_data.get('occurred_at') or datetime.utcnow().isoformat(),
@@ -785,6 +804,13 @@ class CloudDatabase:
             events_payload.append(payload)
         
         # Send batch request (single nonce for all events!)
+        # CRITICAL: edge_id is NOT included - server extracts it from HMAC auth middleware
+        
+        # Log payload for debugging (without sensitive data)
+        logger.debug(f"Sending batch analytics: {len(events_payload)} events")
+        if events_payload:
+            logger.debug(f"First event sample: type={events_payload[0].get('event_type')}, module={events_payload[0].get('meta', {}).get('module')}")
+        
         success, result = await self._request(
             "POST",
             "/api/v1/edges/events/batch",
@@ -795,7 +821,13 @@ class CloudDatabase:
             logger.info(f"Batch analytics sent: {len(events_payload)} events")
             return True
         else:
-            logger.warning(f"Failed to send batch analytics: {result}")
+            # Enhanced error logging
+            error_msg = result if isinstance(result, str) else str(result)
+            logger.error(f"Failed to send batch analytics: {error_msg}")
+            logger.error(f"Batch size: {len(events_payload)} events")
+            if events_payload:
+                logger.error(f"Sample event structure: {list(events_payload[0].keys())}")
+                logger.error(f"Sample event data: {events_payload[0]}")
             return False
 
     async def check_module_entitlement(self, license_id: str, module: str) -> bool:
