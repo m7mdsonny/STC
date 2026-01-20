@@ -37,13 +37,17 @@ class VerifyEdgeSignature
 
         // Check required headers - ALL must be present for HMAC authentication
         if (!$edgeKey || !$timestamp || !$signature) {
-            Log::warning('Edge signature verification failed: missing headers', [
-                'edge_key' => $edgeKey ? 'present' : 'missing',
-                'timestamp' => $timestamp ? 'present' : 'missing',
-                'signature' => $signature ? 'present' : 'missing',
-                'ip' => $request->ip(),
-                'path' => $request->path(),
-            ]);
+            // Use LogDeduplication to prevent spam logs for missing headers
+            $logKey = 'edge_signature_missing_headers:' . $request->ip() . ':' . $request->path();
+            if (\App\Models\LogDeduplication::shouldLog($logKey, now()->addMinutes(5))) {
+                Log::warning('Edge signature verification failed: missing headers', [
+                    'edge_key' => $edgeKey ? 'present' : 'missing',
+                    'timestamp' => $timestamp ? 'present' : 'missing',
+                    'signature' => $signature ? 'present' : 'missing',
+                    'ip' => $request->ip(),
+                    'path' => $request->path(),
+                ]);
+            }
             return response()->json([
                 'message' => 'Missing required authentication headers (X-EDGE-KEY, X-EDGE-TIMESTAMP, X-EDGE-SIGNATURE)',
                 'error' => 'authentication_required'

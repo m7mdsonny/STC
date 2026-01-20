@@ -93,12 +93,44 @@ class Handler extends ExceptionHandler
      */
     protected function unauthenticated($request, AuthenticationException $exception)
     {
+        // CRITICAL: For API routes, always return JSON (never redirect)
         if ($request->expectsJson() || $request->is('api/*')) {
             return response()->json([
                 'message' => 'Unauthenticated.',
+                'error' => 'authentication_required'
             ], 401);
         }
 
-        return redirect()->guest('/login');
+        // For web routes, redirect to login (if route exists)
+        // Check if login route exists before redirecting
+        try {
+            return redirect()->guest(route('login'));
+        } catch (\Illuminate\Routing\Exceptions\RouteNotFoundException $e) {
+            // If login route doesn't exist (API-only app), return JSON anyway
+            return response()->json([
+                'message' => 'Unauthenticated.',
+                'error' => 'authentication_required'
+            ], 401);
+        }
+    }
+
+    /**
+     * Get the redirect URL for authentication exception.
+     * This prevents Laravel 11 from trying to use route('login') before unauthenticated() is called.
+     */
+    protected function redirectTo($request)
+    {
+        // For API routes, return null to prevent redirect attempt
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return null;
+        }
+        
+        // For web routes, check if login route exists
+        try {
+            return route('login');
+        } catch (\Illuminate\Routing\Exceptions\RouteNotFoundException $e) {
+            // If login route doesn't exist, return null
+            return null;
+        }
     }
 }
