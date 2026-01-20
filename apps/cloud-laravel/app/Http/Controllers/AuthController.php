@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Http\JsonResponse;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
@@ -88,18 +89,20 @@ class AuthController extends Controller
             $user->makeVisible(['role']);
 
             // CRITICAL: Clear rate limit cache on successful login to prevent lockout
-            // Laravel throttle middleware uses format: cache:throttle:{identifier}
-            // The identifier is typically the IP address for API routes
-            $throttleKey = 'throttle_' . sha1($request->ip() . '|api/v1/auth/login');
+            // Laravel throttle middleware generates keys based on route and IP
+            // We need to clear the rate limit that was set by the throttle middleware
+            // The key format for throttle:10,1 is typically: throttle:10,1:{hashed_identifier}
+            $identifier = $request->ip();
+            $throttleKey = 'login-attempts:' . $identifier;
             
-            // Try to clear both possible key formats Laravel might use
-            \Illuminate\Support\Facades\Cache::forget($throttleKey);
-            \Illuminate\Support\Facades\Cache::forget(config('cache.prefix', 'laravel_cache_') . $throttleKey);
+            // Clear using RateLimiter facade (recommended method)
+            RateLimiter::clear($throttleKey);
             
-            // Also clear using IP-based key (most common format)
-            $ipKey = 'throttle:10,1:' . sha1($request->ip() . '|api/v1/auth/login');
-            \Illuminate\Support\Facades\Cache::forget($ipKey);
-            \Illuminate\Support\Facades\Cache::forget(config('cache.prefix', 'laravel_cache_') . $ipKey);
+            // Also try clearing using the actual throttle middleware key format
+            // Laravel generates keys as: md5('throttle:10,1' . $identifier) 
+            $middlewareKey = md5('throttle:10,1' . $identifier);
+            \Illuminate\Support\Facades\Cache::forget($middlewareKey);
+            \Illuminate\Support\Facades\Cache::forget(config('cache.prefix', 'laravel_cache_') . $middlewareKey);
 
             // Create token
             $token = $user->createToken('api')->plainTextToken;
