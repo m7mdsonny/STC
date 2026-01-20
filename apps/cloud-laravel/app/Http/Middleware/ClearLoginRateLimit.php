@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Cache\RateLimiter as CacheRateLimiter;
 
 /**
  * Clear login rate limit on successful login
@@ -42,33 +43,64 @@ class ClearLoginRateLimit
     }
 
     /**
-     * Clear rate limit using multiple methods to ensure it works
+     * Clear rate limit using Laravel's exact throttle key format
      */
     protected function clearRateLimit(Request $request)
     {
         try {
-            // Get identifier (IP address by default)
+            // Laravel's throttle middleware uses resolveRequestSignature() to get identifier
             $identifier = $request->ip() ?? $request->userAgent() ?? 'unknown';
             
-            // Method 1: Try using RateLimiter::clear() with the throttle key format
-            // Laravel throttle middleware uses: md5('throttle:{max}:{per}' . $identifier)
-            $throttleKey = md5('throttle:10,1' . $identifier);
-            RateLimiter::clear($throttleKey);
+            // Laravel throttle middleware key format:
+            // For throttle:20,1, it uses: md5('throttle:20,1' . $identifier)
+            $key = md5('throttle:20,1' . $identifier);
             
-            // Method 2: Clear using cache directly with prefix
+            // Also try the old key format in case it was cached with old limit
+            $oldKey = md5('throttle:10,1' . $identifier);
+            
+            // Method 1: Use RateLimiter facade to clear (Laravel's official way)
+            RateLimiter::clear($key);
+            RateLimiter::clear($oldKey); // Clear old key format too
+            
+            // Method 2: Clear from cache directly (in case RateLimiter doesn't work)
+            // Laravel stores throttle data in cache with the key format above
+            $cacheStore = Cache::store();
+            $cacheStore->forget($key);
+            $cacheStore->forget($oldKey);
+            
+            // Method 3: Try with cache prefix if configured
             $cachePrefix = config('cache.prefix', '');
             if ($cachePrefix) {
-                Cache::forget($cachePrefix . $throttleKey);
-                Cache::forget($cachePrefix . 'throttle:10,1:' . $identifier);
+                $cacheStore->forget($cachePrefix . $key);
+                $cacheStore->forget($cachePrefix . $oldKey);
+                $cacheStore->forget($cachePrefix . 'throttle:20,1:' . $identifier);
+                $cacheStore->forget($cachePrefix . 'throttle:10,1:' . $identifier);
             }
             
-            // Method 3: Clear without prefix (for some cache drivers)
-            Cache::forget($throttleKey);
-            Cache::forget('throttle:10,1:' . $identifier);
+            // Method 4: Clear all possible key variations (comprehensive cleanup)
+            $variations = [
+                $key,
+                $oldKey,
+                'throttle:20,1:' . $identifier,
+                'throttle:10,1:' . $identifier,
+                md5('throttle:20,1:' . $identifier),
+                md5('throttle:10,1:' . $identifier),
+                sha1('throttle:20,1' . $identifier),
+                sha1('throttle:10,1' . $identifier),
+                'rate_limit:' . $key,
+                'rate_limit:' . $oldKey,
+            ];
             
-            // Method 4: Try alternative key formats Laravel might use
-            Cache::forget(md5('throttle:10,1:' . $identifier));
-            Cache::forget(sha1('throttle:10,1' . $identifier));
+            foreach ($variations as $variation) {
+                try {
+                    $cacheStore->forget($variation);
+                    if ($cachePrefix) {
+                        $cacheStore->forget($cachePrefix . $variation);
+                    }
+                } catch (\Exception $e) {
+                    // Ignore individual failures
+                }
+            }
             
         } catch (\Exception $e) {
             // Log but don't throw - clearing rate limit is a best-effort operation
