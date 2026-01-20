@@ -27,6 +27,7 @@ class EnforceDomainServices
         
         // Edge server endpoints (HMAC-authenticated, not user-authenticated)
         'api/v1/edges/events',
+        'api/v1/edges/events/batch',
         'api/v1/edges/heartbeat',
     ];
 

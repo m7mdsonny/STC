@@ -81,11 +81,15 @@ abstract class Controller extends BaseController
     {
         $request = request();
         
+        // Skip domain service enforcement for Edge API endpoints (HMAC-authenticated, not user-authenticated)
+        $isEdgeRoute = str_starts_with($request->path(), 'api/v1/edges/');
+        
         // Only enforce domain service usage for mutation requests (non-GET/HEAD/OPTIONS)
-        // and only if user is authenticated (public routes are exempt)
+        // and only if user is authenticated (public routes and edge routes are exempt)
         if ($request instanceof Request 
             && !in_array(strtoupper($request->method()), ['GET', 'HEAD', 'OPTIONS'])
             && $request->user() // Only enforce if user is authenticated
+            && !$isEdgeRoute // Skip Edge routes (HMAC-authenticated, not user-authenticated)
         ) {
             /** @var DomainActionService $service */
             $service = App::make(DomainActionService::class);
