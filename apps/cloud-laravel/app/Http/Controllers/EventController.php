@@ -214,21 +214,31 @@ class EventController extends Controller
                     // Check if module is enabled
                     if ($aiModule) {
                         try {
-                            $organization = $edge->organization;
-                            if ($organization && !$this->subscriptionService->isModuleEnabled($organization, $aiModule)) {
-                                $failed[] = [
-                                    'index' => count($created) + count($failed),
-                                    'error' => 'module_disabled',
-                                    'module' => $aiModule,
-                                ];
-                                continue;
+                            // Use organization_id directly instead of loading relationship to avoid authorization issues
+                            $organizationId = $edge->organization_id;
+                            if ($organizationId) {
+                                $organization = \App\Models\Organization::find($organizationId);
+                                if ($organization && !$this->subscriptionService->isModuleEnabled($organization, $aiModule)) {
+                                    $failed[] = [
+                                        'index' => count($created) + count($failed),
+                                        'error' => 'module_disabled',
+                                        'module' => $aiModule,
+                                    ];
+                                    continue;
+                                }
                             }
                         } catch (\Exception $e) {
-                            Log::warning('Error checking module enabled status', [
-                                'error' => $e->getMessage(),
-                                'ai_module' => $aiModule,
-                                'edge_id' => $edge->id,
-                            ]);
+                            // Log error only once per minute to reduce noise
+                            $logKey = "module_check_error_{$edge->id}_{$aiModule}";
+                            if (!\Illuminate\Support\Facades\Cache::has($logKey)) {
+                                Log::warning('Error checking module enabled status', [
+                                    'error' => $e->getMessage(),
+                                    'ai_module' => $aiModule,
+                                    'edge_id' => $edge->id,
+                                    'organization_id' => $edge->organization_id ?? null,
+                                ]);
+                                \Illuminate\Support\Facades\Cache::put($logKey, true, now()->addMinute());
+                            }
                             // Continue processing - don't fail entire batch
                         }
                     }
@@ -415,6 +425,10 @@ class EventController extends Controller
             $failedCount = count($failed);
             $totalCount = count($events);
             
+            // Check if all failures are due to module_disabled (expected behavior, not an error)
+            $allModuleDisabled = $failedCount > 0 && $createdCount == 0 && 
+                                 count(array_filter($failed, fn($e) => ($e['error'] ?? null) === 'module_disabled')) === $failedCount;
+            
             if ($createdCount > 0 && $failedCount == 0) {
                 // All events created successfully - use DEBUG to reduce log noise
                 Log::debug('Batch ingest completed successfully', [
@@ -425,25 +439,48 @@ class EventController extends Controller
                     'created' => $createdCount,
                 ]);
             } elseif ($createdCount > 0 && $failedCount > 0) {
-                // Partial success - log as WARNING
-                Log::warning('Batch ingest partially completed', [
-                    'edge_id' => $edge->id ?? null,
-                    'edge_key' => $edge->edge_key ?? null,
-                    'organization_id' => $edge->organization_id ?? null,
-                    'total_events' => $totalCount,
-                    'created' => $createdCount,
-                    'failed' => $failedCount,
-                ]);
+                // Partial success - log as WARNING (only once per minute to reduce noise)
+                $logKey = "batch_partial_{$edge->id}_{$edge->organization_id}";
+                if (!cache()->has($logKey)) {
+                    Log::warning('Batch ingest partially completed', [
+                        'edge_id' => $edge->id ?? null,
+                        'edge_key' => $edge->edge_key ?? null,
+                        'organization_id' => $edge->organization_id ?? null,
+                        'total_events' => $totalCount,
+                        'created' => $createdCount,
+                        'failed' => $failedCount,
+                    ]);
+                    cache()->put($logKey, true, now()->addMinute());
+                }
             } elseif ($createdCount == 0 && $failedCount > 0) {
-                // All events failed - log as ERROR
-                Log::error('Batch ingest failed - all events failed', [
-                    'edge_id' => $edge->id ?? null,
-                    'edge_key' => $edge->edge_key ?? null,
-                    'organization_id' => $edge->organization_id ?? null,
-                    'total_events' => $totalCount,
-                    'failed' => $failedCount,
-                    'errors' => $failed,
-                ]);
+                if ($allModuleDisabled) {
+                    // All events failed due to disabled modules - log as WARNING once per hour (not an error)
+                    $logKey = "batch_all_modules_disabled_{$edge->id}_{$edge->organization_id}";
+                    if (!cache()->has($logKey)) {
+                        Log::warning('Batch ingest: all modules disabled for organization', [
+                            'edge_id' => $edge->id ?? null,
+                            'edge_key' => $edge->edge_key ?? null,
+                            'organization_id' => $edge->organization_id ?? null,
+                            'total_events' => $totalCount,
+                            'failed_modules' => array_column($failed, 'module'),
+                        ]);
+                        cache()->put($logKey, true, now()->addHour());
+                    }
+                } else {
+                    // All events failed for other reasons - log as ERROR (but rate limit to once per minute)
+                    $logKey = "batch_all_failed_{$edge->id}_{$edge->organization_id}";
+                    if (!cache()->has($logKey)) {
+                        Log::error('Batch ingest failed - all events failed', [
+                            'edge_id' => $edge->id ?? null,
+                            'edge_key' => $edge->edge_key ?? null,
+                            'organization_id' => $edge->organization_id ?? null,
+                            'total_events' => $totalCount,
+                            'failed' => $failedCount,
+                            'errors' => $failed,
+                        ]);
+                        cache()->put($logKey, true, now()->addMinute());
+                    }
+                }
             }
             
             return response()->json([
