@@ -468,8 +468,8 @@ class EventController extends Controller
                     $lock = cache()->lock($lockKey, 5); // 5 second lock
                     
                     try {
-                        // Try to acquire lock (non-blocking)
-                        if ($lock->get(blocking: false)) {
+                        // Try to acquire lock (non-blocking: 0 seconds = non-blocking)
+                        if ($lock->get(0)) {
                             try {
                                 // Double-check: if already logged recently, skip
                                 if (!cache()->has($logKey)) {
