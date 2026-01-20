@@ -462,22 +462,45 @@ class EventController extends Controller
             } elseif ($createdCount == 0 && $failedCount > 0) {
                 if ($allModuleDisabled) {
                     // All events failed due to disabled modules - log as WARNING once per hour (not an error)
-                    // Use cache()->remember() with atomic operation to prevent duplicate logs
+                    // Use cache lock + double-check to prevent duplicate logs from concurrent requests
                     $logKey = "batch_all_modules_disabled_{$edge->id}_{$edge->organization_id}";
+                    $lockKey = "log_lock_{$logKey}";
+                    $lock = cache()->lock($lockKey, 5); // 5 second lock
                     
-                    // Only log if cache key doesn't exist (atomic check-and-set)
-                    $shouldLog = cache()->remember($logKey, now()->addHour(), function () use ($edge, $totalCount, $failed) {
-                        Log::warning('Batch ingest: all modules disabled for organization', [
-                            'edge_id' => $edge->id ?? null,
-                            'edge_key' => $edge->edge_key ?? null,
-                            'organization_id' => $edge->organization_id ?? null,
-                            'total_events' => $totalCount,
-                            'failed_modules' => array_column($failed, 'module'),
-                        ]);
-                        return true; // Mark as logged
-                    });
-                    
-                    // If cache already had the key, shouldLog will be true (already logged), so we skip
+                    try {
+                        // Try to acquire lock (non-blocking)
+                        if ($lock->get(blocking: false)) {
+                            try {
+                                // Double-check: if already logged recently, skip
+                                if (!cache()->has($logKey)) {
+                                    Log::warning('Batch ingest: all modules disabled for organization', [
+                                        'edge_id' => $edge->id ?? null,
+                                        'edge_key' => $edge->edge_key ?? null,
+                                        'organization_id' => $edge->organization_id ?? null,
+                                        'total_events' => $totalCount,
+                                        'failed_modules' => array_column($failed, 'module'),
+                                    ]);
+                                    // Set cache with hour-long TTL to prevent duplicate logs
+                                    cache()->put($logKey, true, now()->addHour());
+                                }
+                            } finally {
+                                $lock->release();
+                            }
+                        }
+                        // If lock is held by another request, skip logging (they will log it)
+                    } catch (\Exception $e) {
+                        // If lock fails, log anyway (better to have duplicate than miss important warning)
+                        if (!cache()->has($logKey)) {
+                            Log::warning('Batch ingest: all modules disabled for organization', [
+                                'edge_id' => $edge->id ?? null,
+                                'edge_key' => $edge->edge_key ?? null,
+                                'organization_id' => $edge->organization_id ?? null,
+                                'total_events' => $totalCount,
+                                'failed_modules' => array_column($failed, 'module'),
+                            ]);
+                            cache()->put($logKey, true, now()->addHour());
+                        }
+                    }
                 } else {
                     // All events failed for other reasons - log as ERROR (but rate limit to once per minute)
                     $logKey = "batch_all_failed_{$edge->id}_{$edge->organization_id}";
