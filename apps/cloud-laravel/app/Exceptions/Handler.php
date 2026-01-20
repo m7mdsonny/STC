@@ -61,19 +61,26 @@ class Handler extends ExceptionHandler
                 ], 500);
             }
             
-            // For production, return generic error but log details
+            // For production, return detailed error for API endpoints (for debugging)
             if ($request->expectsJson() || $request->is('api/*')) {
                 \Illuminate\Support\Facades\Log::error('API Error', [
                     'error' => $e->getMessage(),
+                    'error_class' => get_class($e),
                     'file' => $e->getFile(),
                     'line' => $e->getLine(),
                     'trace' => $e->getTraceAsString(),
                     'url' => $request->fullUrl(),
+                    'method' => $request->method(),
+                    'route' => $request->route()?->getName(),
                 ]);
                 
+                // Return more details for API debugging (even in production)
                 return response()->json([
                     'message' => 'Server Error',
-                    'error' => get_class($e),
+                    'error' => $e->getMessage(),
+                    'error_type' => get_class($e),
+                    'file' => basename($e->getFile()),
+                    'line' => $e->getLine(),
                 ], 500);
             }
             
