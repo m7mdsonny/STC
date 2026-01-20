@@ -11,24 +11,42 @@ use Illuminate\Cache\RateLimiter as CacheRateLimiter;
 
 /**
  * Clear login rate limit on successful login
- * This middleware should be applied AFTER throttle middleware
+ * This middleware handles rate limiting for login endpoint
+ * Since throttle middleware is removed, this middleware provides basic protection
  */
 class ClearLoginRateLimit
 {
     /**
      * Handle an incoming request.
      * 
-     * Clears the login rate limit cache when login is successful.
-     * This allows legitimate users to login again after successful authentication.
+     * Provides basic rate limiting and clears rate limit cache when login is successful.
+     * This allows legitimate users to login while protecting against brute force attacks.
      */
     public function handle(Request $request, Closure $next)
     {
+        // Basic rate limiting: allow 50 attempts per minute per IP
+        $identifier = $request->ip() ?? 'unknown';
+        $key = 'login_attempts:' . $identifier;
+        $attempts = Cache::get($key, 0);
+        
+        // Check rate limit (50 attempts per minute)
+        if ($attempts >= 50) {
+            return response()->json([
+                'message' => 'Too Many Attempts.',
+            ], 429);
+        }
+        
+        // Increment attempt counter
+        Cache::put($key, $attempts + 1, now()->addMinute());
+        
         $response = $next($request);
 
         // Only clear rate limit if login was successful (status 200)
         // Use try-catch to prevent middleware from breaking the response
         if ($response->getStatusCode() === 200) {
             try {
+                // Clear rate limit on successful login
+                Cache::forget($key);
                 $this->clearRateLimit($request);
             } catch (\Exception $e) {
                 // Log but don't throw - clearing rate limit is best-effort
