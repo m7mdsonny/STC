@@ -410,15 +410,41 @@ class EventController extends Controller
             // CRITICAL: Commit transaction only if we processed all events
             DB::commit();
             
-            // Log success for analytics tracking
-            Log::info('Batch ingest completed successfully', [
-                'edge_id' => $edge->id ?? null,
-                'edge_key' => $edge->edge_key ?? null,
-                'organization_id' => $edge->organization_id ?? null,
-                'total_events' => count($events),
-                'created' => count($created),
-                'failed' => count($failed),
-            ]);
+            // Log based on results - only log when there's something meaningful
+            $createdCount = count($created);
+            $failedCount = count($failed);
+            $totalCount = count($events);
+            
+            if ($createdCount > 0 && $failedCount == 0) {
+                // All events created successfully - use DEBUG to reduce log noise
+                Log::debug('Batch ingest completed successfully', [
+                    'edge_id' => $edge->id ?? null,
+                    'edge_key' => $edge->edge_key ?? null,
+                    'organization_id' => $edge->organization_id ?? null,
+                    'total_events' => $totalCount,
+                    'created' => $createdCount,
+                ]);
+            } elseif ($createdCount > 0 && $failedCount > 0) {
+                // Partial success - log as WARNING
+                Log::warning('Batch ingest partially completed', [
+                    'edge_id' => $edge->id ?? null,
+                    'edge_key' => $edge->edge_key ?? null,
+                    'organization_id' => $edge->organization_id ?? null,
+                    'total_events' => $totalCount,
+                    'created' => $createdCount,
+                    'failed' => $failedCount,
+                ]);
+            } elseif ($createdCount == 0 && $failedCount > 0) {
+                // All events failed - log as ERROR
+                Log::error('Batch ingest failed - all events failed', [
+                    'edge_id' => $edge->id ?? null,
+                    'edge_key' => $edge->edge_key ?? null,
+                    'organization_id' => $edge->organization_id ?? null,
+                    'total_events' => $totalCount,
+                    'failed' => $failedCount,
+                    'errors' => $failed,
+                ]);
+            }
             
             return response()->json([
                 'ok' => true,
