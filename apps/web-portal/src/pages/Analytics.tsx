@@ -499,9 +499,9 @@ export function Analytics() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card p-6">
           <h2 className="text-lg font-semibold mb-6">حركة الزوار اليومية</h2>
-          <div className="h-72 min-h-[288px]">
+          <div className="h-72 min-h-[288px] w-full">
             {data.visitorData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%" minHeight={288}>
+              <ResponsiveContainer width="100%" height={288} aspect={undefined}>
                 <AreaChart data={data.visitorData}>
                   <defs>
                     <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
@@ -539,9 +539,9 @@ export function Analytics() {
 
         <div className="card p-6">
           <h2 className="text-lg font-semibold mb-6">احصائيات الاسبوع</h2>
-          <div className="h-72 min-h-[288px]">
+          <div className="h-72 min-h-[288px] w-full">
             {data.weeklyData.some(d => d.visitors > 0 || d.alerts > 0) ? (
-              <ResponsiveContainer width="100%" height="100%" minHeight={288}>
+              <ResponsiveContainer width="100%" height={288} aspect={undefined}>
                 <BarChart data={data.weeklyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                   <XAxis dataKey="day" stroke="rgba(255,255,255,0.5)" />
@@ -569,9 +569,9 @@ export function Analytics() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="card p-6">
           <h2 className="text-lg font-semibold mb-6">التوزيع العمري</h2>
-          <div className="h-64 min-h-[256px]">
+          <div className="h-64 min-h-[256px] w-full">
             {data.ageDistribution.some(d => d.value > 0) ? (
-              <ResponsiveContainer width="100%" height="100%" minHeight={256}>
+              <ResponsiveContainer width="100%" height={256} aspect={undefined}>
                 <PieChart>
                   <Pie
                     data={data.ageDistribution}
@@ -669,9 +669,9 @@ export function Analytics() {
 
         <div className="card p-6">
           <h2 className="text-lg font-semibold mb-6">التنبيهات حسب الوحدة</h2>
-          <div className="h-64 min-h-[256px]">
+          <div className="h-64 min-h-[256px] w-full">
             {data.alertsByModule.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%" minHeight={256}>
+              <ResponsiveContainer width="100%" height={256} aspect={undefined}>
                 <BarChart layout="vertical" data={data.alertsByModule}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                   <XAxis type="number" stroke="rgba(255,255,255,0.5)" />

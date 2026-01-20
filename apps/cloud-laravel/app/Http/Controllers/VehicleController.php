@@ -166,32 +166,45 @@ class VehicleController extends Controller
     public function getAccessLogs(Request $request): JsonResponse
     {
         $user = $request->user();
-        $query = \App\Models\VehicleAccessLog::query();
+        
+        // Return empty array if VehicleAccessLog table doesn't exist or no logs
+        try {
+            $query = \App\Models\VehicleAccessLog::query();
 
-        if ($user->organization_id) {
-            $query->where('organization_id', $user->organization_id);
+            if ($user->organization_id) {
+                $query->where('organization_id', $user->organization_id);
+            }
+
+            if ($request->filled('vehicle_id')) {
+                $query->where('vehicle_id', $request->get('vehicle_id'));
+            }
+
+            if ($request->filled('camera_id')) {
+                $query->where('camera_id', $request->get('camera_id'));
+            }
+
+            if ($request->filled('from')) {
+                $query->where('created_at', '>=', $request->get('from'));
+            }
+
+            if ($request->filled('to')) {
+                $query->where('created_at', '<=', $request->get('to'));
+            }
+
+            $perPage = (int) $request->get('per_page', 15);
+            $logs = $query->orderByDesc('created_at')->paginate($perPage);
+
+            return response()->json($logs);
+        } catch (\Exception $e) {
+            // If table doesn't exist or any error, return empty paginated response
+            return response()->json([
+                'data' => [],
+                'total' => 0,
+                'per_page' => (int) $request->get('per_page', 15),
+                'current_page' => 1,
+                'last_page' => 1,
+            ]);
         }
-
-        if ($request->filled('vehicle_id')) {
-            $query->where('vehicle_id', $request->get('vehicle_id'));
-        }
-
-        if ($request->filled('camera_id')) {
-            $query->where('camera_id', $request->get('camera_id'));
-        }
-
-        if ($request->filled('from')) {
-            $query->where('created_at', '>=', $request->get('from'));
-        }
-
-        if ($request->filled('to')) {
-            $query->where('created_at', '<=', $request->get('to'));
-        }
-
-        $perPage = (int) $request->get('per_page', 15);
-        $logs = $query->orderByDesc('created_at')->paginate($perPage);
-
-        return response()->json($logs);
     }
 }
 
