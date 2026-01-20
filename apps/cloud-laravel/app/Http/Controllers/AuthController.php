@@ -87,6 +87,12 @@ class AuthController extends Controller
             // Ensure role is normalized in response (use accessor)
             $user->makeVisible(['role']);
 
+            // CRITICAL: Clear rate limit cache on successful login to prevent lockout
+            // This ensures users who successfully login don't get blocked by previous failed attempts
+            $identifier = strtolower(trim($request->email));
+            $key = 'throttle:10,1:' . md5($request->ip() . '|api/v1/auth/login');
+            \Illuminate\Support\Facades\Cache::forget($key);
+
             // Create token
             $token = $user->createToken('api')->plainTextToken;
             
