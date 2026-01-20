@@ -600,7 +600,7 @@ class AnalyticsService
      * @param array $params
      * @return string
      */
-    private function getCacheKey(string $type, array $params): string
+    public function getCacheKey(string $type, array $params): string
     {
         return 'analytics:' . $type . ':' . md5(json_encode($params));
     }

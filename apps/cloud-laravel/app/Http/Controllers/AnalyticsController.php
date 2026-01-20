@@ -275,11 +275,26 @@ class AnalyticsController extends Controller
         $endDate = $request->filled('end_date') ? Carbon::parse($request->get('end_date')) : null;
 
         try {
+            // Clear cache to ensure fresh data
+            $cacheKey = $this->analyticsService->getCacheKey('by_module', [
+                $organizationId,
+                $startDate?->toDateString(),
+                $endDate?->toDateString(),
+            ]);
+            \Illuminate\Support\Facades\Cache::forget($cacheKey);
+            
             $data = $this->analyticsService->getModuleActivity($organizationId, $startDate, $endDate);
             
             // Log if no data found for debugging
             if (empty($data)) {
                 $totalEvents = Event::where('organization_id', $organizationId)->count();
+                $eventsWithAiModule = Event::where('organization_id', $organizationId)
+                    ->whereNotNull('ai_module')
+                    ->count();
+                $eventsWithMetaModule = Event::where('organization_id', $organizationId)
+                    ->whereRaw('JSON_EXTRACT(meta, "$.module") IS NOT NULL')
+                    ->whereNull('ai_module')
+                    ->count();
                 $eventsWithModule = Event::where('organization_id', $organizationId)
                     ->where(function ($q) {
                         $q->whereNotNull('ai_module')
@@ -300,13 +315,32 @@ class AnalyticsController extends Controller
                     $dateFilteredCount = $totalEvents;
                 }
                 
-                \Log::debug('Module activity returned empty', [
+                \Log::warning('Module activity returned empty - DEBUG INFO', [
                     'organization_id' => $organizationId,
                     'start_date' => $startDate?->toDateString(),
                     'end_date' => $endDate?->toDateString(),
                     'total_events' => $totalEvents,
-                    'events_with_module' => $eventsWithModule,
+                    'events_with_ai_module' => $eventsWithAiModule,
+                    'events_with_meta_module_only' => $eventsWithMetaModule,
+                    'events_with_module_total' => $eventsWithModule,
                     'date_filtered_events' => $dateFilteredCount ?? null,
+                    'sample_events' => Event::where('organization_id', $organizationId)
+                        ->orderByDesc('occurred_at')
+                        ->limit(3)
+                        ->get()
+                        ->map(fn($e) => [
+                            'id' => $e->id,
+                            'ai_module' => $e->ai_module,
+                            'meta_module' => $e->meta['module'] ?? null,
+                            'occurred_at' => $e->occurred_at?->toIso8601String(),
+                        ])
+                        ->toArray(),
+                ]);
+            } else {
+                \Log::info('Module activity data found', [
+                    'organization_id' => $organizationId,
+                    'modules_count' => count($data),
+                    'modules' => array_column($data, 'module'),
                 ]);
             }
             

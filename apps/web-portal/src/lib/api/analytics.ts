@@ -140,21 +140,31 @@ export const analyticsApi = {
 
   async getModuleActivity(filters: AnalyticsFilters = {}): Promise<{ module: string; count: number }[]> {
     try {
-      const { data, error } = await apiClient.get('/analytics/module-activity', filters as Record<string, string>);
-      if (error) {
-        console.error('Module activity API error:', error, 'filters:', filters);
+      const response = await apiClient.get('/analytics/module-activity', filters as Record<string, string>);
+      const data = response.data;
+      
+      if (response.error) {
+        console.error('Module activity API error:', response.error, 'filters:', filters);
         return []; // Return empty array instead of throwing
       }
+      
       if (!data) {
-        console.warn('Module activity API returned no data', 'filters:', filters);
+        console.warn('Module activity API returned no data', 'filters:', filters, 'response:', response);
         return [];
       }
+      
       // Ensure data is an array
       const result = Array.isArray(data) ? data : [];
-      console.log('Module activity data fetched:', result.length, 'modules', result);
+      
+      if (result.length > 0) {
+        console.log('Module activity data fetched:', result.length, 'modules', result);
+      } else {
+        console.warn('Module activity returned empty array', 'filters:', filters, 'raw response:', response);
+      }
+      
       return result;
-    } catch (err) {
-      console.error('Exception fetching module activity:', err, 'filters:', filters);
+    } catch (err: any) {
+      console.error('Exception fetching module activity:', err, 'filters:', filters, 'error details:', err?.response?.data);
       return []; // Return empty array on exception
     }
   },
