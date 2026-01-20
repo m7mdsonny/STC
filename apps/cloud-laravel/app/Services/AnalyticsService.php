@@ -302,8 +302,7 @@ class AnalyticsService
             $startDate,
             $endDate
         ) {
-            $query = Event::where('organization_id', $organizationId)
-                ->whereNotNull('ai_module');
+            $query = Event::where('organization_id', $organizationId);
 
             if ($startDate) {
                 $query->where('occurred_at', '>=', $startDate);
@@ -312,17 +311,27 @@ class AnalyticsService
                 $query->where('occurred_at', '<=', $endDate);
             }
 
+            // Get events with ai_module OR extract from meta->module
+            // Use COALESCE to handle both ai_module column and meta->module
             return $query
-                ->selectRaw('ai_module, COUNT(*) as count')
-                ->groupBy('ai_module')
+                ->selectRaw('COALESCE(ai_module, JSON_UNQUOTE(JSON_EXTRACT(meta, "$.module"))) as module, COUNT(*) as count')
+                ->where(function ($q) {
+                    $q->whereNotNull('ai_module')
+                      ->orWhereRaw('JSON_EXTRACT(meta, "$.module") IS NOT NULL');
+                })
+                ->groupBy('module')
                 ->orderByDesc('count')
                 ->get()
+                ->filter(function ($item) {
+                    return !empty($item->module); // Filter out null/empty modules
+                })
                 ->map(function ($item) {
                     return [
-                        'module' => $item->ai_module,
+                        'module' => $item->module,
                         'count' => (int) $item->count,
                     ];
                 })
+                ->values()
                 ->toArray();
         });
     }
