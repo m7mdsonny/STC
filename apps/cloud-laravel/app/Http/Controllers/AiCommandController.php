@@ -166,23 +166,28 @@ class AiCommandController extends Controller
         // For User requests (Sanctum authenticated), check permissions
         $user = $request->user();
         
-        // If request is from Edge Server (HMAC authenticated), get edge from request attributes set by middleware
-        if (!$user && $request->attributes->has('edge_server')) {
-            $edge = $request->attributes->get('edge_server');
-            
-            // Verify command belongs to this Edge Server
-            $commandEdge = $aiCommand->targets()->where('edge_server_id', $edge->id)->first();
-            if (!$commandEdge) {
-                return response()->json([
-                    'message' => 'Command not found for this Edge Server'
-                ], 404);
-            }
-        } else {
-            // For user requests, check permissions (only super admin or command owner org)
-            if (!$user) {
+        // If request is from Edge Server (HMAC authenticated), get edge_key from header and find Edge Server
+        if (!$user) {
+            // This is an Edge Server request (HMAC authenticated via middleware)
+            $edgeKey = $request->header('X-EDGE-KEY');
+            if ($edgeKey) {
+                $edgeServer = EdgeServer::where('edge_key', $edgeKey)->first();
+                if ($edgeServer) {
+                    // Verify command belongs to this Edge Server
+                    $commandTarget = $aiCommand->targets()->where('edge_server_id', $edgeServer->id)->first();
+                    if (!$commandTarget) {
+                        return response()->json([
+                            'message' => 'Command not found for this Edge Server'
+                        ], 404);
+                    }
+                } else {
+                    return response()->json(['message' => 'Invalid Edge Server'], 401);
+                }
+            } else {
                 return response()->json(['message' => 'Authentication required'], 401);
             }
-            
+        } else {
+            // For user requests (Sanctum authenticated), check permissions
             if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
                 if ($user->organization_id != $aiCommand->organization_id) {
                     return response()->json(['message' => 'Access denied'], 403);
