@@ -36,6 +36,22 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        // Use the default Laravel exception handling pipeline.
+        // CRITICAL: Override AuthenticationException redirectTo for API-only app
+        // This prevents "Route [login] not defined" errors
+        $exceptions->respond(function (\Illuminate\Auth\AuthenticationException $e, \Illuminate\Http\Request $request) {
+            // For API routes, always return JSON (never redirect)
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Unauthenticated.',
+                    'error' => 'authentication_required'
+                ], 401);
+            }
+            
+            // For web routes, also return JSON (API-only app)
+            return response()->json([
+                'message' => 'Unauthenticated.',
+                'error' => 'authentication_required'
+            ], 401);
+        });
     })
     ->create();

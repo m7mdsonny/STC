@@ -39,7 +39,7 @@ class VerifyEdgeSignature
         if (!$edgeKey || !$timestamp || !$signature) {
             // Use LogDeduplication to prevent spam logs for missing headers
             $logKey = 'edge_signature_missing_headers:' . $request->ip() . ':' . $request->path();
-            if (\App\Models\LogDeduplication::shouldLog($logKey, now()->addMinutes(5))) {
+            if (\App\Models\LogDeduplication::shouldLog($logKey, 5)) {
                 Log::warning('Edge signature verification failed: missing headers', [
                     'edge_key' => $edgeKey ? 'present' : 'missing',
                     'timestamp' => $timestamp ? 'present' : 'missing',
