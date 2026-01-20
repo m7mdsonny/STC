@@ -61,8 +61,20 @@ class OrganizationController extends Controller
 
     public function show(Organization $organization): JsonResponse
     {
-        // Use Policy for authorization
-        $this->authorize('view', $organization);
+        $user = request()->user();
+        
+        // Authorization check - ensure user can view this organization
+        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
+            // Non-super-admin users can only view their own organization
+            if (!$user->organization_id || (int) $user->organization_id !== (int) $organization->id) {
+                return response()->json([
+                    'message' => 'Access denied to this organization'
+                ], 403);
+            }
+        }
+        
+        // Load relationships if needed
+        $organization->loadMissing(['subscriptionPlan']);
         
         return response()->json($organization);
     }
