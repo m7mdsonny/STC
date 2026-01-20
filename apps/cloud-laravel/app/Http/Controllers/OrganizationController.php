@@ -73,10 +73,23 @@ class OrganizationController extends Controller
             }
         }
         
-        // Load relationships if needed
-        $organization->loadMissing(['subscriptionPlan']);
+        // Ensure subscription_plan is a string, not an object
+        // Frontend expects subscription_plan as string (e.g., 'basic', 'professional', 'enterprise')
+        // Don't load subscriptionPlan relationship as it would return an object
         
-        return response()->json($organization);
+        // Get organization data without relationships to ensure clean JSON response
+        $data = $organization->toArray();
+        
+        // Ensure subscription_plan is always a string (not an object from relationship)
+        if (isset($data['subscription_plan']) && is_array($data['subscription_plan'])) {
+            // If somehow subscription_plan is an object, extract the name
+            $data['subscription_plan'] = $data['subscription_plan']['name'] ?? null;
+        }
+        
+        // Explicitly set subscription_plan as string from the database column
+        $data['subscription_plan'] = $organization->subscription_plan ?? null;
+        
+        return response()->json($data);
     }
 
     public function store(OrganizationStoreRequest $request): JsonResponse
