@@ -303,6 +303,72 @@ class AnalyticsController extends Controller
         }
     }
 
+    public function audience(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $organizationId = $user->organization_id ?? $request->get('organization_id');
+
+        if (!$organizationId) {
+            return response()->json(['error' => 'Organization ID required'], 400);
+        }
+
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->get('start_date')) : null;
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->get('end_date')) : null;
+
+        // Get audience stats from events table (audience module events)
+        $query = Event::where('organization_id', $organizationId)
+            ->where(function ($q) {
+                $q->where('ai_module', 'audience')
+                  ->orWhereRaw('JSON_EXTRACT(meta, "$.module") = "audience"');
+            });
+
+        if ($startDate) {
+            $query->where('occurred_at', '>=', $startDate);
+        }
+        if ($endDate) {
+            $query->where('occurred_at', '<=', $endDate);
+        }
+
+        // Aggregate by hour and date
+        $results = $query
+            ->selectRaw('
+                DATE(occurred_at) as date,
+                HOUR(occurred_at) as hour,
+                COUNT(*) as total_count,
+                SUM(CASE WHEN JSON_EXTRACT(meta, "$.gender") = "male" THEN 1 ELSE 0 END) as male_count,
+                SUM(CASE WHEN JSON_EXTRACT(meta, "$.gender") = "female" THEN 1 ELSE 0 END) as female_count,
+                SUM(CASE WHEN JSON_EXTRACT(meta, "$.age_group") = "0-12" THEN 1 ELSE 0 END) as age_0_12,
+                SUM(CASE WHEN JSON_EXTRACT(meta, "$.age_group") = "13-19" THEN 1 ELSE 0 END) as age_13_19,
+                SUM(CASE WHEN JSON_EXTRACT(meta, "$.age_group") = "20-35" THEN 1 ELSE 0 END) as age_20_35,
+                SUM(CASE WHEN JSON_EXTRACT(meta, "$.age_group") = "36-50" THEN 1 ELSE 0 END) as age_36_50,
+                SUM(CASE WHEN JSON_EXTRACT(meta, "$.age_group") = "51-65" THEN 1 ELSE 0 END) as age_51_65,
+                SUM(CASE WHEN JSON_EXTRACT(meta, "$.age_group") = "65+" THEN 1 ELSE 0 END) as age_65_plus
+            ')
+            ->groupBy('date', 'hour')
+            ->orderBy('date')
+            ->orderBy('hour')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'date' => $item->date,
+                    'hour' => (int) $item->hour,
+                    'total_count' => (int) $item->total_count,
+                    'male_count' => (int) $item->male_count,
+                    'female_count' => (int) $item->female_count,
+                    'age_0_12' => (int) $item->age_0_12,
+                    'age_13_19' => (int) $item->age_13_19,
+                    'age_20_35' => (int) $item->age_20_35,
+                    'age_36_50' => (int) $item->age_36_50,
+                    'age_51_65' => (int) $item->age_51_65,
+                    'age_65_plus' => (int) $item->age_65_plus,
+                ];
+            })
+            ->values()
+            ->toArray();
+
+        return response()->json($results);
+    }
+
     public function weeklyTrend(Request $request): JsonResponse
     {
         $user = $request->user();
