@@ -617,9 +617,9 @@ export function Analytics() {
 
         <div className="card p-6">
           <h2 className="text-lg font-semibold mb-6">التوزيع الجنسي</h2>
-          <div className="h-64 min-h-[256px]">
+          <div className="h-64 min-h-[256px] w-full">
             {totalGender > 0 ? (
-              <ResponsiveContainer width="100%" height="100%" minHeight={256}>
+              <ResponsiveContainer width="100%" height={256} aspect={undefined}>
                 <PieChart>
                   <Pie
                     data={data.genderDistribution}
