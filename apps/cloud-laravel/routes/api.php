@@ -71,6 +71,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/edges/events/batch', [EventController::class, 'batchIngest']); // Batch endpoint - single nonce for multiple events (1000 req/min for high-frequency analytics)
         Route::get('/edges/cameras', [EdgeController::class, 'getCamerasForEdge']);
         Route::get('/edges/commands', [EdgeController::class, 'getCommandsForEdge']); // Edge polls for pending commands
+        Route::post('/ai-commands/{aiCommand}/ack', [AiCommandController::class, 'ack']); // Edge acknowledges command execution
     });
 
     Route::middleware('auth:sanctum')->group(function () {
@@ -370,7 +371,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/ai-commands', [AiCommandController::class, 'index']);
         Route::post('/ai-commands', [AiCommandController::class, 'store']);
         Route::post('/ai-commands/execute', [AiCommandController::class, 'execute']); // For Organization Owners
-        Route::post('/ai-commands/{aiCommand}/ack', [AiCommandController::class, 'ack']);
+        // NOTE: /ai-commands/{aiCommand}/ack moved to Edge Server middleware group - Edge uses HMAC auth
         Route::post('/ai-commands/{aiCommand}/retry', [AiCommandController::class, 'retry']);
         Route::get('/ai-commands/{aiCommand}/logs', [AiCommandController::class, 'logs']);
 

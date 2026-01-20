@@ -162,6 +162,34 @@ class AiCommandController extends Controller
 
     public function ack(Request $request, AiCommand $aiCommand): JsonResponse
     {
+        // For Edge Server requests (HMAC authenticated), verify the command belongs to the Edge Server
+        // For User requests (Sanctum authenticated), check permissions
+        $user = $request->user();
+        
+        // If request is from Edge Server (HMAC authenticated), get edge from request attributes set by middleware
+        if (!$user && $request->attributes->has('edge_server')) {
+            $edge = $request->attributes->get('edge_server');
+            
+            // Verify command belongs to this Edge Server
+            $commandEdge = $aiCommand->targets()->where('edge_server_id', $edge->id)->first();
+            if (!$commandEdge) {
+                return response()->json([
+                    'message' => 'Command not found for this Edge Server'
+                ], 404);
+            }
+        } else {
+            // For user requests, check permissions (only super admin or command owner org)
+            if (!$user) {
+                return response()->json(['message' => 'Authentication required'], 401);
+            }
+            
+            if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
+                if ($user->organization_id != $aiCommand->organization_id) {
+                    return response()->json(['message' => 'Access denied'], 403);
+                }
+            }
+        }
+
         $data = $request->validate([
             'message' => 'nullable|string',
             'meta' => 'nullable|array',
