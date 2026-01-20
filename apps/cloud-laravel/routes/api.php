@@ -284,6 +284,7 @@ Route::prefix('v1')->group(function () {
         // Debug endpoints
         Route::get('/analytics/debug/pipeline-status', [\App\Http\Controllers\AnalyticsDebugController::class, 'pipelineStatus']);
         Route::get('/analytics/debug/test-query', [\App\Http\Controllers\AnalyticsDebugController::class, 'testQuery']);
+        Route::post('/analytics/debug/create-test-event', [\App\Http\Controllers\AnalyticsDebugController::class, 'createTestEvent']);
         Route::get('/analytics/today-alerts', [AnalyticsController::class, 'todayAlerts']);
         Route::get('/analytics/response-times', [AnalyticsController::class, 'responseTimes']);
         Route::get('/analytics/compare', [AnalyticsController::class, 'compare']);

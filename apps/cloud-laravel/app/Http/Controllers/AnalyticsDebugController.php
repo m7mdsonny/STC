@@ -201,4 +201,79 @@ class AnalyticsDebugController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Create a test event for debugging analytics pipeline
+     */
+    public function createTestEvent(Request $request): JsonResponse
+    {
+        try {
+            $user = $request->user();
+            $organizationId = $user?->organization_id ?? $request->get('organization_id');
+
+            if (!$organizationId) {
+                return response()->json(['error' => 'Organization ID required'], 400);
+            }
+
+            $edgeServer = EdgeServer::where('organization_id', $organizationId)->first();
+            if (!$edgeServer) {
+                return response()->json(['error' => 'No Edge Server found for this organization'], 404);
+            }
+
+            $validated = $request->validate([
+                'event_type' => 'nullable|string|max:255',
+                'ai_module' => 'nullable|string|max:255',
+                'severity' => 'nullable|string|in:info,warning,critical',
+                'meta' => 'nullable|array',
+            ]);
+
+            try {
+                $event = Event::create([
+                    'organization_id' => $organizationId,
+                    'edge_server_id' => $edgeServer->id,
+                    'edge_id' => $edgeServer->edge_id ?? $edgeServer->edge_key ?? (string) $edgeServer->id,
+                    'event_type' => $validated['event_type'] ?? 'test_event',
+                    'ai_module' => $validated['ai_module'] ?? 'test',
+                    'severity' => $validated['severity'] ?? 'info',
+                    'occurred_at' => now(),
+                    'meta' => array_merge([
+                        'module' => $validated['ai_module'] ?? 'test',
+                        'source' => 'debug_endpoint',
+                        'test' => true,
+                    ], $validated['meta'] ?? []),
+                ]);
+
+                return response()->json([
+                    'message' => 'Test event created successfully',
+                    'event' => [
+                        'id' => $event->id,
+                        'event_type' => $event->event_type,
+                        'ai_module' => $event->ai_module,
+                        'meta_module' => is_array($event->meta) ? ($event->meta['module'] ?? null) : null,
+                        'occurred_at' => $event->occurred_at?->toIso8601String(),
+                        'organization_id' => $event->organization_id,
+                    ],
+                ], 201);
+            } catch (\Exception $e) {
+                Log::error('Error creating test event', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'organization_id' => $organizationId,
+                ]);
+                return response()->json([
+                    'error' => 'Failed to create test event',
+                    'message' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            Log::error('Fatal error in createTestEvent', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'error' => 'Fatal error',
+                'message' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
+    }
 }
