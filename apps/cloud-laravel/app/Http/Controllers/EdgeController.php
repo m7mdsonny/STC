@@ -72,8 +72,17 @@ class EdgeController extends Controller
 
     public function show(EdgeServer $edgeServer): JsonResponse
     {
-        // Use Policy for authorization
-        $this->authorize('view', $edgeServer);
+        $user = request()->user();
+        
+        // Authorization check - ensure user can view this edge server
+        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
+            // Non-super-admin users can only view edge servers in their organization
+            if (!$user->organization_id || (int) $user->organization_id !== (int) $edgeServer->organization_id) {
+                return response()->json([
+                    'message' => 'Access denied to this edge server'
+                ], 403);
+            }
+        }
         
         // SECURITY: Never expose edge_secret in show endpoint
         $edgeData = $edgeServer->load(['organization', 'license'])->toArray();
@@ -125,11 +134,26 @@ class EdgeController extends Controller
 
     public function destroy(EdgeServer $edgeServer): JsonResponse
     {
-        // Use Policy for authorization
-        $this->authorize('delete', $edgeServer);
+        $user = request()->user();
+        
+        // Authorization check - ensure user can delete this edge server
+        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
+            // Non-super-admin users can only delete edge servers in their organization
+            if (!$user->organization_id || (int) $user->organization_id !== (int) $edgeServer->organization_id) {
+                return response()->json([
+                    'message' => 'Access denied to this edge server'
+                ], 403);
+            }
+            // Org managers can delete edge servers in their organization
+            if (!RoleHelper::canManageOrganization($user->role)) {
+                return response()->json([
+                    'message' => 'Insufficient permissions to delete edge server'
+                ], 403);
+            }
+        }
 
         try {
-            $this->edgeServerService->deleteEdgeServer($edgeServer, request()->user());
+            $this->edgeServerService->deleteEdgeServer($edgeServer, $user);
         } catch (DomainActionException $e) {
             return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
@@ -262,8 +286,23 @@ class EdgeController extends Controller
 
     public function config(EdgeServer $edgeServer): JsonResponse
     {
-        // Use Policy for authorization
-        $this->authorize('viewConfig', $edgeServer);
+        $user = request()->user();
+        
+        // Authorization check - ensure user can view config for this edge server (same as viewLogs)
+        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
+            // Non-super-admin users can only view config for edge servers in their organization
+            if (!$user->organization_id || (int) $user->organization_id !== (int) $edgeServer->organization_id) {
+                return response()->json([
+                    'message' => 'Access denied to this edge server'
+                ], 403);
+            }
+            // Org managers can view config for edge servers in their organization
+            if (!RoleHelper::canManageOrganization($user->role)) {
+                return response()->json([
+                    'message' => 'Insufficient permissions to view edge server config'
+                ], 403);
+            }
+        }
         
         return response()->json($edgeServer->system_info ?? []);
     }
@@ -931,7 +970,17 @@ class EdgeController extends Controller
      */
     public function cameras(Request $request, EdgeServer $edgeServer): JsonResponse
     {
-        $this->authorize('view', $edgeServer);
+        $user = request()->user();
+        
+        // Authorization check - ensure user can view this edge server
+        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
+            // Non-super-admin users can only view edge servers in their organization
+            if (!$user->organization_id || (int) $user->organization_id !== (int) $edgeServer->organization_id) {
+                return response()->json([
+                    'message' => 'Access denied to this edge server'
+                ], 403);
+            }
+        }
 
         $query = \App\Models\Camera::where('edge_server_id', $edgeServer->id);
 
