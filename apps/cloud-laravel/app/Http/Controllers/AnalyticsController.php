@@ -279,12 +279,34 @@ class AnalyticsController extends Controller
             
             // Log if no data found for debugging
             if (empty($data)) {
+                $totalEvents = Event::where('organization_id', $organizationId)->count();
+                $eventsWithModule = Event::where('organization_id', $organizationId)
+                    ->where(function ($q) {
+                        $q->whereNotNull('ai_module')
+                          ->orWhereRaw('JSON_EXTRACT(meta, "$.module") IS NOT NULL');
+                    })
+                    ->count();
+                
+                if ($startDate || $endDate) {
+                    $dateFilteredEvents = Event::where('organization_id', $organizationId);
+                    if ($startDate) {
+                        $dateFilteredEvents->where('occurred_at', '>=', $startDate);
+                    }
+                    if ($endDate) {
+                        $dateFilteredEvents->where('occurred_at', '<=', $endDate);
+                    }
+                    $dateFilteredCount = $dateFilteredEvents->count();
+                } else {
+                    $dateFilteredCount = $totalEvents;
+                }
+                
                 \Log::debug('Module activity returned empty', [
                     'organization_id' => $organizationId,
                     'start_date' => $startDate?->toDateString(),
                     'end_date' => $endDate?->toDateString(),
-                    'total_events' => Event::where('organization_id', $organizationId)->count(),
-                    'events_with_ai_module' => Event::where('organization_id', $organizationId)->whereNotNull('ai_module')->count(),
+                    'total_events' => $totalEvents,
+                    'events_with_module' => $eventsWithModule,
+                    'date_filtered_events' => $dateFilteredCount ?? null,
                 ]);
             }
             
@@ -329,7 +351,7 @@ class AnalyticsController extends Controller
             $query->where('occurred_at', '<=', $endDate);
         }
 
-        // Aggregate by hour and date
+        // Aggregate by hour and date - fix GROUP BY to use raw expressions
         $results = $query
             ->selectRaw('
                 DATE(occurred_at) as date,
@@ -344,9 +366,8 @@ class AnalyticsController extends Controller
                 SUM(CASE WHEN JSON_EXTRACT(meta, "$.age_group") = "51-65" THEN 1 ELSE 0 END) as age_51_65,
                 SUM(CASE WHEN JSON_EXTRACT(meta, "$.age_group") = "65+" THEN 1 ELSE 0 END) as age_65_plus
             ')
-            ->groupBy('date', 'hour')
-            ->orderBy('date')
-            ->orderBy('hour')
+            ->groupByRaw('DATE(occurred_at), HOUR(occurred_at)')
+            ->orderByRaw('DATE(occurred_at), HOUR(occurred_at)')
             ->get()
             ->map(function ($item) {
                 return [

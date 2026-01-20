@@ -302,45 +302,41 @@ class AnalyticsService
             $startDate,
             $endDate
         ) {
-            // Query 1: Events with ai_module column populated
-            $query1 = Event::where('organization_id', $organizationId)
-                ->whereNotNull('ai_module');
-
-            // Query 2: Events with module in meta->module but ai_module is NULL
-            $query2 = Event::where('organization_id', $organizationId)
-                ->whereNull('ai_module')
-                ->whereRaw('JSON_EXTRACT(meta, "$.module") IS NOT NULL');
+            // Unified query: Get all events with module (either in ai_module column or meta->module)
+            $baseQuery = Event::where('organization_id', $organizationId)
+                ->where(function ($q) {
+                    $q->whereNotNull('ai_module')
+                      ->orWhereRaw('JSON_EXTRACT(meta, "$.module") IS NOT NULL');
+                });
 
             if ($startDate) {
-                $query1->where('occurred_at', '>=', $startDate);
-                $query2->where('occurred_at', '>=', $startDate);
+                $baseQuery->where('occurred_at', '>=', $startDate);
             }
             if ($endDate) {
-                $query1->where('occurred_at', '<=', $endDate);
-                $query2->where('occurred_at', '<=', $endDate);
+                $baseQuery->where('occurred_at', '<=', $endDate);
             }
 
-            // Get results from both queries
-            $results1 = $query1
-                ->selectRaw('ai_module as module, COUNT(*) as count')
-                ->groupBy('ai_module')
-                ->get();
+            // Get all events first
+            $events = $baseQuery->get();
 
-            $results2 = $query2
-                ->selectRaw('JSON_UNQUOTE(JSON_EXTRACT(meta, "$.module")) as module, COUNT(*) as count')
-                ->groupBy(DB::raw('JSON_UNQUOTE(JSON_EXTRACT(meta, "$.module"))'))
-                ->get();
+            // Extract module from either ai_module column or meta->module
+            $moduleCounts = [];
+            foreach ($events as $event) {
+                $module = $event->ai_module ?? ($event->meta['module'] ?? null);
+                if (!empty($module)) {
+                    if (!isset($moduleCounts[$module])) {
+                        $moduleCounts[$module] = 0;
+                    }
+                    $moduleCounts[$module]++;
+                }
+            }
 
-            // Merge and aggregate results
-            $merged = collect([...$results1, ...$results2])
-                ->filter(function ($item) {
-                    return !empty($item->module); // Filter out null/empty modules
-                })
-                ->groupBy('module')
-                ->map(function ($group) {
+            // Convert to array format
+            $results = collect($moduleCounts)
+                ->map(function ($count, $module) {
                     return [
-                        'module' => $group->first()->module,
-                        'count' => (int) $group->sum('count'),
+                        'module' => $module,
+                        'count' => (int) $count,
                     ];
                 })
                 ->values()
@@ -348,7 +344,7 @@ class AnalyticsService
                 ->values()
                 ->toArray();
 
-            return $merged;
+            return $results;
         });
     }
 
