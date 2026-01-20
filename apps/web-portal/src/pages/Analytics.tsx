@@ -158,9 +158,6 @@ export function Analytics() {
           organization_id: organization.id.toString(),
           start_date: start.toISOString().split('T')[0],
           end_date: end.toISOString().split('T')[0],
-        }).then((result) => {
-          console.log('Module activity API response:', result);
-          return result;
         }).catch((error) => {
           console.error('Failed to fetch module activity:', error);
           return []; // Return empty array on error
