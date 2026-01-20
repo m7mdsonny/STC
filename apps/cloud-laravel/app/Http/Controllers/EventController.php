@@ -242,29 +242,23 @@ class EventController extends Controller
                                 }
                             }
                         } catch (\Exception $e) {
-                            // Log error only once per minute to reduce noise (suppress if locking fails)
+                            // Log error only once per minute to reduce noise (atomic increment)
                             $logKey = "module_check_error_{$edge->id}_{$aiModule}";
+                            $minuteKey = now()->format('Y-m-d-H-i'); // Minute-based key
+                            $fullKey = "{$logKey}_{$minuteKey}";
                             
-                            try {
-                                $lock = cache()->lock("lock_{$logKey}", 10);
-                                
-                                if ($lock->get(0)) {
-                                    try {
-                                        if (!cache()->has($logKey)) {
-                                            Log::warning('Error checking module enabled status', [
-                                                'error' => $e->getMessage(),
-                                                'ai_module' => $aiModule,
-                                                'edge_id' => $edge->id,
-                                                'organization_id' => $edge->organization_id ?? null,
-                                            ]);
-                                            cache()->put($logKey, true, now()->addMinute());
-                                        }
-                                    } finally {
-                                        $lock->release();
-                                    }
-                                }
-                            } catch (\Exception $lockError) {
-                                // Suppress log if locking fails (prevent duplicate logs)
+                            // Atomic increment: only first request in this minute will have count = 1
+                            $count = cache()->increment($fullKey, 1);
+                            cache()->put($fullKey, $count, now()->addMinute()); // Ensure TTL is set
+                            
+                            // Only log if this is the first request in this minute (count == 1)
+                            if ($count === 1 || $count === null) {
+                                Log::warning('Error checking module enabled status', [
+                                    'error' => $e->getMessage(),
+                                    'ai_module' => $aiModule,
+                                    'edge_id' => $edge->id,
+                                    'organization_id' => $edge->organization_id ?? null,
+                                ]);
                             }
                             // Continue processing - don't fail entire batch
                         }
@@ -468,71 +462,46 @@ class EventController extends Controller
             } elseif ($createdCount > 0 && $failedCount > 0) {
                 // Partial success - log as WARNING (only once per minute to reduce noise)
                 $logKey = "batch_partial_{$edge->id}_{$edge->organization_id}";
+                $minuteKey = now()->format('Y-m-d-H-i'); // Minute-based key for deduplication
+                $fullKey = "{$logKey}_{$minuteKey}";
                 
-                try {
-                    // Use lock to prevent duplicate logs
-                    $lock = cache()->lock("lock_{$logKey}", 30);
-                    
-                    if ($lock->get(0)) {
-                        try {
-                            if (!cache()->has($logKey)) {
-                                Log::warning('Batch ingest partially completed', [
-                                    'edge_id' => $edge->id ?? null,
-                                    'edge_key' => $edge->edge_key ?? null,
-                                    'organization_id' => $edge->organization_id ?? null,
-                                    'total_events' => $totalCount,
-                                    'created' => $createdCount,
-                                    'failed' => $failedCount,
-                                ]);
-                                cache()->put($logKey, true, now()->addMinute());
-                            }
-                        } finally {
-                            $lock->release();
-                        }
-                    }
-                } catch (\Exception $e) {
-                    // Suppress duplicate logs if locking fails
+                // Atomic increment: only first request in this minute will have count = 1
+                $count = cache()->increment($fullKey, 1);
+                cache()->put($fullKey, $count, now()->addMinute()); // Ensure TTL is set
+                
+                // Only log if this is the first request in this minute (count == 1)
+                if ($count === 1 || $count === null) {
+                    Log::warning('Batch ingest partially completed', [
+                        'edge_id' => $edge->id ?? null,
+                        'edge_key' => $edge->edge_key ?? null,
+                        'organization_id' => $edge->organization_id ?? null,
+                        'total_events' => $totalCount,
+                        'created' => $createdCount,
+                        'failed' => $failedCount,
+                    ]);
                 }
             } elseif ($createdCount == 0 && $failedCount > 0) {
                 if ($allModuleDisabled) {
                     // All events failed due to disabled modules - log as WARNING once per hour (not an error)
-                    // Use database-based locking to prevent duplicate logs from concurrent requests
+                    // Use atomic cache increment to prevent duplicate logs from concurrent requests
                     $logKey = "batch_all_modules_disabled_{$edge->id}_{$edge->organization_id}";
+                    $hourKey = now()->format('Y-m-d-H'); // Hour-based key for deduplication
+                    $fullKey = "{$logKey}_{$hourKey}";
                     
-                    try {
-                        // Try to acquire lock with blocking timeout (prevents duplicates)
-                        $lock = cache()->lock("lock_{$logKey}", 60); // 60 second lock
-                        
-                        if ($lock->get(0)) { // Non-blocking, return immediately if lock unavailable
-                            try {
-                                // Double-check: only log if not logged in the last hour
-                                if (!cache()->has($logKey)) {
-                                    Log::warning('Batch ingest: all modules disabled for organization', [
-                                        'edge_id' => $edge->id ?? null,
-                                        'edge_key' => $edge->edge_key ?? null,
-                                        'organization_id' => $edge->organization_id ?? null,
-                                        'total_events' => $totalCount,
-                                        'failed_modules' => array_column($failed, 'module'),
-                                    ]);
-                                    // Set cache with hour-long TTL
-                                    cache()->put($logKey, time(), now()->addHour());
-                                }
-                            } finally {
-                                $lock->release();
-                            }
-                        }
-                        // If lock is unavailable, another request is logging - skip
-                    } catch (\Exception $e) {
-                        // If locking fails completely, suppress the log (better than duplicates)
-                        // Log only the locking error (once per minute)
-                        $lockErrorKey = "lock_error_{$logKey}";
-                        if (!cache()->has($lockErrorKey)) {
-                            Log::debug('Failed to acquire lock for batch ingest log (suppressing duplicate)', [
-                                'error' => $e->getMessage(),
-                                'log_key' => $logKey,
-                            ]);
-                            cache()->put($lockErrorKey, true, now()->addMinute());
-                        }
+                    // Atomic increment: if key doesn't exist, create with value 1, else increment
+                    // Only first request in this hour will have count = 1
+                    $count = cache()->increment($fullKey, 1);
+                    cache()->put($fullKey, $count, now()->addHour()); // Ensure TTL is set
+                    
+                    // Only log if this is the first request in this hour (count == 1)
+                    if ($count === 1 || $count === null) {
+                        Log::warning('Batch ingest: all modules disabled for organization', [
+                            'edge_id' => $edge->id ?? null,
+                            'edge_key' => $edge->edge_key ?? null,
+                            'organization_id' => $edge->organization_id ?? null,
+                            'total_events' => $totalCount,
+                            'failed_modules' => array_column($failed, 'module'),
+                        ]);
                     }
                 } else {
                     // All events failed for other reasons - log as ERROR (but rate limit to once per minute)
