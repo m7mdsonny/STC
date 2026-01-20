@@ -297,42 +297,58 @@ class AnalyticsService
             $endDate?->toDateString(),
         ]);
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use (
+        return Cache::remember($cacheKey, 30, function () use (
             $organizationId,
             $startDate,
             $endDate
         ) {
-            $query = Event::where('organization_id', $organizationId);
+            // Query 1: Events with ai_module column populated
+            $query1 = Event::where('organization_id', $organizationId)
+                ->whereNotNull('ai_module');
+
+            // Query 2: Events with module in meta->module but ai_module is NULL
+            $query2 = Event::where('organization_id', $organizationId)
+                ->whereNull('ai_module')
+                ->whereRaw('JSON_EXTRACT(meta, "$.module") IS NOT NULL');
 
             if ($startDate) {
-                $query->where('occurred_at', '>=', $startDate);
+                $query1->where('occurred_at', '>=', $startDate);
+                $query2->where('occurred_at', '>=', $startDate);
             }
             if ($endDate) {
-                $query->where('occurred_at', '<=', $endDate);
+                $query1->where('occurred_at', '<=', $endDate);
+                $query2->where('occurred_at', '<=', $endDate);
             }
 
-            // Get events with ai_module OR extract from meta->module
-            // Use COALESCE to handle both ai_module column and meta->module
-            return $query
-                ->selectRaw('COALESCE(ai_module, JSON_UNQUOTE(JSON_EXTRACT(meta, "$.module"))) as module, COUNT(*) as count')
-                ->where(function ($q) {
-                    $q->whereNotNull('ai_module')
-                      ->orWhereRaw('JSON_EXTRACT(meta, "$.module") IS NOT NULL');
-                })
-                ->groupBy('module')
-                ->orderByDesc('count')
-                ->get()
+            // Get results from both queries
+            $results1 = $query1
+                ->selectRaw('ai_module as module, COUNT(*) as count')
+                ->groupBy('ai_module')
+                ->get();
+
+            $results2 = $query2
+                ->selectRaw('JSON_UNQUOTE(JSON_EXTRACT(meta, "$.module")) as module, COUNT(*) as count')
+                ->groupBy(DB::raw('JSON_UNQUOTE(JSON_EXTRACT(meta, "$.module"))'))
+                ->get();
+
+            // Merge and aggregate results
+            $merged = collect([...$results1, ...$results2])
                 ->filter(function ($item) {
                     return !empty($item->module); // Filter out null/empty modules
                 })
-                ->map(function ($item) {
+                ->groupBy('module')
+                ->map(function ($group) {
                     return [
-                        'module' => $item->module,
-                        'count' => (int) $item->count,
+                        'module' => $group->first()->module,
+                        'count' => (int) $group->sum('count'),
                     ];
                 })
                 ->values()
+                ->sortByDesc('count')
+                ->values()
                 ->toArray();
+
+            return $merged;
         });
     }
 

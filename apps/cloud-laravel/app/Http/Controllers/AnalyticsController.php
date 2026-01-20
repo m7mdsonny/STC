@@ -274,9 +274,33 @@ class AnalyticsController extends Controller
         $startDate = $request->filled('start_date') ? Carbon::parse($request->get('start_date')) : null;
         $endDate = $request->filled('end_date') ? Carbon::parse($request->get('end_date')) : null;
 
-        $data = $this->analyticsService->getModuleActivity($organizationId, $startDate, $endDate);
-
-        return response()->json($data);
+        try {
+            $data = $this->analyticsService->getModuleActivity($organizationId, $startDate, $endDate);
+            
+            // Log if no data found for debugging
+            if (empty($data)) {
+                \Log::debug('Module activity returned empty', [
+                    'organization_id' => $organizationId,
+                    'start_date' => $startDate?->toDateString(),
+                    'end_date' => $endDate?->toDateString(),
+                    'total_events' => Event::where('organization_id', $organizationId)->count(),
+                    'events_with_ai_module' => Event::where('organization_id', $organizationId)->whereNotNull('ai_module')->count(),
+                ]);
+            }
+            
+            return response()->json($data);
+        } catch (\Exception $e) {
+            \Log::error('Module activity error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'organization_id' => $organizationId,
+            ]);
+            
+            return response()->json([
+                'error' => 'Failed to fetch module activity',
+                'message' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
     }
 
     public function weeklyTrend(Request $request): JsonResponse
