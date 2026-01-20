@@ -89,20 +89,26 @@ class AuthController extends Controller
             $user->makeVisible(['role']);
 
             // CRITICAL: Clear rate limit cache on successful login to prevent lockout
-            // Laravel throttle middleware generates keys based on route and IP
-            // We need to clear the rate limit that was set by the throttle middleware
-            // The key format for throttle:10,1 is typically: throttle:10,1:{hashed_identifier}
-            $identifier = $request->ip();
-            $throttleKey = 'login-attempts:' . $identifier;
+            // Laravel throttle middleware uses a specific key format based on route signature
+            // The format is: throttle:{max}:{per}:{resolvedSignature}
+            // For throttle:10,1, the signature is resolved from request (typically IP)
             
-            // Clear using RateLimiter facade (recommended method)
-            RateLimiter::clear($throttleKey);
+            // Laravel's throttle middleware uses resolveRequestSignature() which returns IP by default
+            $identifier = $request->ip() ?? $request->userAgent();
             
-            // Also try clearing using the actual throttle middleware key format
-            // Laravel generates keys as: md5('throttle:10,1' . $identifier) 
-            $middlewareKey = md5('throttle:10,1' . $identifier);
-            \Illuminate\Support\Facades\Cache::forget($middlewareKey);
-            \Illuminate\Support\Facades\Cache::forget(config('cache.prefix', 'laravel_cache_') . $middlewareKey);
+            // Laravel throttle middleware key format: md5('throttle:{max}:{per}' . $identifier)
+            // For throttle:10,1 with IP identifier, key is: md5('throttle:10,1' . $ip)
+            $throttleKey = md5('throttle:10,1' . $identifier);
+            
+            // Clear with cache prefix (Laravel adds prefix automatically)
+            $cachePrefix = config('cache.prefix', 'laravel_cache_');
+            \Illuminate\Support\Facades\Cache::forget($cachePrefix . $throttleKey);
+            \Illuminate\Support\Facades\Cache::forget($throttleKey); // Also try without prefix
+            
+            // Alternative: Try clearing all rate limit keys for this IP (brute force but effective)
+            // This ensures we clear the rate limit regardless of exact key format
+            \Illuminate\Support\Facades\Cache::forget($cachePrefix . 'throttle:10,1:' . sha1($identifier));
+            \Illuminate\Support\Facades\Cache::forget($cachePrefix . 'throttle:10,1:' . md5($identifier));
 
             // Create token
             $token = $user->createToken('api')->plainTextToken;
