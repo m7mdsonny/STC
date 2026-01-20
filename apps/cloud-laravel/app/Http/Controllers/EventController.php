@@ -12,6 +12,7 @@ use App\Services\EnterpriseMonitoringService;
 use App\Services\FcmService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Models\LogDeduplication;
 
 class EventController extends Controller
 {
@@ -242,17 +243,11 @@ class EventController extends Controller
                                 }
                             }
                         } catch (\Exception $e) {
-                            // Log error only once per minute to reduce noise (atomic increment)
-                            $logKey = "module_check_error_{$edge->id}_{$aiModule}";
-                            $minuteKey = now()->format('Y-m-d-H-i'); // Minute-based key
-                            $fullKey = "{$logKey}_{$minuteKey}";
+                            // Log error only once per minute to reduce noise (database deduplication)
+                            $logKey = "module_check_error_{$edge->id}_{$aiModule}_" . now()->format('Y-m-d-H-i');
                             
-                            // Atomic increment: only first request in this minute will have count = 1
-                            $count = cache()->increment($fullKey, 1);
-                            cache()->put($fullKey, $count, now()->addMinute()); // Ensure TTL is set
-                            
-                            // Only log if this is the first request in this minute (count == 1)
-                            if ($count === 1 || $count === null) {
+                            // Use database-based deduplication
+                            if (LogDeduplication::shouldLog($logKey, 1)) { // 1 minute TTL
                                 Log::warning('Error checking module enabled status', [
                                     'error' => $e->getMessage(),
                                     'ai_module' => $aiModule,
@@ -461,16 +456,10 @@ class EventController extends Controller
                 ]);
             } elseif ($createdCount > 0 && $failedCount > 0) {
                 // Partial success - log as WARNING (only once per minute to reduce noise)
-                $logKey = "batch_partial_{$edge->id}_{$edge->organization_id}";
-                $minuteKey = now()->format('Y-m-d-H-i'); // Minute-based key for deduplication
-                $fullKey = "{$logKey}_{$minuteKey}";
+                $logKey = "batch_partial_{$edge->id}_{$edge->organization_id}_" . now()->format('Y-m-d-H-i');
                 
-                // Atomic increment: only first request in this minute will have count = 1
-                $count = cache()->increment($fullKey, 1);
-                cache()->put($fullKey, $count, now()->addMinute()); // Ensure TTL is set
-                
-                // Only log if this is the first request in this minute (count == 1)
-                if ($count === 1 || $count === null) {
+                // Use database-based deduplication (guaranteed no duplicates)
+                if (LogDeduplication::shouldLog($logKey, 1)) { // 1 minute TTL
                     Log::warning('Batch ingest partially completed', [
                         'edge_id' => $edge->id ?? null,
                         'edge_key' => $edge->edge_key ?? null,
@@ -483,18 +472,11 @@ class EventController extends Controller
             } elseif ($createdCount == 0 && $failedCount > 0) {
                 if ($allModuleDisabled) {
                     // All events failed due to disabled modules - log as WARNING once per hour (not an error)
-                    // Use atomic cache increment to prevent duplicate logs from concurrent requests
-                    $logKey = "batch_all_modules_disabled_{$edge->id}_{$edge->organization_id}";
-                    $hourKey = now()->format('Y-m-d-H'); // Hour-based key for deduplication
-                    $fullKey = "{$logKey}_{$hourKey}";
+                    // Use database-based deduplication (guaranteed no duplicates even with concurrent requests)
+                    $logKey = "batch_all_modules_disabled_{$edge->id}_{$edge->organization_id}_" . now()->format('Y-m-d-H');
                     
-                    // Atomic increment: if key doesn't exist, create with value 1, else increment
-                    // Only first request in this hour will have count = 1
-                    $count = cache()->increment($fullKey, 1);
-                    cache()->put($fullKey, $count, now()->addHour()); // Ensure TTL is set
-                    
-                    // Only log if this is the first request in this hour (count == 1)
-                    if ($count === 1 || $count === null) {
+                    // Database INSERT with UNIQUE constraint prevents duplicates atomically
+                    if (LogDeduplication::shouldLog($logKey, 60)) { // 60 minutes (1 hour) TTL
                         Log::warning('Batch ingest: all modules disabled for organization', [
                             'edge_id' => $edge->id ?? null,
                             'edge_key' => $edge->edge_key ?? null,
