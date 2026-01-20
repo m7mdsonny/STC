@@ -678,7 +678,8 @@ class CloudDatabase:
             meta = payload.get('meta', {})
             module = meta.get('module', 'unknown')
             if event_type == 'analytics':
-                logger.info(f"Analytics event sent to Cloud: module={module}, camera_id={payload.get('camera_id')}, event_id={result.get('event_id') or result.get('id')}")
+                # Use debug level to reduce log noise (successful analytics are normal operation)
+                logger.debug(f"Analytics event sent to Cloud: module={module}, camera_id={payload.get('camera_id')}, event_id={result.get('event_id') or result.get('id')}")
             return True, result.get('event_id') or result.get('id') or result.get('alert_id')
 
         # CRITICAL: Log failed event creation
@@ -829,7 +830,8 @@ class CloudDatabase:
         )
         
         if success:
-            logger.info(f"Batch analytics sent: {len(events_payload)} events")
+            # Use debug level to reduce log noise (successful batches are normal operation)
+            logger.debug(f"Batch analytics sent: {len(events_payload)} events")
             return True
         else:
             # Enhanced error logging

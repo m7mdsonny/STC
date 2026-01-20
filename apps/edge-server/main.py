@@ -322,12 +322,14 @@ async def start_services():
             
             # Log AI processing for debugging
             if detections or modules_processed:
-                logger.info(f"AI processing: Camera {camera_id} - {len(detections)} detections, {len(modules_processed)} modules: {modules_processed}")
+                # Use debug level to reduce log noise (AI processing is normal operation)
+                logger.debug(f"AI processing: Camera {camera_id} - {len(detections)} detections, {len(modules_processed)} modules: {modules_processed}")
             
             # CRITICAL: Log if analytics were sent (for debugging analytics tracking)
             analytics_sent = len(modules_processed) if modules_processed else (1 if detections else 0)
             if analytics_sent > 0:
-                logger.info(f"Analytics sent: Camera {camera_id} - {analytics_sent} analytics event(s) sent to Cloud")
+                # Use debug level to reduce log noise (successful analytics are normal operation)
+                logger.debug(f"Analytics sent: Camera {camera_id} - {analytics_sent} analytics event(s) sent to Cloud")
 
     camera_service.register_processor(ai_processor)
 
