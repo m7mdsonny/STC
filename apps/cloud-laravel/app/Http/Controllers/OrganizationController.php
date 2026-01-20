@@ -120,11 +120,16 @@ class OrganizationController extends Controller
 
     public function destroy(Organization $organization): JsonResponse
     {
-        // Use Policy for authorization
-        $this->authorize('delete', $organization);
+        // Direct authorization check - only super admin can delete organizations
+        $user = request()->user();
+        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
+            return response()->json([
+                'message' => 'Only super admins can delete organizations'
+            ], 403);
+        }
 
         try {
-            $this->organizationService->deleteOrganization($organization, request()->user());
+            $this->organizationService->deleteOrganization($organization, $user);
         } catch (DomainActionException $e) {
             return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
@@ -134,11 +139,16 @@ class OrganizationController extends Controller
 
     public function toggleActive(Organization $organization): JsonResponse
     {
-        // Use Policy for authorization
-        $this->authorize('toggleActive', $organization);
+        // Direct authorization check - only super admin can toggle organization status
+        $user = request()->user();
+        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
+            return response()->json([
+                'message' => 'Only super admins can toggle organization status'
+            ], 403);
+        }
 
         try {
-            $organization = $this->organizationService->toggleOrganization($organization, request()->user());
+            $organization = $this->organizationService->toggleOrganization($organization, $user);
         } catch (DomainActionException $e) {
             return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
@@ -148,7 +158,14 @@ class OrganizationController extends Controller
 
     public function updatePlan(Request $request, Organization $organization): JsonResponse
     {
-        $this->ensureSuperAdmin($request);
+        // Direct authorization check - only super admin can update plans
+        $user = $request->user();
+        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
+            return response()->json([
+                'message' => 'Only super admins can update organization plans'
+            ], 403);
+        }
+        
         $data = $request->validate([
             'subscription_plan' => 'required|string',
             'max_cameras' => 'nullable|integer|min:1',
@@ -166,8 +183,15 @@ class OrganizationController extends Controller
 
     public function stats(Organization $organization): JsonResponse
     {
-        // Use Policy for authorization (same as view)
-        $this->authorize('view', $organization);
+        // Direct authorization check (same as view) - avoid authorize() method issues
+        $user = request()->user();
+        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
+            if (!$user->organization_id || (int) $user->organization_id !== (int) $organization->id) {
+                return response()->json([
+                    'message' => 'Access denied to this organization'
+                ], 403);
+            }
+        }
         
         return response()->json([
             'users_count' => User::where('organization_id', $organization->id)->count(),
