@@ -391,20 +391,21 @@ class EventController extends Controller
                         ];
                     }
                 }
-            } catch (\Exception $e) {
-                Log::error('Error processing batch event', [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                    'event_data' => $eventData,
-                    'edge_id' => $edge->id ?? null,
-                    'edge_organization_id' => $edge->organization_id ?? null,
-                ]);
-                $failed[] = [
-                    'index' => count($created) + count($failed),
-                    'error' => 'processing_failed',
-                    'message' => $e->getMessage(),
-                ];
-            }
+                } catch (\Exception $e) {
+                    Log::error('Error processing batch event', [
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                        'event_data' => $eventData,
+                        'edge_id' => $edge->id ?? null,
+                        'edge_organization_id' => $edge->organization_id ?? null,
+                    ]);
+                    $failed[] = [
+                        'index' => count($created) + count($failed),
+                        'error' => 'processing_failed',
+                        'message' => $e->getMessage(),
+                    ];
+                }
+            } // Close foreach loop
             
             // CRITICAL: Commit transaction only if we processed all events
             DB::commit();
