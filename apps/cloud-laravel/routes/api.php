@@ -63,9 +63,10 @@ Route::prefix('v1')->group(function () {
     Route::post('/edges/heartbeat', [EdgeController::class, 'heartbeat'])->middleware('throttle:100,1');
 
     // Edge Server endpoints (HMAC-secured ONLY - NO public access)
-    Route::middleware(['verify.edge.signature', 'throttle:100,1'])->group(function () {
+    // Higher throttle limits for Edge endpoints (analytics batches can be high frequency)
+    Route::middleware(['verify.edge.signature', 'throttle:1000,1'])->group(function () {
         Route::post('/edges/events', [EventController::class, 'ingest']);
-        Route::post('/edges/events/batch', [EventController::class, 'batchIngest']); // Batch endpoint - single nonce for multiple events
+        Route::post('/edges/events/batch', [EventController::class, 'batchIngest']); // Batch endpoint - single nonce for multiple events (1000 req/min for high-frequency analytics)
         Route::get('/edges/cameras', [EdgeController::class, 'getCamerasForEdge']);
         Route::get('/edges/commands', [EdgeController::class, 'getCommandsForEdge']); // Edge polls for pending commands
     });
