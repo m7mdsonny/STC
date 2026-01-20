@@ -166,25 +166,22 @@ class AiCommandController extends Controller
         // For User requests (Sanctum authenticated), check permissions
         $user = $request->user();
         
-        // If request is from Edge Server (HMAC authenticated), get edge_key from header and find Edge Server
+        // If request is from Edge Server (HMAC authenticated), get edge_server from request (set by middleware)
         if (!$user) {
-            // This is an Edge Server request (HMAC authenticated via middleware)
-            $edgeKey = $request->header('X-EDGE-KEY');
-            if ($edgeKey) {
-                $edgeServer = EdgeServer::where('edge_key', $edgeKey)->first();
-                if ($edgeServer) {
-                    // Verify command belongs to this Edge Server
-                    $commandTarget = $aiCommand->targets()->where('edge_server_id', $edgeServer->id)->first();
-                    if (!$commandTarget) {
-                        return response()->json([
-                            'message' => 'Command not found for this Edge Server'
-                        ], 404);
-                    }
-                } else {
-                    return response()->json(['message' => 'Invalid Edge Server'], 401);
-                }
-            } else {
-                return response()->json(['message' => 'Authentication required'], 401);
+            // This is an Edge Server request (HMAC authenticated via verify.edge.signature middleware)
+            // Middleware sets edge_server in request via $request->merge(['edge_server' => $edgeServer])
+            $edgeServer = $request->get('edge_server');
+            
+            if (!$edgeServer) {
+                return response()->json(['message' => 'Edge Server not found in request'], 401);
+            }
+            
+            // Verify command belongs to this Edge Server
+            $commandTarget = $aiCommand->targets()->where('edge_server_id', $edgeServer->id)->first();
+            if (!$commandTarget) {
+                return response()->json([
+                    'message' => 'Command not found for this Edge Server'
+                ], 404);
             }
         } else {
             // For user requests (Sanctum authenticated), check permissions
