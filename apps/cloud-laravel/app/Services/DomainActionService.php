@@ -31,11 +31,21 @@ class DomainActionService
             throw new DomainActionException('Authentication required', 401);
         }
 
-        $isSuperAdmin = RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false);
+        // CRITICAL: Defensive check for role property
+        $userRole = $user->role ?? null;
+        if (!$userRole) {
+            Log::warning('User missing role property in DomainActionService', [
+                'user_id' => $user->id ?? null,
+                'route' => $request->path(),
+            ]);
+            throw new DomainActionException('User role is required but not available', 403);
+        }
+
+        $isSuperAdmin = RoleHelper::isSuperAdmin($userRole, $user->is_super_admin ?? false);
         if ($user->organization_id === null && !$isSuperAdmin) {
             Log::warning('Mutation blocked because organization context is missing', [
                 'user_id' => $user->id,
-                'role' => $user->role,
+                'role' => $userRole,
                 'route' => $request->path(),
             ]);
             throw new DomainActionException('Organization context is required for this action');

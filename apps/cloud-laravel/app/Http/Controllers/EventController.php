@@ -173,7 +173,7 @@ class EventController extends Controller
                 return response()->json([
                     'message' => 'Edge server configuration error: missing organization_id',
                     'error' => 'configuration_error'
-                ], 500);
+                ], 403); // Changed from 500 to 403 - this is a configuration issue, not a server error
             }
 
             // Validate request with better error handling
@@ -391,7 +391,7 @@ class EventController extends Controller
                         ];
                     }
                 }
-                } catch (\Exception $e) {
+            } catch (\Exception $e) {
                 Log::error('Error processing batch event', [
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
@@ -409,13 +409,23 @@ class EventController extends Controller
             // CRITICAL: Commit transaction only if we processed all events
             DB::commit();
             
+            // Log success for analytics tracking
+            Log::info('Batch ingest completed successfully', [
+                'edge_id' => $edge->id ?? null,
+                'edge_key' => $edge->edge_key ?? null,
+                'organization_id' => $edge->organization_id ?? null,
+                'total_events' => count($events),
+                'created' => count($created),
+                'failed' => count($failed),
+            ]);
+            
             return response()->json([
                 'ok' => true,
                 'created' => count($created),
                 'failed' => count($failed),
                 'events' => $created,
                 'errors' => $failed,
-            ]);
+            ], 200);
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
             Log::error('Batch ingest validation exception', [
