@@ -163,8 +163,23 @@ class EdgeController extends Controller
 
     public function logs(Request $request, EdgeServer $edgeServer): JsonResponse
     {
-        // Use Policy for authorization
-        $this->authorize('viewLogs', $edgeServer);
+        $user = request()->user();
+        
+        // Authorization check - ensure user can view logs for this edge server
+        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
+            // Non-super-admin users can only view logs for edge servers in their organization
+            if (!$user->organization_id || (int) $user->organization_id !== (int) $edgeServer->organization_id) {
+                return response()->json([
+                    'message' => 'Access denied to this edge server'
+                ], 403);
+            }
+            // Org managers can view logs for edge servers in their organization
+            if (!RoleHelper::canManageOrganization($user->role)) {
+                return response()->json([
+                    'message' => 'Insufficient permissions to view edge server logs'
+                ], 403);
+            }
+        }
 
         $query = EdgeServerLog::where('edge_server_id', $edgeServer->id);
 
@@ -925,7 +940,17 @@ class EdgeController extends Controller
      */
     public function status(EdgeServer $edgeServer): JsonResponse
     {
-        $this->authorize('view', $edgeServer);
+        $user = request()->user();
+        
+        // Authorization check - ensure user can view this edge server
+        if (!RoleHelper::isSuperAdmin($user->role, $user->is_super_admin ?? false)) {
+            // Non-super-admin users can only view edge servers in their organization
+            if (!$user->organization_id || (int) $user->organization_id !== (int) $edgeServer->organization_id) {
+                return response()->json([
+                    'message' => 'Access denied to this edge server'
+                ], 403);
+            }
+        }
 
         $edgeServer->load(['organization', 'license']);
         
