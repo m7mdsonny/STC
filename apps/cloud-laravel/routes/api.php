@@ -49,7 +49,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/public/free-trial/modules', [FreeTrialRequestController::class, 'getAvailableModules']);
 
     // Auth endpoints with throttling
-    Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1'); // 5 attempts per minute
+    Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:10,1'); // 10 attempts per minute (increased for better UX)
     Route::post('/auth/register', [AuthController::class, 'register'])->middleware('throttle:3,1'); // 3 attempts per minute
     Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
