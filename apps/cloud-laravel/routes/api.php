@@ -50,8 +50,8 @@ Route::prefix('v1')->group(function () {
 
     // Auth endpoints with throttling
     // CRITICAL: clear.login.rate.limit middleware clears rate limit on successful login (200 response)
-    // Increased throttle to 20 attempts per minute to prevent lockouts
-    Route::post('/auth/login', [AuthController::class, 'login'])->middleware(['throttle:20,1', 'clear.login.rate.limit']); // 20 attempts per minute - cleared on success
+    // Increased throttle to 50 attempts per minute + automatic clearing on success to prevent lockouts
+    Route::post('/auth/login', [AuthController::class, 'login'])->middleware(['throttle:50,1', 'clear.login.rate.limit']); // 50 attempts per minute - cleared on success
     Route::post('/auth/register', [AuthController::class, 'register'])->middleware('throttle:3,1'); // 3 attempts per minute
     Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 

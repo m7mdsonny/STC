@@ -43,63 +43,100 @@ class ClearLoginRateLimit
     }
 
     /**
-     * Clear rate limit using Laravel's exact throttle key format
+     * Clear rate limit using comprehensive approach
+     * Uses Laravel's exact throttle key format + brute force cache clearing
      */
     protected function clearRateLimit(Request $request)
     {
         try {
             // Laravel's throttle middleware uses resolveRequestSignature() to get identifier
-            $identifier = $request->ip() ?? $request->userAgent() ?? 'unknown';
+            // For unauthenticated requests, it uses: sha1(route()->getDomain() . '|' . $request->ip())
+            // For authenticated requests, it uses: sha1($user->getAuthIdentifier())
             
-            // Laravel throttle middleware key format:
-            // For throttle:20,1, it uses: md5('throttle:20,1' . $identifier)
-            $key = md5('throttle:20,1' . $identifier);
+            $identifier = null;
+            $route = $request->route();
             
-            // Also try the old key format in case it was cached with old limit
-            $oldKey = md5('throttle:10,1' . $identifier);
-            
-            // Method 1: Use RateLimiter facade to clear (Laravel's official way)
-            RateLimiter::clear($key);
-            RateLimiter::clear($oldKey); // Clear old key format too
-            
-            // Method 2: Clear from cache directly (in case RateLimiter doesn't work)
-            // Laravel stores throttle data in cache with the key format above
-            $cacheStore = Cache::store();
-            $cacheStore->forget($key);
-            $cacheStore->forget($oldKey);
-            
-            // Method 3: Try with cache prefix if configured
-            $cachePrefix = config('cache.prefix', '');
-            if ($cachePrefix) {
-                $cacheStore->forget($cachePrefix . $key);
-                $cacheStore->forget($cachePrefix . $oldKey);
-                $cacheStore->forget($cachePrefix . 'throttle:20,1:' . $identifier);
-                $cacheStore->forget($cachePrefix . 'throttle:10,1:' . $identifier);
+            // Build identifier exactly like Laravel's throttle middleware does
+            if ($route) {
+                $domain = $route->getDomain();
+                $ip = $request->ip();
+                $identifier = sha1($domain . '|' . $ip);
+            } else {
+                // Fallback to IP
+                $identifier = sha1($request->ip());
             }
             
-            // Method 4: Clear all possible key variations (comprehensive cleanup)
-            $variations = [
-                $key,
-                $oldKey,
+            // Laravel throttle middleware key format:
+            // For throttle:20,1, it uses the signature directly as key
+            // But Laravel also uses md5 for some cache drivers
+            $keys = [
+                // Laravel's standard format
+                'throttle:' . $identifier,
+                md5('throttle:20,1' . $identifier),
+                md5('throttle:10,1' . $identifier), // Old format
+                
+                // Alternative formats
                 'throttle:20,1:' . $identifier,
                 'throttle:10,1:' . $identifier,
-                md5('throttle:20,1:' . $identifier),
-                md5('throttle:10,1:' . $identifier),
                 sha1('throttle:20,1' . $identifier),
                 sha1('throttle:10,1' . $identifier),
-                'rate_limit:' . $key,
-                'rate_limit:' . $oldKey,
+                
+                // With IP directly
+                md5('throttle:20,1' . $request->ip()),
+                md5('throttle:10,1' . $request->ip()),
             ];
             
-            foreach ($variations as $variation) {
+            // Method 1: Use RateLimiter facade to clear all keys
+            foreach ($keys as $key) {
                 try {
-                    $cacheStore->forget($variation);
-                    if ($cachePrefix) {
-                        $cacheStore->forget($cachePrefix . $variation);
-                    }
+                    RateLimiter::clear($key);
                 } catch (\Exception $e) {
                     // Ignore individual failures
                 }
+            }
+            
+            // Method 2: Clear from cache directly (brute force)
+            $cacheStore = Cache::store();
+            $cachePrefix = config('cache.prefix', '');
+            
+            foreach ($keys as $key) {
+                try {
+                    // Clear without prefix
+                    $cacheStore->forget($key);
+                    
+                    // Clear with prefix
+                    if ($cachePrefix) {
+                        $cacheStore->forget($cachePrefix . $key);
+                        $cacheStore->forget($cachePrefix . md5($key));
+                    }
+                    
+                    // Try with 'laravel_cache' prefix (Laravel default)
+                    $cacheStore->forget('laravel_cache' . $key);
+                    $cacheStore->forget('laravel_cache:' . $key);
+                } catch (\Exception $e) {
+                    // Ignore individual failures
+                }
+            }
+            
+            // Method 3: Clear all throttle-related keys for this IP (nuclear option)
+            // This ensures we catch any variation Laravel might use
+            try {
+                $allKeys = [
+                    'throttle:' . $request->ip(),
+                    'throttle:20,1:' . $request->ip(),
+                    'throttle:10,1:' . $request->ip(),
+                    md5('throttle:20,1' . $request->ip()),
+                    md5('throttle:10,1' . $request->ip()),
+                ];
+                
+                foreach ($allKeys as $key) {
+                    $cacheStore->forget($key);
+                    if ($cachePrefix) {
+                        $cacheStore->forget($cachePrefix . $key);
+                    }
+                }
+            } catch (\Exception $e) {
+                // Ignore
             }
             
         } catch (\Exception $e) {
