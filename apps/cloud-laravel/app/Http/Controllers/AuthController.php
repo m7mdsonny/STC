@@ -88,27 +88,8 @@ class AuthController extends Controller
             // Ensure role is normalized in response (use accessor)
             $user->makeVisible(['role']);
 
-            // CRITICAL: Clear rate limit cache on successful login to prevent lockout
-            // Laravel throttle middleware uses a specific key format based on route signature
-            // The format is: throttle:{max}:{per}:{resolvedSignature}
-            // For throttle:10,1, the signature is resolved from request (typically IP)
-            
-            // Laravel's throttle middleware uses resolveRequestSignature() which returns IP by default
-            $identifier = $request->ip() ?? $request->userAgent();
-            
-            // Laravel throttle middleware key format: md5('throttle:{max}:{per}' . $identifier)
-            // For throttle:10,1 with IP identifier, key is: md5('throttle:10,1' . $ip)
-            $throttleKey = md5('throttle:10,1' . $identifier);
-            
-            // Clear with cache prefix (Laravel adds prefix automatically)
-            $cachePrefix = config('cache.prefix', 'laravel_cache_');
-            \Illuminate\Support\Facades\Cache::forget($cachePrefix . $throttleKey);
-            \Illuminate\Support\Facades\Cache::forget($throttleKey); // Also try without prefix
-            
-            // Alternative: Try clearing all rate limit keys for this IP (brute force but effective)
-            // This ensures we clear the rate limit regardless of exact key format
-            \Illuminate\Support\Facades\Cache::forget($cachePrefix . 'throttle:10,1:' . sha1($identifier));
-            \Illuminate\Support\Facades\Cache::forget($cachePrefix . 'throttle:10,1:' . md5($identifier));
+            // NOTE: Rate limit is cleared by ClearLoginRateLimit middleware after successful login
+            // This middleware runs after the controller and clears rate limit for 200 responses
 
             // Create token
             $token = $user->createToken('api')->plainTextToken;

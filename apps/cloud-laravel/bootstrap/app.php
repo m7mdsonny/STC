@@ -32,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'verify.edge.signature' => \App\Http\Middleware\VerifyEdgeSignature::class,
             'require.https' => RequireHttps::class,
             'role' => \App\Http\Middleware\EnsureRole::class,
+            'clear.login.rate.limit' => \App\Http\Middleware\ClearLoginRateLimit::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
