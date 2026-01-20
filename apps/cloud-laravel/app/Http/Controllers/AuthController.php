@@ -88,10 +88,18 @@ class AuthController extends Controller
             $user->makeVisible(['role']);
 
             // CRITICAL: Clear rate limit cache on successful login to prevent lockout
-            // This ensures users who successfully login don't get blocked by previous failed attempts
-            $identifier = strtolower(trim($request->email));
-            $key = 'throttle:10,1:' . md5($request->ip() . '|api/v1/auth/login');
-            \Illuminate\Support\Facades\Cache::forget($key);
+            // Laravel throttle middleware uses format: cache:throttle:{identifier}
+            // The identifier is typically the IP address for API routes
+            $throttleKey = 'throttle_' . sha1($request->ip() . '|api/v1/auth/login');
+            
+            // Try to clear both possible key formats Laravel might use
+            \Illuminate\Support\Facades\Cache::forget($throttleKey);
+            \Illuminate\Support\Facades\Cache::forget(config('cache.prefix', 'laravel_cache_') . $throttleKey);
+            
+            // Also clear using IP-based key (most common format)
+            $ipKey = 'throttle:10,1:' . sha1($request->ip() . '|api/v1/auth/login');
+            \Illuminate\Support\Facades\Cache::forget($ipKey);
+            \Illuminate\Support\Facades\Cache::forget(config('cache.prefix', 'laravel_cache_') . $ipKey);
 
             // Create token
             $token = $user->createToken('api')->plainTextToken;
